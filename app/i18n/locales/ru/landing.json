@@ -170,5 +170,44 @@
       "title": "Мы в соцсетях"
     },
     "copyright": "© 2026 Kitep World. Все права защищены."
+  },
+  "admin": {
+    "login": {
+      "title": "Вход в админ-панель",
+      "subtitle": "Введите учетные данные администратора",
+      "email": "Email администратора",
+      "password": "Пароль",
+      "loginButton": "Войти",
+      "loggingIn": "Вход...",
+      "backToSite": "Вернуться на сайт"
+    },
+    "verify": {
+      "title": "Подтверждение входа",
+      "subtitle": "Код отправлен в Telegram",
+      "description": "Введите 6-значный код, который был отправлен в ваш Telegram",
+      "code": "Код подтверждения",
+      "verifyButton": "Подтвердить",
+      "verifying": "Проверка...",
+      "resendCode": "Отправить код повторно",
+      "codeSent": "Код отправлен повторно",
+      "backToLogin": "Вернуться к входу"
+    },
+    "dashboard": {
+      "title": "Панель администратора",
+      "welcome": "Добро пожаловать",
+      "logout": "Выйти"
+    },
+    "errors": {
+      "invalidCredentials": "Неверный email или пароль",
+      "notAdmin": "У вас нет прав администратора",
+      "accountBlocked": "Ваш аккаунт заблокирован",
+      "accountInactive": "Ваш аккаунт неактивен",
+      "telegramNotConfigured": "Telegram не настроен для этого аккаунта",
+      "codeNotSent": "Не удалось отправить код в Telegram",
+      "invalidCode": "Неверный код подтверждения",
+      "codeExpired": "Код подтверждения истек",
+      "serverError": "Ошибка сервера",
+      "connectionError": "Ошибка соединения с сервером"
+    }
   }
 }

@@ -5,6 +5,7 @@ import { FaChild } from "react-icons/fa6";
 import { FaPencilAlt } from "react-icons/fa";
 import { getLanguage, getTranslations } from './i18n';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import LoginButton from './components/LoginButton';
 
 export default async function Home() {
   const lang = await getLanguage();
@@ -82,10 +83,7 @@ export default async function Home() {
               <div className="flex items-center gap-3">
                 <LanguageSwitcher initialLang={lang} />
 
-                <button className="hidden md:flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-violet-500 hover:bg-violet-50 rounded-xl transition-all">
-                  <User className="w-5 h-5" />
-                  {t.header.login}
-                </button>
+                <LoginButton text={t.header.login} />
 
                 <button className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors md:hidden">
                   <Menu className="w-6 h-6 text-black" />
@@ -103,21 +101,21 @@ export default async function Home() {
           <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative w-full">
             <div className="text-center space-y-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm mt-6 md:mt-10">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm mt-6 md:mt-10 animate-fadeInDown">
                 <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse"></span>
                 <span className="text-sm font-bold text-black">{t.hero.badge}</span>
               </div>
               
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-black leading-tight max-w-4xl mx-auto">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-black leading-tight max-w-4xl mx-auto animate-fadeInUp">
                 {t.hero.title} <span className="bg-gradient-to-r from-violet-500 to-violet-500 bg-clip-text text-transparent">{t.hero.titleHighlight}</span>
               </h1>
               
-              <p className="text-lg md:text-xl text-gray-700 leading-relaxed font-semibold max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl text-gray-700 leading-relaxed font-semibold max-w-2xl mx-auto animate-fadeInUp">
                 {t.hero.subtitle}
               </p>
 
               {/* Search Bar */}
-              <div className="relative max-w-2xl mx-auto">
+              <div className="relative max-w-2xl mx-auto animate-scaleIn">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
@@ -129,7 +127,7 @@ export default async function Home() {
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-4 justify-center">
+              <div className="flex flex-wrap gap-4 justify-center animate-fadeInUp">
                 <button className="px-8 py-4 bg-gradient-to-r from-violet-500 to-violet-500 text-white font-bold rounded-2xl hover:shadow-2xl hover:scale-105 transition-all duration-300">
                   {t.hero.catalogButton}
                 </button>

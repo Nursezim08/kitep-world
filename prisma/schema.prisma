@@ -7,6 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -84,6 +85,7 @@ model User {
   id            String      @id @default(uuid()) @db.Uuid
   fullName      String      @map("full_name") @db.VarChar(255)
   email         String      @unique @db.VarChar(255)
+  emailVerified Boolean     @default(false) @map("email_verified")
   role          UserRole    @default(user)
   phone         String?     @unique @db.VarChar(30)
   passwordHash  String      @map("password_hash") @db.Text
@@ -99,8 +101,43 @@ model User {
   orders        Order[]
   aiChats       AiChat[]
   reviews       Review[]
+  verificationCodes EmailVerification[]
+  adminVerifications AdminVerification[]
 
   @@map("users")
+}
+
+// Коды верификации email
+model EmailVerification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  email     String   @db.VarChar(255)
+  code      String   @db.VarChar(6)
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email, code])
+  @@map("email_verifications")
+}
+
+// Коды верификации для админов через Telegram
+model AdminVerification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  code      String   @db.VarChar(6)
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, code])
+  @@map("admin_verifications")
 }
 
 // 2. Филиалы

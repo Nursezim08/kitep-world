@@ -170,5 +170,44 @@
       "title": "Биз социалдык тармактарда"
     },
     "copyright": "© 2026 Kitep World. Бардык укуктар корголгон."
+  },
+  "admin": {
+    "login": {
+      "title": "Админ панелге кирүү",
+      "subtitle": "Администратордун маалыматтарын киргизиңиз",
+      "email": "Администратордун email",
+      "password": "Сырсөз",
+      "loginButton": "Кирүү",
+      "loggingIn": "Кирүү...",
+      "backToSite": "Сайтка кайтуу"
+    },
+    "verify": {
+      "title": "Кирүүнү тастыктоо",
+      "subtitle": "Код Telegramга жөнөтүлдү",
+      "description": "Telegramга жөнөтүлгөн 6 сандуу кодду киргизиңиз",
+      "code": "Тастыктоо коду",
+      "verifyButton": "Тастыктоо",
+      "verifying": "Текшерүү...",
+      "resendCode": "Кодду кайра жөнөтүү",
+      "codeSent": "Код кайра жөнөтүлдү",
+      "backToLogin": "Кирүүгө кайтуу"
+    },
+    "dashboard": {
+      "title": "Администратор панели",
+      "welcome": "Кош келиңиз",
+      "logout": "Чыгуу"
+    },
+    "errors": {
+      "invalidCredentials": "Туура эмес email же сырсөз",
+      "notAdmin": "Сизде администратор укуктары жок",
+      "accountBlocked": "Сиздин аккаунт бөгөттөлгөн",
+      "accountInactive": "Сиздин аккаунт активдүү эмес",
+      "telegramNotConfigured": "Бул аккаунт үчүн Telegram конфигурацияланган эмес",
+      "codeNotSent": "Telegramга код жөнөтүлгөн жок",
+      "invalidCode": "Туура эмес тастыктоо коду",
+      "codeExpired": "Тастыктоо кодунун мөөнөтү бүттү",
+      "serverError": "Сервер катасы",
+      "connectionError": "Сервер менен байланыш катасы"
+    }
   }
 }
