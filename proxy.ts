@@ -67,9 +67,18 @@ export async function proxy(request: NextRequest) {
   }
 
   // ============================================
-  // ЗАЩИТА СТРАНИЦ АВТОРИЗАЦИИ
+  // ЗАЩИТА СТРАНИЦ АВТОРИЗАЦИИ И ВОССТАНОВЛЕНИЯ ПАРОЛЯ
   // ============================================
-  if (pathname === '/login' || pathname === '/register' || pathname === '/verify-email') {
+  const authPages = [
+    '/login',
+    '/register',
+    '/verify-email',
+    '/forgot-password',
+    '/reset-password/verify',
+    '/reset-password/new',
+  ];
+
+  if (authPages.some(page => pathname.startsWith(page))) {
     if (user) {
       // Админы идут в админку, обычные пользователи в профиль
       if (user.role === 'admin') {
@@ -81,11 +90,15 @@ export async function proxy(request: NextRequest) {
   }
 
   // ============================================
-  // ЗАЩИТА ГЛАВНОЙ СТРАНИЦЫ ДЛЯ АДМИНОВ
+  // ЗАЩИТА ГЛАВНОЙ СТРАНИЦЫ (LANDING PAGE)
   // ============================================
   if (pathname === '/') {
-    if (user && user.role === 'admin') {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    if (user) {
+      // Админы идут в админку, обычные пользователи в профиль
+      if (user.role === 'admin') {
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+      }
+      return NextResponse.redirect(new URL('/profile', request.url));
     }
     return NextResponse.next();
   }

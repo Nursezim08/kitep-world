@@ -45,13 +45,13 @@ export default function Toast({
   const getTypeStyles = () => {
     switch (type) {
       case 'success':
-        return 'bg-green-50 text-green-800';
+        return 'bg-violet-50 text-violet-800';
       case 'error':
         return 'bg-red-50 text-red-800';
       case 'google':
         return 'bg-violet-50 text-violet-900';
       default:
-        return 'bg-blue-50 text-blue-800';
+        return 'bg-violet-50 text-violet-800';
     }
   };
 

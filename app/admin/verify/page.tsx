@@ -128,7 +128,7 @@ function VerifyContent() {
 
         {/* Telegram иконка */}
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg">
             <FaTelegram className="text-white" size={32} />
           </div>
         </div>
@@ -146,8 +146,8 @@ function VerifyContent() {
         )}
 
         {resendSuccess && (
-          <div className="mb-3 p-2.5 bg-green-900/30 border-2 border-green-500/50 rounded-xl">
-            <p className="text-green-400 text-xs font-semibold">
+          <div className="mb-3 p-2.5 bg-violet-900/30 border-2 border-violet-500/50 rounded-xl">
+            <p className="text-violet-400 text-xs font-semibold">
               Код отправлен повторно
             </p>
           </div>

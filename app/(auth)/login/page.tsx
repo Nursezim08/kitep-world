@@ -1,15 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FcGoogle } from 'react-icons/fc';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import Toast from '@/app/components/Toast';
+import { useTranslation } from '@/app/i18n/client';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation('auth');
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -21,14 +24,14 @@ export default function LoginPage() {
 
   const urlError = searchParams.get('error');
   const errorMessages: Record<string, string> = {
-    google_auth_failed: 'Ошибка авторизации через Google',
-    no_code: 'Не получен код авторизации',
-    config_error: 'Ошибка конфигурации Google OAuth',
-    token_exchange_failed: 'Не удалось обменять код на токен',
-    user_info_failed: 'Не удалось получить информацию о пользователе',
-    account_blocked: 'Ваш аккаунт заблокирован',
-    account_inactive: 'Ваш аккаунт неактивен',
-    server_error: 'Ошибка сервера',
+    google_auth_failed: t('errors.serverError'),
+    no_code: t('errors.serverError'),
+    config_error: t('errors.serverError'),
+    token_exchange_failed: t('errors.serverError'),
+    user_info_failed: t('errors.serverError'),
+    account_blocked: t('errors.accountBlocked'),
+    account_inactive: t('errors.accountInactive'),
+    server_error: t('errors.serverError'),
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,12 +61,11 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Проверка на Google аккаунт
         if (data.useGoogleAuth) {
           setShowGoogleToast(true);
           setError('');
         } else {
-          setError(data.error || 'Ошибка при входе');
+          setError(data.error || t('errors.invalidCredentials'));
         }
         return;
       }
@@ -71,7 +73,7 @@ export default function LoginPage() {
       router.push('/profile');
       router.refresh();
     } catch (err) {
-      setError('Ошибка соединения с сервером');
+      setError(t('errors.connectionError'));
     } finally {
       setLoading(false);
     }
@@ -86,10 +88,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-violet-100 to-violet-50 px-4 py-4">
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
       
-      {/* Toast уведомление для Google аккаунтов */}
       {showGoogleToast && (
         <Toast
-          message="Этот аккаунт зарегистрирован через Google. Используйте кнопку 'Войти через Google' ниже."
+          message={t('login.googleToast')}
           type="google"
           duration={5000}
           onClose={() => setShowGoogleToast(false)}
@@ -97,7 +98,6 @@ export default function LoginPage() {
       )}
 
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-5 relative">
-        {/* Logo */}
         <div className="flex justify-center mb-3">
           <Link href="/" className="flex flex-col items-center gap-0.5">
             <div className="w-10 h-10 flex items-center justify-center">
@@ -110,25 +110,22 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center mb-4">
-          <h1 className="text-xl font-extrabold text-black mb-0.5">Вход</h1>
-          <p className="text-gray-600 font-semibold text-xs">Войдите в свой аккаунт</p>
+          <h1 className="text-xl font-extrabold text-black mb-0.5">{t('login.title')}</h1>
+          <p className="text-gray-600 font-semibold text-xs">{t('login.subtitle')}</p>
         </div>
 
         {(error || urlError) && (
           <div className="mb-3 p-2.5 bg-red-50 border-2 border-red-200 rounded-xl">
             <p className="text-red-600 text-xs font-semibold">
-              {error || errorMessages[urlError!] || 'Произошла ошибка'}
+              {error || errorMessages[urlError!] || t('errors.serverError')}
             </p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label
-              htmlFor="email"
-              className="block text-xs font-bold text-black mb-1"
-            >
-              Email
+            <label htmlFor="email" className="block text-xs font-bold text-black mb-1">
+              {t('login.email')}
             </label>
             <input
               type="email"
@@ -143,12 +140,17 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-xs font-bold text-black mb-1"
-            >
-              Пароль
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label htmlFor="password" className="block text-xs font-bold text-black">
+                {t('login.password')}
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-violet-500 hover:text-violet-600 font-bold"
+              >
+                {t('login.forgotPassword')}
+              </Link>
+            </div>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -179,7 +181,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-gradient-to-r from-violet-500 to-violet-600 text-white py-2 rounded-xl font-bold hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
           >
-            {loading ? 'Вход...' : 'Войти'}
+            {loading ? t('login.loggingIn') : t('login.loginButton')}
           </button>
         </form>
 
@@ -189,7 +191,7 @@ export default function LoginPage() {
               <div className="w-full border-t-2 border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-3 bg-white text-gray-500 font-semibold">или</span>
+              <span className="px-3 bg-white text-gray-500 font-semibold">{t('login.or')}</span>
             </div>
           </div>
 
@@ -199,20 +201,29 @@ export default function LoginPage() {
             className="mt-3 w-full flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-black py-2 rounded-xl font-bold hover:border-violet-500 hover:shadow-lg transition-all text-sm"
           >
             <FcGoogle size={20} />
-            Войти через Google
+            {t('login.googleButton')}
           </button>
         </div>
 
         <p className="mt-4 text-center text-xs text-gray-600 font-semibold">
-          Нет аккаунта?{' '}
-          <Link
-            href="/register"
-            className="text-violet-500 hover:text-violet-600 font-bold"
-          >
-            Зарегистрироваться
+          {t('login.noAccount')}{' '}
+          <Link href="/register" className="text-violet-500 hover:text-violet-600 font-bold">
+            {t('login.register')}
           </Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-violet-100 to-violet-50">
+        <div className="text-violet-600">Загрузка...</div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

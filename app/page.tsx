@@ -12,10 +12,10 @@ export default async function Home() {
   const t = await getTranslations(lang, 'landing');
 
   const categories = [
-    { name: t.categories.items.fiction, icon: GiBookmarklet, color: "bg-blue-100", iconColor: "text-blue-500" },
-    { name: t.categories.items.educational, icon: FaPencilAlt, color: "bg-purple-100", iconColor: "text-purple-500" },
-    { name: t.categories.items.stationery, icon: LuClipboardPenLine, color: "bg-green-100", iconColor: "text-green-500" },
-    { name: t.categories.items.children, icon: FaChild, color: "bg-orange-100", iconColor: "text-orange-500" },
+    { name: t.categories.items.fiction, icon: GiBookmarklet, color: "bg-violet-50", iconColor: "text-violet-600" },
+    { name: t.categories.items.educational, icon: FaPencilAlt, color: "bg-violet-50", iconColor: "text-violet-600" },
+    { name: t.categories.items.stationery, icon: LuClipboardPenLine, color: "bg-violet-50", iconColor: "text-violet-600" },
+    { name: t.categories.items.children, icon: FaChild, color: "bg-violet-50", iconColor: "text-violet-600" },
   ];
 
   const featuredProducts = [
@@ -32,16 +32,16 @@ export default async function Home() {
   ];
 
   const benefits = [
-    { icon: Check, title: t.benefits.items.quality.title, desc: t.benefits.items.quality.description, color: "bg-green-100", iconColor: "text-green-500" },
-    { icon: Star, title: t.benefits.items.loyalty.title, desc: t.benefits.items.loyalty.description, color: "bg-orange-100", iconColor: "text-orange-500" },
-    { icon: Package, title: t.benefits.items.assortment.title, desc: t.benefits.items.assortment.description, color: "bg-blue-100", iconColor: "text-blue-500" },
-    { icon: MapPin, title: t.benefits.items.branches.title, desc: t.benefits.items.branches.description, color: "bg-purple-100", iconColor: "text-purple-500" },
+    { icon: Check, title: t.benefits.items.quality.title, desc: t.benefits.items.quality.description, color: "bg-violet-50", iconColor: "text-violet-600" },
+    { icon: Star, title: t.benefits.items.loyalty.title, desc: t.benefits.items.loyalty.description, color: "bg-violet-50", iconColor: "text-violet-600" },
+    { icon: Package, title: t.benefits.items.assortment.title, desc: t.benefits.items.assortment.description, color: "bg-violet-50", iconColor: "text-violet-600" },
+    { icon: MapPin, title: t.benefits.items.branches.title, desc: t.benefits.items.branches.description, color: "bg-violet-50", iconColor: "text-violet-600" },
   ];
 
   const reviews = [
-    { name: t.reviews.items.review1.name, university: t.reviews.items.review1.university, avatar: "A+T", color: "4F46E5", text: t.reviews.items.review1.text },
-    { name: t.reviews.items.review2.name, university: t.reviews.items.review2.university, avatar: "B+I", color: "059669", text: t.reviews.items.review2.text },
-    { name: t.reviews.items.review3.name, university: t.reviews.items.review3.university, avatar: "N+A", color: "DC2626", text: t.reviews.items.review3.text },
+    { name: t.reviews.items.review1.name, university: t.reviews.items.review1.university, avatar: "A+T", color: "8b5cf6", text: t.reviews.items.review1.text },
+    { name: t.reviews.items.review2.name, university: t.reviews.items.review2.university, avatar: "B+I", color: "7c3aed", text: t.reviews.items.review2.text },
+    { name: t.reviews.items.review3.name, university: t.reviews.items.review3.university, avatar: "N+A", color: "6d28d9", text: t.reviews.items.review3.text },
   ];
 
   const faqs = [
@@ -54,7 +54,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* Header */}
-      <header className="absolute top-2 left-0 right-0 z-50 mx-4 md:mx-8">
+      <header className="fixed top-2 left-0 right-0 z-50 mx-4 md:mx-8">
         <div className="bg-white/95 backdrop-blur-lg border border-gray-200 shadow-lg rounded-2xl">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-14 md:h-16">
@@ -142,16 +142,16 @@ export default async function Home() {
         {/* Banner */}
         <section className="py-8 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative bg-gradient-to-r from-blue-500 to-purple-500 rounded-3xl overflow-hidden shadow-xl">
+            <div className="relative bg-gradient-to-r from-violet-500 to-violet-600 rounded-3xl overflow-hidden shadow-xl">
               <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>
               <div className="relative px-8 py-16 md:py-20 text-center">
                 <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">
                   {t.banner.title}
                 </h2>
-                <p className="text-lg md:text-xl text-blue-50 mb-8 font-semibold max-w-2xl mx-auto">
+                <p className="text-lg md:text-xl text-violet-50 mb-8 font-semibold max-w-2xl mx-auto">
                   {t.banner.description}
                 </p>
-                <button className="px-8 py-4 bg-white text-blue-600 font-bold rounded-2xl hover:shadow-2xl hover:scale-105 transition-all">
+                <button className="px-8 py-4 bg-white text-violet-600 font-bold rounded-2xl hover:shadow-2xl hover:scale-105 transition-all">
                   {t.banner.button}
                 </button>
               </div>
@@ -260,31 +260,24 @@ export default async function Home() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
-              {steps.map((step, idx) => {
-                const colors = [
-                  { bg: "bg-blue-100", text: "text-blue-500" },
-                  { bg: "bg-purple-100", text: "text-purple-500" },
-                  { bg: "bg-green-100", text: "text-green-500" }
-                ];
-                return (
-                  <div key={idx} className="relative">
-                    <div className={`${colors[idx].bg} rounded-3xl p-8 hover:shadow-xl transition-all`}>
-                      <div className={`text-6xl font-extrabold ${colors[idx].text} mb-6`}>
-                        {step.number}
-                      </div>
-                      <h3 className="text-xl font-bold text-black mb-3">
-                        {step.title}
-                      </h3>
-                      <p className="text-gray-700 leading-relaxed font-semibold">
-                        {step.desc}
-                      </p>
+              {steps.map((step, idx) => (
+                <div key={idx} className="relative">
+                  <div className="bg-violet-50 rounded-3xl p-8 hover:shadow-xl transition-all">
+                    <div className="text-6xl font-extrabold text-violet-600 mb-6">
+                      {step.number}
                     </div>
-                    {idx < steps.length - 1 && (
-                      <div className={`hidden md:block absolute top-1/2 -right-4 w-8 h-0.5 ${colors[idx].bg}`}></div>
-                    )}
+                    <h3 className="text-xl font-bold text-black mb-3">
+                      {step.title}
+                    </h3>
+                    <p className="text-gray-700 leading-relaxed font-semibold">
+                      {step.desc}
+                    </p>
                   </div>
-                );
-              })}
+                  {idx < steps.length - 1 && (
+                    <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-0.5 bg-violet-200"></div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -381,15 +374,15 @@ export default async function Home() {
         </section>
 
         {/* CTA */}
-        <section className="py-20 bg-gradient-to-br from-blue-500 via-purple-500 to-violet-500">
+        <section className="py-20 bg-gradient-to-br from-violet-500 to-violet-600">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6">
               {t.cta.title}
             </h2>
-            <p className="text-xl text-blue-50 mb-8 font-semibold">
+            <p className="text-xl text-violet-50 mb-8 font-semibold">
               {t.cta.subtitle}
             </p>
-            <button className="px-10 py-5 bg-white text-blue-600 font-extrabold text-lg rounded-2xl hover:shadow-2xl hover:scale-105 transition-all">
+            <button className="px-10 py-5 bg-white text-violet-600 font-extrabold text-lg rounded-2xl hover:shadow-2xl hover:scale-105 transition-all">
               {t.cta.button}
             </button>
           </div>

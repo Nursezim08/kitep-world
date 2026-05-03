@@ -6,9 +6,12 @@ import Link from 'next/link';
 import { FcGoogle } from 'react-icons/fc';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import Toast from '@/app/components/Toast';
+import { useTranslation } from '@/app/i18n/client';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useTranslation('auth');
+  
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -37,7 +40,7 @@ export default function RegisterPage() {
     setShowGoogleToast(false);
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Пароли не совпадают');
+      setError(t('register.passwordMismatch'));
       return;
     }
 
@@ -64,7 +67,7 @@ export default function RegisterPage() {
           setShowGoogleToast(true);
           setError('');
         } else {
-          setError(data.error || 'Ошибка при регистрации');
+          setError(data.error || t('errors.serverError'));
         }
         return;
       }
@@ -76,7 +79,7 @@ export default function RegisterPage() {
       }
       router.refresh();
     } catch (err) {
-      setError('Ошибка соединения с сервером');
+      setError(t('errors.connectionError'));
     } finally {
       setLoading(false);
     }
@@ -93,7 +96,7 @@ export default function RegisterPage() {
       
       {showGoogleToast && (
         <Toast
-          message="Этот email уже зарегистрирован через Google. Используйте кнопку 'Войти через Google' ниже."
+          message={t('register.googleToast')}
           type="google"
           duration={5000}
           onClose={() => setShowGoogleToast(false)}
@@ -113,8 +116,8 @@ export default function RegisterPage() {
         </div>
 
         <div className="text-center mb-2.5">
-          <h1 className="text-xl font-extrabold text-black mb-0.5">Регистрация</h1>
-          <p className="text-gray-600 font-semibold text-xs">Создайте новый аккаунт</p>
+          <h1 className="text-xl font-extrabold text-black mb-0.5">{t('register.title')}</h1>
+          <p className="text-gray-600 font-semibold text-xs">{t('register.subtitle')}</p>
         </div>
 
         {error && (
@@ -126,7 +129,7 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-2.5">
           <div>
             <label htmlFor="fullName" className="block text-xs font-bold text-black mb-1">
-              Полное имя *
+              {t('register.fullName')} *
             </label>
             <input
               type="text"
@@ -142,7 +145,7 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="email" className="block text-xs font-bold text-black mb-1">
-              Email *
+              {t('register.email')} *
             </label>
             <input
               type="email"
@@ -158,7 +161,7 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="phone" className="block text-xs font-bold text-black mb-1">
-              Телефон
+              {t('register.phone')}
             </label>
             <input
               type="tel"
@@ -173,7 +176,7 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="password" className="block text-xs font-bold text-black mb-1">
-              Пароль *
+              {t('register.password')} *
             </label>
             <div className="relative">
               <input
@@ -198,7 +201,7 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="confirmPassword" className="block text-xs font-bold text-black mb-1">
-              Подтвердите пароль *
+              {t('register.confirmPassword')} *
             </label>
             <div className="relative">
               <input
@@ -226,7 +229,7 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full bg-gradient-to-r from-violet-500 to-violet-600 text-white py-2 rounded-xl font-bold hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm mt-3"
           >
-            {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+            {loading ? t('register.registering') : t('register.registerButton')}
           </button>
         </form>
 
@@ -236,7 +239,7 @@ export default function RegisterPage() {
               <div className="w-full border-t-2 border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-3 bg-white text-gray-500 font-semibold">или</span>
+              <span className="px-3 bg-white text-gray-500 font-semibold">{t('register.or')}</span>
             </div>
           </div>
 
@@ -246,14 +249,14 @@ export default function RegisterPage() {
             className="mt-2.5 w-full flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-black py-2 rounded-xl font-bold hover:border-violet-500 hover:shadow-lg transition-all text-sm"
           >
             <FcGoogle size={20} />
-            Регистрация через Google
+            {t('register.googleButton')}
           </button>
         </div>
 
         <p className="mt-3 text-center text-xs text-gray-600 font-semibold">
-          Уже есть аккаунт?{' '}
+          {t('register.haveAccount')}{' '}
           <Link href="/login" className="text-violet-500 hover:text-violet-600 font-bold">
-            Войти
+            {t('register.login')}
           </Link>
         </p>
       </div>

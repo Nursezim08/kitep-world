@@ -1,0 +1,87 @@
+{
+  "managers": {
+    "title": "Менеджерлер",
+    "subtitle": "Филиалдардын менеджерлерин башкаруу",
+    "addButton": "Менеджер кошуу",
+    "searchPlaceholder": "Аты, email же телефон боюнча издөө...",
+    "noManagers": "Менеджерлер жок",
+    "notFound": "Менеджерлер табылган жок",
+    "loading": "Жүктөлүүдө...",
+    "table": {
+      "manager": "Менеджер",
+      "email": "Email",
+      "phone": "Телефон",
+      "branch": "Филиал",
+      "status": "Статус",
+      "actions": "Аракеттер",
+      "noBranch": "Дайындалган эмес",
+      "noPhone": "—"
+    },
+    "addModal": {
+      "title": "Менеджер кошуу",
+      "fullName": "Толук аты",
+      "fullNamePlaceholder": "Иван Иванов",
+      "email": "Email",
+      "emailPlaceholder": "manager@example.com",
+      "phone": "Телефон (милдеттүү эмес)",
+      "phonePlaceholder": "+996 XXX XXX XXX",
+      "password": "Сырсөз",
+      "passwordPlaceholder": "••••••••",
+      "branch": "Филиал (милдеттүү эмес)",
+      "branchNone": "Дайындалган эмес",
+      "cancelButton": "Жокко чыгаруу",
+      "createButton": "Түзүү"
+    },
+    "editModal": {
+      "title": "Менеджерди өзгөртүү",
+      "fullName": "Толук аты",
+      "email": "Email",
+      "phone": "Телефон",
+      "password": "Жаңы сырсөз (өзгөртпөө үчүн бош калтырыңыз)",
+      "passwordPlaceholder": "••••••••",
+      "status": "Статус",
+      "branch": "Филиал",
+      "branchNone": "Дайындалган эмес",
+      "cancelButton": "Жокко чыгаруу",
+      "saveButton": "Сактоо"
+    },
+    "status": {
+      "active": "Активдүү",
+      "inactive": "Активдүү эмес",
+      "blocked": "Бөгөттөлгөн"
+    },
+    "deleteConfirm": "Бул менеджерди өчүрүүнү каалайсызбы?",
+    "deleteModal": {
+      "title": "Менеджерди өчүрүү",
+      "subtitle": "Бул аракетти жокко чыгаруу мүмкүн эмес",
+      "warning": "Көңүл буруңуз!",
+      "warningText": "Сиз {name} менеджерин өчүрүүнү каалайсыз. Бул аракетти жокко чыгаруу мүмкүн эмес. Филиалдар менен бардык байланыштар өчүрүлөт.",
+      "cancelButton": "Жокко чыгаруу",
+      "deleteButton": "Өчүрүү"
+    },
+    "errors": {
+      "createError": "Менеджер түзүүдө ката",
+      "updateError": "Менеджерди жаңыртууда ката",
+      "deleteError": "Менеджерди өчүрүүдө ката",
+      "emailExists": "Email катталган",
+      "phoneExists": "Телефон катталган"
+    }
+  },
+  "dashboard": {
+    "title": "Башкаруу панели",
+    "subtitle": "Статистиканы көрүү жана дүкөндү башкаруу",
+    "navigation": "Навигация",
+    "quickActions": "Тез аракеттер",
+    "menu": {
+      "dashboard": "Башкаруу панели",
+      "users": "Колдонуучулар",
+      "products": "Товарлар",
+      "orders": "Заказдар",
+      "branches": "Филиалдар",
+      "managers": "Менеджерлер",
+      "reports": "Отчеттор",
+      "settings": "Жөндөөлөр"
+    },
+    "logout": "Чыгуу"
+  }
+}

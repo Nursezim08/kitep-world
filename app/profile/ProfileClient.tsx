@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import { AiOutlineUser, AiOutlineMail, AiOutlinePhone, AiOutlineLogout } from 'react-icons/ai';
+import { Globe } from 'lucide-react';
+import { useTranslation, setLanguageCookie } from '@/app/i18n/client';
+import { languages, type Language } from '@/app/i18n/settings';
 
 interface User {
   id: string;
@@ -17,7 +20,9 @@ interface User {
 
 export default function ProfileClient({ user }: { user: User }) {
   const router = useRouter();
+  const { t, lang } = useTranslation('auth');
   const [loading, setLoading] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
 
   const handleLogout = async () => {
     setLoading(true);
@@ -34,16 +39,15 @@ export default function ProfileClient({ user }: { user: User }) {
     }
   };
 
-  const roleNames: Record<string, string> = {
-    admin: 'Администратор',
-    manager: 'Менеджер',
-    user: 'Пользователь',
+  const handleLanguageChange = (newLang: Language) => {
+    setLanguageCookie(newLang);
+    setIsLangOpen(false);
+    window.location.reload();
   };
 
-  const statusNames: Record<string, string> = {
-    active: 'Активен',
-    inactive: 'Неактивен',
-    blocked: 'Заблокирован',
+  const languageLabels: Record<Language, string> = {
+    ru: 'Русский',
+    kg: 'Кыргызча',
   };
 
   return (
@@ -51,13 +55,50 @@ export default function ProfileClient({ user }: { user: User }) {
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
       
       <div className="max-w-2xl mx-auto relative">
-        {/* Back to Home */}
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-1.5 text-violet-600 hover:text-violet-700 font-bold mb-4 transition text-sm"
-        >
-          ← Главная
-        </Link>
+        {/* Back to Home and Language Switcher */}
+        <div className="flex items-center justify-between mb-4">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-1.5 text-violet-600 hover:text-violet-700 font-bold transition text-sm"
+          >
+            ← {t('profile.backToHome')}
+          </Link>
+
+          {/* Language Switcher */}
+          <div className="relative">
+            <button
+              onClick={() => setIsLangOpen(!isLangOpen)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-black bg-white hover:bg-gray-50 rounded-xl transition-all border-2 border-gray-200"
+            >
+              <Globe className="w-4 h-4" />
+              <span>{languageLabels[lang]}</span>
+            </button>
+
+            {isLangOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsLangOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-2 w-40 bg-white border-2 border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                  {languages.map((language) => (
+                    <button
+                      key={language}
+                      onClick={() => handleLanguageChange(language)}
+                      className={`w-full px-4 py-2.5 text-left text-sm font-bold transition-colors ${
+                        lang === language
+                          ? 'bg-violet-50 text-violet-600'
+                          : 'text-black hover:bg-gray-50'
+                      }`}
+                    >
+                      {languageLabels[language]}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
@@ -76,7 +117,7 @@ export default function ProfileClient({ user }: { user: User }) {
               </div>
               <div>
                 <h1 className="text-xl font-extrabold mb-0.5">{user.fullName}</h1>
-                <p className="text-violet-100 font-semibold text-sm">{roleNames[user.role]}</p>
+                <p className="text-violet-100 font-semibold text-sm">{t(`profile.roles.${user.role}`)}</p>
               </div>
             </div>
           </div>
@@ -84,7 +125,7 @@ export default function ProfileClient({ user }: { user: User }) {
           {/* Content */}
           <div className="p-5">
             <h2 className="text-base font-extrabold text-black mb-3">
-              Информация о профиле
+              {t('profile.profileInfo')}
             </h2>
 
             <div className="space-y-2.5">
@@ -93,18 +134,18 @@ export default function ProfileClient({ user }: { user: User }) {
                   <AiOutlineMail className="text-violet-600" size={20} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-gray-600 font-semibold">Email</p>
+                  <p className="text-xs text-gray-600 font-semibold">{t('profile.email')}</p>
                   <p className="text-black font-bold text-sm truncate">{user.email}</p>
                 </div>
               </div>
 
               {user.phone ? (
-                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border-2 border-green-100">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <AiOutlinePhone className="text-green-600" size={20} />
+                <div className="flex items-center gap-3 p-3 bg-violet-50 rounded-xl border-2 border-violet-100">
+                  <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
+                    <AiOutlinePhone className="text-violet-600" size={20} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-gray-600 font-semibold">Телефон</p>
+                    <p className="text-xs text-gray-600 font-semibold">{t('profile.phone')}</p>
                     <p className="text-black font-bold text-sm">{user.phone}</p>
                   </div>
                 </div>
@@ -114,20 +155,20 @@ export default function ProfileClient({ user }: { user: User }) {
                     <AiOutlinePhone className="text-gray-400" size={20} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-gray-600 font-semibold">Телефон</p>
-                    <p className="text-gray-400 font-semibold italic text-sm">Не указан</p>
+                    <p className="text-xs text-gray-600 font-semibold">{t('profile.phone')}</p>
+                    <p className="text-gray-400 font-semibold italic text-sm">{t('profile.phoneNotSet')}</p>
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl border-2 border-purple-100">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                  <AiOutlineUser className="text-purple-600" size={20} />
+              <div className="flex items-center gap-3 p-3 bg-violet-50 rounded-xl border-2 border-violet-100">
+                <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
+                  <AiOutlineUser className="text-violet-600" size={20} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-gray-600 font-semibold">Статус</p>
+                  <p className="text-xs text-gray-600 font-semibold">{t('profile.status')}</p>
                   <p className="text-black font-bold text-sm">
-                    {statusNames[user.status]}
+                    {t(`profile.statuses.${user.status}`)}
                   </p>
                 </div>
               </div>
@@ -140,7 +181,7 @@ export default function ProfileClient({ user }: { user: User }) {
                 className="w-full flex items-center justify-center gap-2 bg-red-500 text-white py-2 rounded-xl font-bold hover:bg-red-600 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 <AiOutlineLogout size={18} />
-                {loading ? 'Выход...' : 'Выйти из аккаунта'}
+                {loading ? t('profile.loggingOut') : t('profile.logout')}
               </button>
             </div>
           </div>

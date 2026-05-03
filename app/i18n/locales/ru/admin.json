@@ -1,0 +1,87 @@
+{
+  "managers": {
+    "title": "Менеджеры",
+    "subtitle": "Управление менеджерами филиалов",
+    "addButton": "Добавить менеджера",
+    "searchPlaceholder": "Поиск по имени, email или телефону...",
+    "noManagers": "Нет менеджеров",
+    "notFound": "Менеджеры не найдены",
+    "loading": "Загрузка...",
+    "table": {
+      "manager": "Менеджер",
+      "email": "Email",
+      "phone": "Телефон",
+      "branch": "Филиал",
+      "status": "Статус",
+      "actions": "Действия",
+      "noBranch": "Не назначен",
+      "noPhone": "—"
+    },
+    "addModal": {
+      "title": "Добавить менеджера",
+      "fullName": "Полное имя",
+      "fullNamePlaceholder": "Иван Иванов",
+      "email": "Email",
+      "emailPlaceholder": "manager@example.com",
+      "phone": "Телефон (необязательно)",
+      "phonePlaceholder": "+996 XXX XXX XXX",
+      "password": "Пароль",
+      "passwordPlaceholder": "••••••••",
+      "branch": "Филиал (необязательно)",
+      "branchNone": "Не назначен",
+      "cancelButton": "Отмена",
+      "createButton": "Создать"
+    },
+    "editModal": {
+      "title": "Редактировать менеджера",
+      "fullName": "Полное имя",
+      "email": "Email",
+      "phone": "Телефон",
+      "password": "Новый пароль (оставьте пустым, чтобы не менять)",
+      "passwordPlaceholder": "••••••••",
+      "status": "Статус",
+      "branch": "Филиал",
+      "branchNone": "Не назначен",
+      "cancelButton": "Отмена",
+      "saveButton": "Сохранить"
+    },
+    "status": {
+      "active": "Активен",
+      "inactive": "Неактивен",
+      "blocked": "Заблокирован"
+    },
+    "deleteConfirm": "Вы уверены, что хотите удалить этого менеджера?",
+    "deleteModal": {
+      "title": "Удалить менеджера",
+      "subtitle": "Это действие нельзя отменить",
+      "warning": "Внимание!",
+      "warningText": "Вы собираетесь удалить менеджера {name}. Это действие нельзя отменить. Все связи с филиалами будут удалены.",
+      "cancelButton": "Отмена",
+      "deleteButton": "Удалить"
+    },
+    "errors": {
+      "createError": "Ошибка при создании менеджера",
+      "updateError": "Ошибка при обновлении менеджера",
+      "deleteError": "Ошибка при удалении менеджера",
+      "emailExists": "Email уже существует",
+      "phoneExists": "Телефон уже существует"
+    }
+  },
+  "dashboard": {
+    "title": "Панель управления",
+    "subtitle": "Обзор статистики и управление магазином",
+    "navigation": "Навигация",
+    "quickActions": "Быстрые действия",
+    "menu": {
+      "dashboard": "Панель управления",
+      "users": "Пользователи",
+      "products": "Товары",
+      "orders": "Заказы",
+      "branches": "Филиалы",
+      "managers": "Менеджеры",
+      "reports": "Отчеты",
+      "settings": "Настройки"
+    },
+    "logout": "Выйти"
+  }
+}

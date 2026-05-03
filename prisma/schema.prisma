@@ -140,6 +140,19 @@ model AdminVerification {
   @@map("admin_verifications")
 }
 
+// Коды для сброса пароля
+model PasswordReset {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @db.VarChar(255)
+  code      String   @db.VarChar(6)
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([email, code])
+  @@map("password_resets")
+}
+
 // 2. Филиалы
 model Branch {
   id          String        @id @default(uuid()) @db.Uuid

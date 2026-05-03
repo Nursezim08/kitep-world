@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { MdEmail } from 'react-icons/md';
+import { useTranslation } from '@/app/i18n/client';
 
-export default function VerifyEmailPage() {
+function VerifyEmailForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation('auth');
   const userId = searchParams.get('userId');
   const email = searchParams.get('email');
 
@@ -78,7 +80,7 @@ export default function VerifyEmailPage() {
     const codeToVerify = verificationCode || code.join('');
     
     if (codeToVerify.length !== 6) {
-      setError('Введите полный 6-значный код');
+      setError(t('verifyEmail.enterFullCode'));
       return;
     }
 
@@ -100,7 +102,7 @@ export default function VerifyEmailPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Ошибка при верификации');
+        setError(data.error || t('errors.invalidCode'));
         setCode(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
         return;
@@ -109,7 +111,7 @@ export default function VerifyEmailPage() {
       router.push('/profile');
       router.refresh();
     } catch (err) {
-      setError('Ошибка соединения с сервером');
+      setError(t('errors.connectionError'));
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } finally {
@@ -135,7 +137,7 @@ export default function VerifyEmailPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Ошибка при отправке кода');
+        setError(data.error || t('errors.serverError'));
         return;
       }
 
@@ -143,7 +145,7 @@ export default function VerifyEmailPage() {
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch (err) {
-      setError('Ошибка соединения с сервером');
+      setError(t('errors.connectionError'));
     } finally {
       setResendLoading(false);
     }
@@ -173,10 +175,10 @@ export default function VerifyEmailPage() {
             </div>
           </div>
           <h1 className="text-3xl font-extrabold text-black mb-2">
-            Проверьте Email
+            {t('verifyEmail.title')}
           </h1>
           <p className="text-gray-600 font-semibold">
-            Мы отправили 6-значный код на
+            {t('verifyEmail.subtitle')}
           </p>
           <p className="text-violet-600 font-bold mt-1">{email}</p>
         </div>
@@ -214,12 +216,12 @@ export default function VerifyEmailPage() {
           disabled={loading || code.some(digit => digit === '')}
           className="w-full bg-gradient-to-r from-violet-500 to-violet-600 text-white py-3 rounded-xl font-bold hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mb-4"
         >
-          {loading ? 'Проверка...' : 'Подтвердить'}
+          {loading ? t('verifyEmail.verifying') : t('verifyEmail.verifyButton')}
         </button>
 
         <div className="text-center">
           <p className="text-sm text-gray-600 font-semibold mb-2">
-            Не получили код?
+            {t('verifyEmail.didntReceive')}
           </p>
           <button
             onClick={handleResendCode}
@@ -227,25 +229,37 @@ export default function VerifyEmailPage() {
             className="text-violet-500 hover:text-violet-600 font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {resendLoading
-              ? 'Отправка...'
+              ? t('verifyEmail.resending')
               : resendCooldown > 0
-              ? `Отправить повторно (${resendCooldown}с)`
-              : 'Отправить повторно'}
+              ? t('verifyEmail.resendCooldown').replace('{seconds}', resendCooldown.toString())
+              : t('verifyEmail.resendCode')}
           </button>
         </div>
 
         <div className="mt-8 pt-6 border-t-2 border-gray-100">
           <p className="text-center text-sm text-gray-600 font-semibold">
-            Неправильный email?{' '}
+            {t('verifyEmail.wrongEmail')}{' '}
             <Link
               href="/register"
               className="text-violet-500 hover:text-violet-600 font-bold"
             >
-              Вернуться к регистрации
+              {t('verifyEmail.backToRegister')}
             </Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-violet-100 to-violet-50">
+        <div className="text-violet-600">Загрузка...</div>
+      </div>
+    }>
+      <VerifyEmailForm />
+    </Suspense>
   );
 }
