@@ -21,6 +21,8 @@ import {
   X,
   ChevronDown,
   Image as ImageIcon,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import AddProductModal from './AddProductModal';
 import EditProductModal from './EditProductModal';
@@ -55,6 +57,8 @@ interface Product {
   brand: string | null;
   price: number;
   status: string;
+  createdAt: string;
+  updatedAt: string;
   translations: ProductTranslation[];
   images: ProductImage[];
   category: Category;
@@ -92,6 +96,14 @@ export default function ProductsClient({ user }: ProductsClientProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>(categoryIdParam || 'all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [priceMin, setPriceMin] = useState<string>('');
+  const [priceMax, setPriceMax] = useState<string>('');
+  const [brandFilter, setBrandFilter] = useState<string>('all');
+  const [brands, setBrands] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<string>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 100;
 
   const handleLogout = async () => {
     try {
@@ -124,7 +136,8 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 
   useEffect(() => {
     filterProducts();
-  }, [searchQuery, products, categoryFilter, statusFilter]);
+    setCurrentPage(1); // Сброс на первую страницу при изменении фильтров
+  }, [searchQuery, products, categoryFilter, statusFilter, priceMin, priceMax, brandFilter, sortBy, sortOrder]);
 
   const fetchCategories = async () => {
     try {
@@ -151,6 +164,10 @@ export default function ProductsClient({ user }: ProductsClientProps) {
       if (response.ok) {
         const data = await response.json();
         setProducts(data);
+        
+        // Извлекаем уникальные бренды
+        const uniqueBrands = [...new Set(data.map((p: Product) => p.brand).filter(Boolean))];
+        setBrands(uniqueBrands as string[]);
       } else if (response.status === 401) {
         router.push('/admin/login');
       }
@@ -183,6 +200,59 @@ export default function ProductsClient({ user }: ProductsClientProps) {
     if (statusFilter !== 'all') {
       filtered = filtered.filter((product) => product.status === statusFilter);
     }
+
+    // Фильтр по цене
+    if (priceMin) {
+      const min = parseFloat(priceMin);
+      if (!isNaN(min)) {
+        filtered = filtered.filter((product) => product.price >= min);
+      }
+    }
+    if (priceMax) {
+      const max = parseFloat(priceMax);
+      if (!isNaN(max)) {
+        filtered = filtered.filter((product) => product.price <= max);
+      }
+    }
+
+    // Фильтр по бренду
+    if (brandFilter !== 'all') {
+      filtered = filtered.filter((product) => product.brand === brandFilter);
+    }
+
+    // Сортировка
+    filtered = [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          const aName = getProductName(a, 'ru');
+          const bName = getProductName(b, 'ru');
+          comparison = aName.localeCompare(bName);
+          break;
+        
+        case 'price':
+          comparison = a.price - b.price;
+          break;
+        
+        case 'createdAt':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        
+        case 'updatedAt':
+          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          break;
+        
+        case 'reviewsCount':
+          comparison = a._count.reviews - b._count.reviews;
+          break;
+        
+        default:
+          comparison = 0;
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
 
     setFilteredProducts(filtered);
   };
@@ -240,13 +310,67 @@ export default function ProductsClient({ user }: ProductsClientProps) {
     setCategoryFilter('all');
     setStatusFilter('all');
     setSearchQuery('');
+    setPriceMin('');
+    setPriceMax('');
+    setBrandFilter('all');
+    setSortBy('name');
+    setSortOrder('asc');
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
     if (categoryFilter !== 'all') count++;
     if (statusFilter !== 'all') count++;
+    if (priceMin || priceMax) count++;
+    if (brandFilter !== 'all') count++;
+    if (sortBy !== 'name') count++;
     return count;
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  // Пагинация
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
   };
 
   return (
@@ -369,56 +493,29 @@ export default function ProductsClient({ user }: ProductsClientProps) {
         <div className="flex-1">
           <main className="p-8">
             {/* Welcome Section */}
-            <div className="mb-8">
-              <h2 className="text-3xl font-extrabold text-white mb-2">
-                Товары
-              </h2>
-              <p className="text-gray-400 font-semibold">
-                Управление товарами и их характеристиками
-              </p>
-            </div>
-
-            {/* Info block when filters are active */}
-            {(categoryFilter !== 'all' || statusFilter !== 'all') && (
-              <div className="mb-6 bg-gradient-to-r from-violet-600/10 to-purple-600/10 border border-violet-500/20 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-violet-600/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Filter className="w-5 h-5 text-violet-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-white font-medium mb-2">
-                      Активные фильтры ({getActiveFiltersCount()})
-                    </h3>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {categoryFilter !== 'all' && (
-                        <span className="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-lg text-sm">
-                          {getCategoryName(categories.find(c => c.id === categoryFilter))}
-                        </span>
-                      )}
-                      {statusFilter !== 'all' && (
-                        <span className="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-lg text-sm">
-                          {statusFilter === 'active' ? 'Активные' : 'Неактивные'}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-400 text-sm">
-                      Отображаются только товары, соответствующие выбранным критериям
-                    </p>
-                  </div>
-                  <button
-                    onClick={resetFilters}
-                    className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
-                  >
-                    <X className="w-4 h-4" />
-                    Сбросить
-                  </button>
-                </div>
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-extrabold text-white mb-2">
+                  Товары
+                </h2>
+                <p className="text-gray-400 font-semibold">
+                  Управление товарами и их характеристиками
+                </p>
               </div>
-            )}
+              
+              {/* Add Button */}
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 whitespace-nowrap"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Добавить товар</span>
+              </button>
+            </div>
 
             {/* Search, Filter and Add */}
             <div className="mb-6">
-              {/* Top Row: Search and Buttons */}
+              {/* Top Row: Search and Filter Button */}
               <div className="flex flex-col sm:flex-row gap-4 mb-4">
                 {/* Search */}
                 <div className="flex-1 relative">
@@ -450,15 +547,6 @@ export default function ProductsClient({ user }: ProductsClientProps) {
                   )}
                   <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
                 </button>
-
-                {/* Add Button */}
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-all font-medium shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 whitespace-nowrap"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span>Добавить товар</span>
-                </button>
               </div>
 
               {/* Filters Panel */}
@@ -480,72 +568,126 @@ export default function ProductsClient({ user }: ProductsClientProps) {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Category Filter */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        Категория
-                      </label>
-                      <CustomSelect
-                        value={categoryFilter}
-                        onChange={(value) => setCategoryFilter(value)}
-                        options={[
-                          { value: 'all', label: 'Все категории' },
-                          ...categories.map(cat => ({
-                            value: cat.id,
-                            label: getCategoryName(cat, 'ru')
-                          }))
-                        ]}
-                      />
-                    </div>
+                  <div className="space-y-4">
+                    {/* First Row: Category, Status, Brand */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Category Filter */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                          Категория
+                        </label>
+                        <CustomSelect
+                          value={categoryFilter}
+                          onChange={(value) => setCategoryFilter(value)}
+                          options={[
+                            { value: 'all', label: 'Все категории' },
+                            ...categories.map(cat => ({
+                              value: cat.id,
+                              label: getCategoryName(cat, 'ru')
+                            }))
+                          ]}
+                        />
+                      </div>
 
-                    {/* Status Filter */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
-                        Статус
-                      </label>
-                      <CustomSelect
-                        value={statusFilter}
-                        onChange={(value) => setStatusFilter(value)}
-                        options={[
-                          { value: 'all', label: 'Все статусы' },
-                          { value: 'active', label: 'Активные' },
-                          { value: 'inactive', label: 'Неактивные' },
-                        ]}
-                      />
-                    </div>
-                  </div>
+                      {/* Status Filter */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                          Статус
+                        </label>
+                        <CustomSelect
+                          value={statusFilter}
+                          onChange={(value) => setStatusFilter(value)}
+                          options={[
+                            { value: 'all', label: 'Все статусы' },
+                            { value: 'active', label: 'Активные' },
+                            { value: 'inactive', label: 'Неактивные' },
+                          ]}
+                        />
+                      </div>
 
-                  {/* Active Filters Summary */}
-                  {getActiveFiltersCount() > 0 && (
-                    <div className="pt-4 border-t border-gray-700/50">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-gray-400">Активные фильтры:</span>
-                        {categoryFilter !== 'all' && (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-violet-500/15 text-violet-400 rounded-lg text-sm">
-                            {getCategoryName(categories.find(c => c.id === categoryFilter))}
-                            <button
-                              onClick={() => setCategoryFilter('all')}
-                              className="hover:bg-violet-500/20 rounded p-0.5"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        )}
-                        {statusFilter !== 'all' && (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-violet-500/15 text-violet-400 rounded-lg text-sm">
-                            {statusFilter === 'active' ? 'Активные' : 'Неактивные'}
-                            <button
-                              onClick={() => setStatusFilter('all')}
-                              className="hover:bg-violet-500/20 rounded p-0.5"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        )}
+                      {/* Brand Filter */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                          Бренд
+                        </label>
+                        <CustomSelect
+                          value={brandFilter}
+                          onChange={(value) => setBrandFilter(value)}
+                          options={[
+                            { value: 'all', label: 'Все бренды' },
+                            ...brands.map(brand => ({
+                              value: brand,
+                              label: brand
+                            }))
+                          ]}
+                        />
                       </div>
                     </div>
-                  )}
+
+                    {/* Second Row: Price Range and Sort */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Price Range */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                          Цена (сом)
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="От"
+                            value={priceMin}
+                            onChange={(e) => setPriceMin(e.target.value)}
+                            className="w-full px-3 py-2 bg-[#2a3347] border-2 border-violet-500 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="До"
+                            value={priceMax}
+                            onChange={(e) => setPriceMax(e.target.value)}
+                            className="w-full px-3 py-2 bg-[#2a3347] border-2 border-violet-500 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Sort By */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                          Сортировка
+                        </label>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <CustomSelect
+                              value={sortBy}
+                              onChange={(value) => setSortBy(value)}
+                              options={[
+                                { value: 'name', label: 'По названию' },
+                                { value: 'price', label: 'По цене' },
+                                { value: 'createdAt', label: 'По дате создания' },
+                                { value: 'updatedAt', label: 'По дате обновления' },
+                                { value: 'reviewsCount', label: 'По кол-ву отзывов' },
+                              ]}
+                            />
+                          </div>
+                          
+                          {/* Sort Order Toggle Button */}
+                          <button
+                            type="button"
+                            onClick={toggleSortOrder}
+                            className="px-3 py-2 bg-[#2a3347] border-2 border-violet-500 rounded-xl text-violet-400 hover:bg-[#2f3850] transition-all flex items-center justify-center"
+                            title={sortOrder === 'asc' ? 'По возрастанию (клик для убывания)' : 'По убыванию (клик для возрастания)'}
+                          >
+                            {sortOrder === 'asc' ? (
+                              <ArrowUp className="w-4 h-4" />
+                            ) : (
+                              <ArrowDown className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -578,17 +720,18 @@ export default function ProductsClient({ user }: ProductsClientProps) {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredProducts.map((product) => {
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {currentProducts.map((product) => {
                   const mainImage = product.images.find(img => img.status === 'active');
                   return (
                     <div
                       key={product.id}
                       onClick={() => router.push(`/admin/products/${product.id}`)}
-                      className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden transition-all hover:border-violet-500 hover:shadow-lg hover:shadow-violet-500/20 cursor-pointer"
+                      className="bg-gradient-to-br from-[#252d3d] to-[#1e2533] border border-gray-700/30 rounded-2xl overflow-hidden transition-all hover:border-violet-500/50 hover:shadow-xl hover:shadow-violet-500/10 cursor-pointer group backdrop-blur-sm"
                     >
                       {/* Image */}
-                      <div className="aspect-square bg-gray-700 overflow-hidden relative group">
+                      <div className="aspect-square bg-[#1e2533] overflow-hidden relative">
                         {mainImage ? (
                           <img
                             src={mainImage.imageUrl}
@@ -601,60 +744,126 @@ export default function ProductsClient({ user }: ProductsClientProps) {
                           </div>
                         )}
                         
-                        {/* Status Badge */}
+                        {/* Status Badge - Top Right */}
                         <div className="absolute top-2 right-2 z-10">
-                          <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                          <div className={`px-2 py-0.5 rounded text-[9px] font-semibold ${
                             product.status === 'active' 
-                              ? 'bg-green-500/20 text-green-400' 
-                              : 'bg-gray-500/20 text-gray-400'
+                              ? 'bg-green-500 text-white' 
+                              : 'bg-gray-500 text-white'
                           }`}>
-                            {product.status === 'active' ? 'Активен' : 'Неактивен'}
-                          </span>
+                            {product.status === 'active' ? 'Активно' : 'Неактивно'}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="p-4">
-                        {/* Info */}
-                        <div className="mb-3">
-                          <h3 className="text-white font-medium mb-1 truncate">
+                      {/* Content */}
+                      <div className="p-3">
+                        {/* Title */}
+                        <div className="-mb-4">
+                          <h3 className="text-white font-medium text-xs leading-tight line-clamp-2 min-h-[2rem]">
                             {getProductName(product, 'ru')}
                           </h3>
-                          <p className="text-gray-400 text-sm truncate">
-                            {getProductName(product, 'kg')}
+                        </div>
+
+                        {/* Price */}
+                        <div className="mb-2">
+                          <p className="text-violet-400 font-bold text-base">
+                            {product.price.toLocaleString('ru-RU')} <span className="text-xs font-medium text-violet-400/70">сом</span>
                           </p>
                         </div>
 
-                        {/* Price & Category */}
-                        <div className="mb-3">
-                          <p className="text-violet-400 font-bold text-lg">
-                            {product.price.toLocaleString('ru-RU')} сом
-                          </p>
-                          <p className="text-gray-500 text-xs">
+                        {/* Meta Info */}
+                        <div className="flex flex-wrap gap-1">
+                          {/* Category */}
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/5 backdrop-blur-sm text-gray-300 rounded text-[10px] font-medium border border-white/10">
+                            <FolderTree className="w-2.5 h-2.5" />
                             {getCategoryName(product.category, 'ru')}
-                          </p>
-                        </div>
+                          </span>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => handleEdit(product, e)}
-                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors text-sm font-medium"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                            Изменить
-                          </button>
-                          <button
-                            onClick={(e) => handleDeleteClick(product, e)}
-                            className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {/* Brand */}
+                          {product.brand && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/5 backdrop-blur-sm text-gray-300 rounded text-[10px] font-medium border border-white/10">
+                              {product.brand}
+                            </span>
+                          )}
+
+                          {/* Reviews Count */}
+                          {product._count.reviews > 0 && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-500/10 backdrop-blur-sm text-violet-300 rounded text-[10px] font-medium border border-violet-500/20">
+                              ⭐ {product._count.reviews}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
+
+              {/* Пагинация */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-2">
+                  {/* Предыдущая страница */}
+                  <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-2 rounded-lg font-medium text-sm transition-all ${
+                      currentPage === 1
+                        ? 'bg-[#252d3d] text-gray-600 cursor-not-allowed'
+                        : 'bg-[#252d3d] text-gray-300 hover:bg-violet-500/20 hover:text-violet-400'
+                    }`}
+                  >
+                    Назад
+                  </button>
+
+                  {/* Номера страниц */}
+                  <div className="flex items-center gap-1">
+                    {getPageNumbers().map((page, index) => (
+                      page === '...' ? (
+                        <span key={`ellipsis-${index}`} className="px-3 py-2 text-gray-500">
+                          ...
+                        </span>
+                      ) : (
+                        <button
+                          key={page}
+                          onClick={() => goToPage(page as number)}
+                          className={`px-3 py-2 rounded-lg font-medium text-sm transition-all ${
+                            currentPage === page
+                              ? 'bg-violet-600 text-white'
+                              : 'bg-[#252d3d] text-gray-300 hover:bg-violet-500/20 hover:text-violet-400'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    ))}
+                  </div>
+
+                  {/* Следующая страница */}
+                  <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-2 rounded-lg font-medium text-sm transition-all ${
+                      currentPage === totalPages
+                        ? 'bg-[#252d3d] text-gray-600 cursor-not-allowed'
+                        : 'bg-[#252d3d] text-gray-300 hover:bg-violet-500/20 hover:text-violet-400'
+                    }`}
+                  >
+                    Вперед
+                  </button>
+                </div>
+              )}
+
+              {/* Информация о пагинации */}
+              <div className="mt-4 flex items-center justify-between text-sm text-gray-400">
+                <p>
+                  Показано {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} из {filteredProducts.length} товаров
+                </p>
+                <p>
+                  Страница {currentPage} из {totalPages}
+                </p>
+              </div>
+            </>
             )}
           </main>
         </div>

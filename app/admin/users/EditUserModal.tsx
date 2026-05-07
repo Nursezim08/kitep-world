@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, User, Mail, Phone, Lock, Shield } from 'lucide-react';
+import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
 interface UserData {
   id: string;
@@ -30,6 +31,9 @@ export default function EditUserModal({ isOpen, onClose, onSuccess, user }: Edit
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Блокируем скролл страницы при открытии модального окна
+  useBlockScroll(true);
 
   useEffect(() => {
     if (user) {

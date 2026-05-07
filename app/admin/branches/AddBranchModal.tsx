@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, ChevronRight, ChevronLeft, MapPin, Clock, Users, Check, Plus, Search } from 'lucide-react';
+import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 import CustomSelect from '@/app/components/CustomSelect';
 import CityAutocomplete from '@/app/components/CityAutocomplete';
 import DistrictAutocomplete from '@/app/components/DistrictAutocomplete';
@@ -61,6 +62,9 @@ export default function AddBranchModal({
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Блокируем скролл страницы при открытии модального окна
+  useBlockScroll(isOpen);
   const modalContainerRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState<FormData>({
     name: '',

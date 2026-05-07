@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, ArrowRight, RefreshCw, AlertCircle, MoveRight } from 'lucide-react';
 import CustomSelect from '@/app/components/CustomSelect';
+import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
 interface Manager {
   id: string;
@@ -38,6 +39,9 @@ export default function ReassignManagersModal({
   const [toBranchId, setToBranchId] = useState('');
   const [selectedManagerIds, setSelectedManagerIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Блокируем скролл страницы при открытии модального окна
+  useBlockScroll(true);
   const [error, setError] = useState('');
 
   // Получить менеджеров выбранного филиала

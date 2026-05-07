@@ -23,6 +23,8 @@ import {
   Filter,
   X,
   ChevronDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import AddCategoryModal from './AddCategoryModal';
 import EditCategoryModal from './EditCategoryModal';
@@ -41,6 +43,8 @@ interface Category {
   parentId: string | null;
   image: string | null;
   status: string;
+  createdAt: string;
+  updatedAt: string;
   translations: CategoryTranslation[];
   children?: Category[];
   _count: {
@@ -76,6 +80,8 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedParentIds, setSelectedParentIds] = useState<string[]>([]); // Выбранные родительские категории
   const [allCategories, setAllCategories] = useState<Category[]>([]); // Все категории для фильтра
+  const [sortBy, setSortBy] = useState<string>('name'); // name, createdAt, updatedAt, productsCount, childrenCount
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc'); // asc = по возрастанию, desc = по убыванию
 
   const handleLogout = async () => {
     try {
@@ -108,7 +114,7 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
 
   useEffect(() => {
     filterCategories();
-  }, [searchQuery, categories, statusFilter, hasChildrenFilter, selectedParentIds]);
+  }, [searchQuery, categories, statusFilter, hasChildrenFilter, selectedParentIds, sortBy, sortOrder]);
 
   const fetchAllCategories = async () => {
     try {
@@ -179,6 +185,41 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
       filtered = filtered.filter((category) => category._count.children === 0);
     }
 
+    // Сортировка
+    filtered = [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          const aName = getCategoryName(a, 'ru');
+          const bName = getCategoryName(b, 'ru');
+          comparison = aName.localeCompare(bName);
+          break;
+        
+        case 'createdAt':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        
+        case 'updatedAt':
+          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          break;
+        
+        case 'productsCount':
+          comparison = a._count.products - b._count.products;
+          break;
+        
+        case 'childrenCount':
+          comparison = a._count.children - b._count.children;
+          break;
+        
+        default:
+          comparison = 0;
+      }
+
+      // Применяем направление сортировки
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
     setFilteredCategories(filtered);
   };
 
@@ -240,6 +281,8 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
     setHasChildrenFilter('all');
     setSearchQuery('');
     setSelectedParentIds([]);
+    setSortBy('name');
+    setSortOrder('asc');
   };
 
   const getActiveFiltersCount = () => {
@@ -247,7 +290,12 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
     if (statusFilter !== 'all') count++;
     if (hasChildrenFilter !== 'all') count++;
     if (selectedParentIds.length > 0) count++;
+    if (sortBy !== 'name') count++;
     return count;
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
   };
 
   return (
@@ -445,7 +493,7 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {/* Parent Categories Filter */}
                     <div>
                       <label className="block text-sm font-medium text-gray-400 mb-2">
@@ -492,6 +540,42 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
                           { value: 'leaf', label: 'Конечные' },
                         ]}
                       />
+                    </div>
+
+                    {/* Sort By */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">
+                        Сортировка
+                      </label>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <CustomSelect
+                            value={sortBy}
+                            onChange={(value) => setSortBy(value)}
+                            options={[
+                              { value: 'name', label: 'По названию' },
+                              { value: 'createdAt', label: 'По дате создания' },
+                              { value: 'updatedAt', label: 'По дате обновления' },
+                              { value: 'productsCount', label: 'По кол-ву товаров' },
+                              { value: 'childrenCount', label: 'По кол-ву подкатегорий' },
+                            ]}
+                          />
+                        </div>
+                        
+                        {/* Sort Order Toggle Button */}
+                        <button
+                          type="button"
+                          onClick={toggleSortOrder}
+                          className="px-3 py-2 bg-[#2a3347] border-2 border-violet-500 rounded-xl text-violet-400 hover:bg-[#2f3850] transition-all flex items-center justify-center"
+                          title={sortOrder === 'asc' ? 'По возрастанию (клик для убывания)' : 'По убыванию (клик для возрастания)'}
+                        >
+                          {sortOrder === 'asc' ? (
+                            <ArrowUp className="w-4 h-4" />
+                          ) : (
+                            <ArrowDown className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

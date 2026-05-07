@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, X } from 'lucide-react';
+import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
 interface DeleteCategoryModalProps {
   categoryName: string;
@@ -13,6 +14,9 @@ export default function DeleteCategoryModal({
   onConfirm,
   onCancel,
 }: DeleteCategoryModalProps) {
+  // Блокируем скролл страницы при открытии модального окна
+  useBlockScroll(true);
+  
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
       {/* Backdrop */}

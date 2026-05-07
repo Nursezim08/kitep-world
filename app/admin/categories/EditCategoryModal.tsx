@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Upload } from 'lucide-react';
 import AdminToast, { ToastType } from '@/app/components/AdminToast';
+import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
 interface CategoryTranslation {
   id: string;
@@ -54,6 +55,9 @@ export default function EditCategoryModal({
   const [imagePreview, setImagePreview] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  // Блокируем скролл страницы при открытии модального окна
+  useBlockScroll(true);
 
   const showToast = (message: string, type: ToastType = 'error') => {
     const id = Date.now() + toastIdCounter++;

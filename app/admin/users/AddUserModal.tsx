@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, User, Mail, Phone, Lock, Shield } from 'lucide-react';
+import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -20,6 +21,9 @@ export default function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModa
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Блокируем скролл страницы при открытии модального окна
+  useBlockScroll(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

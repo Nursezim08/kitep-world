@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
 interface UserData {
   id: string;
@@ -19,6 +20,9 @@ interface DeleteUserModalProps {
 export default function DeleteUserModal({ isOpen, onClose, onSuccess, user }: DeleteUserModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Блокируем скролл страницы при открытии модального окна
+  useBlockScroll(isOpen);
 
   const handleDelete = async () => {
     if (!user) return;

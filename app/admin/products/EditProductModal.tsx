@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Upload, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Upload, Trash2, ChevronDown, Check } from 'lucide-react';
 import AdminToast, { ToastType } from '@/app/components/AdminToast';
+import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
 interface ProductTranslation {
   id: string;
@@ -71,6 +72,12 @@ export default function EditProductModal({ product, onClose, onSuccess }: EditPr
   const [error, setError] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const categoryRef = useRef<HTMLDivElement>(null);
+
+  // Блокируем скролл страницы при открытии модального окна
+  useBlockScroll(true);
 
   const showToast = (message: string, type: ToastType = 'error') => {
     const id = Date.now() + toastIdCounter++;
@@ -105,6 +112,18 @@ export default function EditProductModal({ product, onClose, onSuccess }: EditPr
       newImages: [],
     });
   }, [product]);
+
+  // Закрытие выпадающего списка категорий при клике вне
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
+        setIsCategoryOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchCategories = async () => {
     try {
@@ -281,6 +300,58 @@ export default function EditProductModal({ product, onClose, onSuccess }: EditPr
     return category.translations.find((t) => t.locale === 'ru')?.name || 'Без названия';
   };
 
+  const handleTranslate = async () => {
+    const ruName = formData.translations['ru']?.name || '';
+    const ruDescription = formData.translations['ru']?.description || '';
+
+    if (!ruName.trim()) {
+      showToast('Сначала заполните название на русском языке', 'warning');
+      return;
+    }
+
+    setIsTranslating(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/admin/products/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: ruName,
+          description: ruDescription,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Обновляем переводы
+        setFormData((prev) => ({
+          ...prev,
+          translations: {
+            ...prev.translations,
+            kg: {
+              name: data.translations.kg.name,
+              description: data.translations.kg.description,
+            },
+          },
+        }));
+
+        showToast('Перевод выполнен успешно', 'success');
+      } else {
+        const data = await response.json();
+        showToast(data.error || 'Не удалось выполнить перевод', 'error');
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+      showToast('Произошла ошибка при переводе', 'error');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const allImages = [
     ...formData.existingImages.map(img => ({ type: 'existing' as const, data: img })),
     ...formData.newImages.map(img => ({ type: 'new' as const, data: img })),
@@ -343,18 +414,50 @@ export default function EditProductModal({ product, onClose, onSuccess }: EditPr
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Категория *
                 </label>
-                <select
-                  value={formData.categoryId}
-                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                >
-                  <option value="">Выберите категорию</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {getCategoryName(category)}
-                    </option>
-                  ))}
-                </select>
+                <div ref={categoryRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm text-left focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all hover:bg-gray-600/50 flex items-center justify-between"
+                  >
+                    <span className={formData.categoryId ? 'text-white' : 'text-gray-400'}>
+                      {formData.categoryId
+                        ? getCategoryName(categories.find(c => c.id === formData.categoryId)!)
+                        : 'Выберите категорию'}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-gray-400 transition-transform ${
+                        isCategoryOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {isCategoryOpen && (
+                    <div className="absolute z-50 w-full mt-2 bg-gray-700 border border-gray-600 rounded-lg shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+                      {categories.map((category) => {
+                        const isSelected = category.id === formData.categoryId;
+                        return (
+                          <button
+                            key={category.id}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, categoryId: category.id });
+                              setIsCategoryOpen(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left text-sm transition-all flex items-center justify-between ${
+                              isSelected
+                                ? 'bg-violet-600 text-white'
+                                : 'text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            <span>{getCategoryName(category)}</span>
+                            {isSelected && <Check className="w-4 h-4 text-white" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -391,7 +494,38 @@ export default function EditProductModal({ product, onClose, onSuccess }: EditPr
             {/* Translations */}
             {LOCALES.map((locale) => (
               <div key={locale.code} className="space-y-4 p-4 bg-gray-700/30 rounded-lg">
-                <h3 className="text-white font-medium">{locale.name}</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-medium">{locale.name}</h3>
+                  {locale.code === 'ru' && (
+                    <button
+                      type="button"
+                      onClick={handleTranslate}
+                      disabled={isTranslating || !formData.translations['ru']?.name.trim() || !formData.translations['ru']?.description.trim()}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 text-white text-xs rounded-lg transition-all ${
+                        !formData.translations['ru']?.name.trim() || !formData.translations['ru']?.description.trim()
+                          ? 'bg-violet-600/30 cursor-not-allowed'
+                          : 'bg-violet-600 hover:bg-violet-700 cursor-pointer'
+                      } ${isTranslating ? 'opacity-70' : ''}`}
+                    >
+                        {isTranslating ? (
+                          <>
+                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Перевод...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" viewBox="0 0 56 56" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M 26.6875 12.6602 C 26.9687 12.6602 27.1094 12.4961 27.1797 12.2383 C 27.9062 8.3242 27.8594 8.2305 31.9375 7.4570 C 32.2187 7.4102 32.3828 7.2461 32.3828 6.9648 C 32.3828 6.6836 32.2187 6.5195 31.9375 6.4726 C 27.8828 5.6524 28.0000 5.5586 27.1797 1.6914 C 27.1094 1.4336 26.9687 1.2695 26.6875 1.2695 C 26.4062 1.2695 26.2656 1.4336 26.1953 1.6914 C 25.3750 5.5586 25.5156 5.6524 21.4375 6.4726 C 21.1797 6.5195 20.9922 6.6836 20.9922 6.9648 C 20.9922 7.2461 21.1797 7.4102 21.4375 7.4570 C 25.5156 8.2774 25.4687 8.3242 26.1953 12.2383 C 26.2656 12.4961 26.4062 12.6602 26.6875 12.6602 Z M 15.3438 28.7852 C 15.7891 28.7852 16.0938 28.5039 16.1406 28.0821 C 16.9844 21.8242 17.1953 21.8242 23.6641 20.5821 C 24.0860 20.5117 24.3906 20.2305 24.3906 19.7852 C 24.3906 19.3633 24.0860 19.0586 23.6641 18.9883 C 17.1953 18.0977 16.9609 17.8867 16.1406 11.5117 C 16.0938 11.0899 15.7891 10.7852 15.3438 10.7852 C 14.9219 10.7852 14.6172 11.0899 14.5703 11.5352 C 13.7969 17.8164 13.4687 17.7930 7.0469 18.9883 C 6.6250 19.0821 6.3203 19.3633 6.3203 19.7852 C 6.3203 20.2539 6.6250 20.5117 7.1406 20.5821 C 13.5156 21.6133 13.7969 21.7774 14.5703 28.0352 C 14.6172 28.5039 14.9219 28.7852 15.3438 28.7852 Z M 31.2344 54.7305 C 31.8438 54.7305 32.2891 54.2852 32.4062 53.6524 C 34.0703 40.8086 35.8750 38.8633 48.5781 37.4570 C 49.2344 37.3867 49.6797 36.8945 49.6797 36.2852 C 49.6797 35.6758 49.2344 35.2070 48.5781 35.1133 C 35.8750 33.7070 34.0703 31.7617 32.4062 18.9180 C 32.2891 18.2852 31.8438 17.8633 31.2344 17.8633 C 30.6250 17.8633 30.1797 18.2852 30.0860 18.9180 C 28.4219 31.7617 26.5938 33.7070 13.9140 35.1133 C 13.2344 35.2070 12.7891 35.6758 12.7891 36.2852 C 12.7891 36.8945 13.2344 37.3867 13.9140 37.4570 C 26.5703 39.1211 28.3281 40.8321 30.0860 53.6524 C 30.1797 54.2852 30.6250 54.7305 31.2344 54.7305 Z"/>
+                            </svg>
+                            <span>Перевести на все языки</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
