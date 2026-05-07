@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Toast from '@/app/components/Toast';
+import EmailInput from '@/app/components/EmailInput';
 import { useTranslation } from '@/app/i18n/client';
 
 export default function ForgotPasswordPage() {
@@ -97,21 +98,16 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label htmlFor="email" className="block text-xs font-bold text-black mb-1">
-              {t('forgotPassword.email')}
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
+            <EmailInput
+              label={t('forgotPassword.email')}
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
+              onChange={(value) => {
+                setEmail(value);
                 setError('');
               }}
-              required
-              className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition font-semibold text-sm"
               placeholder="example@mail.com"
+              required
+              className="[&_input]:border-2 [&_input]:border-gray-200 [&_input]:bg-white [&_input]:text-black [&_input]:rounded-xl [&_input]:focus:ring-2 [&_input]:focus:ring-violet-500 [&_label]:text-black"
             />
           </div>
 

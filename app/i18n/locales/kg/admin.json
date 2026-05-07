@@ -75,6 +75,7 @@
     "menu": {
       "dashboard": "Башкаруу панели",
       "users": "Колдонуучулар",
+      "categories": "Категориялар",
       "products": "Товарлар",
       "orders": "Заказдар",
       "branches": "Филиалдар",
@@ -85,3 +86,66 @@
     "logout": "Чыгуу"
   }
 }
+,
+  "categories": {
+    "title": "Товарлардын категориялары",
+    "subtitle": "Категорияларды жана подкатегорияларды башкаруу",
+    "addButton": "Категория кошуу",
+    "searchPlaceholder": "Категорияларды издөө...",
+    "noCategories": "Категориялар жок",
+    "notFound": "Категориялар табылган жок",
+    "loading": "Категориялар жүктөлүүдө...",
+    "createFirst": "Биринчи категорияны түзүү",
+    "openSubcategories": "Подкатегорияларды ачуу",
+    "allCategories": "Бардык категориялар",
+    "addModal": {
+      "title": "Категория кошуу",
+      "titleSub": "Подкатегория кошуу",
+      "image": "Сүрөт (PNG)",
+      "imageRequired": "Сүрөт (PNG) *",
+      "uploadImage": "Сүрөт жүктөө",
+      "changeImage": "Сүрөттү өзгөртүү",
+      "imageFormat": "Формат: PNG, максималдуу өлчөм: 5MB",
+      "nameRu": "Аталышы (Орусча)",
+      "nameRuRequired": "Аталышы (Орусча) *",
+      "nameRuPlaceholder": "Мисалы: Канцелярия",
+      "nameKg": "Аталышы (Кыргызча)",
+      "nameKgRequired": "Аталышы (Кыргызча) *",
+      "nameKgPlaceholder": "Мисалы: Канцелярия",
+      "status": "Статус",
+      "cancelButton": "Жокко чыгаруу",
+      "createButton": "Түзүү",
+      "creating": "Түзүлүүдө..."
+    },
+    "editModal": {
+      "title": "Категорияны өзгөртүү",
+      "saveButton": "Сактоо",
+      "saving": "Сакталууда..."
+    },
+    "status": {
+      "active": "Активдүү",
+      "inactive": "Активдүү эмес"
+    },
+    "stats": {
+      "subcategories": "Подкатегориялар",
+      "products": "Товарлар"
+    },
+    "actions": {
+      "edit": "Өзгөртүү",
+      "delete": "Өчүрүү"
+    },
+    "deleteConfirm": "Бул категорияны өчүрүүнү каалайсызбы?",
+    "errors": {
+      "pngOnly": "PNG сүрөттөр гана кабыл алынат",
+      "maxSize": "Сүрөттүн өлчөмү 5MB ашпашы керек",
+      "nameRuRequired": "Орусча аталышын киргизиңиз",
+      "nameKgRequired": "Кыргызча аталышын киргизиңиз",
+      "imageRequired": "Категориянын сүрөтүн жүктөңүз",
+      "createError": "Категория түзүү мүмкүн болгон жок",
+      "updateError": "Категорияны жаңыртуу мүмкүн болгон жок",
+      "deleteError": "Категорияны өчүрүү мүмкүн болгон жок",
+      "deleteWithSubcategories": "Подкатегориялары бар категорияны өчүрүү мүмкүн эмес",
+      "deleteWithProducts": "Товарлары бар категорияны өчүрүү мүмкүн эмес",
+      "generalError": "Ката кетти"
+    }
+  }

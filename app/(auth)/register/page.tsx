@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { FcGoogle } from 'react-icons/fc';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import Toast from '@/app/components/Toast';
+import EmailInput from '@/app/components/EmailInput';
+import PhoneInput from '@/app/components/PhoneInput';
 import { useTranslation } from '@/app/i18n/client';
 
 export default function RegisterPage() {
@@ -144,33 +146,31 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-xs font-bold text-black mb-1">
-              {t('register.email')} *
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
+            <EmailInput
+              label={`${t('register.email')} *`}
               value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition font-semibold text-sm"
+              onChange={(value) => {
+                setFormData({ ...formData, email: value });
+                setError('');
+                setShowGoogleToast(false);
+              }}
               placeholder="example@mail.com"
+              required
+              className="[&_input]:border-2 [&_input]:border-gray-200 [&_input]:bg-white [&_input]:text-black [&_input]:rounded-xl [&_input]:focus:ring-2 [&_input]:focus:ring-violet-500 [&_label]:text-black"
             />
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-xs font-bold text-black mb-1">
-              {t('register.phone')}
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
+            <PhoneInput
+              label={t('register.phone')}
               value={formData.phone}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition font-semibold text-sm"
+              onChange={(value) => {
+                setFormData({ ...formData, phone: value });
+                setError('');
+                setShowGoogleToast(false);
+              }}
               placeholder="+996 XXX XXX XXX"
+              className="[&_input]:border-2 [&_input]:border-gray-200 [&_input]:bg-white [&_input]:text-black [&_input]:rounded-xl [&_input]:focus:ring-2 [&_input]:focus:ring-violet-500 [&_label]:text-black"
             />
           </div>
 

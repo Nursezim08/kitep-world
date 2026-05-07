@@ -204,10 +204,7 @@ export default function ManagerDetailClient({ manager, currentUser }: ManagerDet
           {/* Main Navigation Card */}
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
             <div className="flex items-center justify-between mb-4 px-2">
-              <div className="flex items-center gap-2 text-gray-400">
-                <LayoutDashboard size={18} />
-                <span className="text-sm font-semibold">Навигация</span>
-              </div>
+              <span className="text-sm font-semibold text-gray-400">Навигация</span>
             </div>
             
             <nav className="space-y-1">
@@ -237,6 +234,7 @@ export default function ManagerDetailClient({ manager, currentUser }: ManagerDet
                 <span className="text-sm font-medium">Заказы</span>
               </button>
               <button
+                onClick={() => router.push('/admin/branches')}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
               >
                 <MapPin size={18} className="flex-shrink-0" />

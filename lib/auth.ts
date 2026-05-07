@@ -49,6 +49,22 @@ export async function removeAuthCookie() {
   cookieStore.delete('auth_token');
 }
 
+// Функция для проверки авторизации из запроса
+export async function verifyAuth(request: Request): Promise<JWTPayload | null> {
+  try {
+    const token = request.headers.get('cookie')?.split('auth_token=')[1]?.split(';')[0];
+    
+    if (!token) {
+      return null;
+    }
+
+    const payload = await verifyToken(token);
+    return payload;
+  } catch (error) {
+    return null;
+  }
+}
+
 export async function getAuthToken(): Promise<string | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token');

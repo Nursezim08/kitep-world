@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Clock,
   TrendingUp,
-  LayoutDashboard
+  LayoutDashboard,
+  FolderTree
 } from 'lucide-react';
 
 interface User {
@@ -46,13 +47,14 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
 
   const menuItems = [
     { title: 'Панель управления', icon: LayoutDashboard, active: true, href: '/admin/dashboard' },
-    { title: 'Пользователи', icon: Users, active: false, href: '#' },
-    { title: 'Товары', icon: Package, active: false, href: '#' },
+    { title: 'Пользователи', icon: Users, active: false, href: '/admin/users' },
+    { title: 'Категории', icon: FolderTree, active: false, href: '/admin/categories' },
+    { title: 'Товары', icon: Package, active: false, href: '/admin/products' },
     { title: 'Заказы', icon: ShoppingCart, active: false, href: '#' },
-    { title: 'Филиалы', icon: MapPin, active: false, href: '#' },
+    { title: 'Филиалы', icon: MapPin, active: false, href: '/admin/branches' },
     { title: 'Менеджеры', icon: Users, active: false, href: '/admin/managers' },
     { title: 'Отчеты', icon: FileText, active: false, href: '#' },
-    { title: 'Настройки', icon: Settings, active: false, href: '#' },
+    { title: 'Настройки', icon: Settings, active: false, href: '/admin/settings' },
   ];
 
   const stats = [
@@ -163,14 +165,11 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
 
       <div className="flex pt-[73px]">
         {/* Sidebar */}
-        <aside className="w-72 p-4 flex flex-col sticky top-[73px] h-fit z-40">
+        <aside className="w-72 p-4 pb-4 flex flex-col sticky top-[73px] h-fit z-40">
           {/* Main Navigation Card */}
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
             <div className="flex items-center justify-between mb-4 px-2">
-              <div className="flex items-center gap-2 text-gray-400">
-                <LayoutDashboard size={18} />
-                <span className="text-sm font-semibold">Навигация</span>
-              </div>
+              <span className="text-sm font-semibold text-gray-400">Навигация</span>
             </div>
             
             <nav className="space-y-1">
@@ -193,13 +192,15 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
 
           {/* Quick Actions Card */}
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
-            <div className="flex items-center gap-2 text-gray-400 mb-4 px-2">
-              <Settings size={18} />
-              <span className="text-sm font-semibold">Быстрые действия</span>
+            <div className="flex items-center gap-2 mb-4 px-2">
+              <span className="text-sm font-semibold text-gray-400">Быстрые действия</span>
             </div>
             
             <div className="space-y-1">
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all">
+              <button
+                onClick={() => router.push('/admin/branches')}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all"
+              >
                 <MapPin size={18} className="flex-shrink-0" />
                 <span className="text-sm font-medium">Филиалы</span>
               </button>

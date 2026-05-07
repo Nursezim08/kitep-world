@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import CustomSelect from '@/app/components/CustomSelect';
+import EmailInput from '@/app/components/EmailInput';
+import PhoneInput from '@/app/components/PhoneInput';
 import { 
   Users, 
   LogOut, 
@@ -33,7 +35,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  FolderTree
 } from 'lucide-react';
 
 interface User {
@@ -388,14 +391,11 @@ export default function ManagersClient({ user }: ManagersClientProps) {
       {/* Main Content */}
       <div className="flex pt-[73px] overflow-x-hidden">
         {/* Sidebar */}
-        <aside className="w-80 p-4 flex flex-col sticky top-[73px] h-fit z-40 flex-shrink-0">
+        <aside className="w-80 p-4 pb-4 flex flex-col sticky top-[73px] h-fit z-40 flex-shrink-0">
           {/* Main Navigation Card */}
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
             <div className="flex items-center justify-between mb-4 px-2">
-              <div className="flex items-center gap-2 text-gray-400">
-                <LayoutDashboard size={18} />
-                <span className="text-sm font-semibold">Навигация</span>
-              </div>
+              <span className="text-sm font-semibold text-gray-400">Навигация</span>
             </div>
             
             <nav className="space-y-1">
@@ -407,12 +407,21 @@ export default function ManagersClient({ user }: ManagersClientProps) {
                 <span className="text-sm font-medium">Панель управления</span>
               </button>
               <button
+                onClick={() => router.push('/admin/users')}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
               >
                 <Users size={18} className="flex-shrink-0" />
                 <span className="text-sm font-medium">Пользователи</span>
               </button>
               <button
+                onClick={() => router.push('/admin/categories')}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
+              >
+                <FolderTree size={18} className="flex-shrink-0" />
+                <span className="text-sm font-medium">Категории</span>
+              </button>
+              <button
+                onClick={() => router.push('/admin/products')}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
               >
                 <Package size={18} className="flex-shrink-0" />
@@ -425,6 +434,7 @@ export default function ManagersClient({ user }: ManagersClientProps) {
                 <span className="text-sm font-medium">Заказы</span>
               </button>
               <button
+                onClick={() => router.push('/admin/branches')}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
               >
                 <MapPin size={18} className="flex-shrink-0" />
@@ -443,6 +453,7 @@ export default function ManagersClient({ user }: ManagersClientProps) {
                 <span className="text-sm font-medium">Отчеты</span>
               </button>
               <button
+                onClick={() => router.push('/admin/settings')}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
               >
                 <Settings size={18} className="flex-shrink-0" />
@@ -896,34 +907,20 @@ export default function ManagersClient({ user }: ManagersClientProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <Mail size={14} />
-                    Email
-                  </div>
-                </label>
-                <input
-                  type="email"
-                  required
+                <EmailInput
+                  label="Email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#1e2533] border border-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/50 text-white text-sm"
+                  onChange={(value) => setFormData({ ...formData, email: value })}
                   placeholder="manager@example.com"
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <Phone size={14} />
-                    Телефон (необязательно)
-                  </div>
-                </label>
-                <input
-                  type="tel"
+                <PhoneInput
+                  label="Телефон (необязательно)"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#1e2533] border border-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/50 text-white text-sm"
+                  onChange={(value) => setFormData({ ...formData, phone: value })}
                   placeholder="+996 XXX XXX XXX"
                 />
               </div>
@@ -1026,33 +1023,21 @@ export default function ManagersClient({ user }: ManagersClientProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <Mail size={14} />
-                    Email
-                  </div>
-                </label>
-                <input
-                  type="email"
-                  required
+                <EmailInput
+                  label="Email"
                   value={editFormData.email}
-                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#1e2533] border border-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/50 text-white text-sm"
+                  onChange={(value) => setEditFormData({ ...editFormData, email: value })}
+                  placeholder="manager@example.com"
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <Phone size={14} />
-                    Телефон
-                  </div>
-                </label>
-                <input
-                  type="tel"
+                <PhoneInput
+                  label="Телефон"
                   value={editFormData.phone}
-                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#1e2533] border border-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/50 text-white text-sm"
+                  onChange={(value) => setEditFormData({ ...editFormData, phone: value })}
+                  placeholder="+996 XXX XXX XXX"
                 />
               </div>
 

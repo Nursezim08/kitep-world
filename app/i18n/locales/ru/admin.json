@@ -75,6 +75,7 @@
     "menu": {
       "dashboard": "Панель управления",
       "users": "Пользователи",
+      "categories": "Категории",
       "products": "Товары",
       "orders": "Заказы",
       "branches": "Филиалы",
@@ -85,3 +86,66 @@
     "logout": "Выйти"
   }
 }
+,
+  "categories": {
+    "title": "Категории товаров",
+    "subtitle": "Управление категориями и подкатегориями",
+    "addButton": "Добавить категорию",
+    "searchPlaceholder": "Поиск категорий...",
+    "noCategories": "Нет категорий",
+    "notFound": "Категории не найдены",
+    "loading": "Загрузка категорий...",
+    "createFirst": "Создать первую категорию",
+    "openSubcategories": "Открыть подкатегории",
+    "allCategories": "Все категории",
+    "addModal": {
+      "title": "Добавить категорию",
+      "titleSub": "Добавить подкатегорию",
+      "image": "Изображение (PNG)",
+      "imageRequired": "Изображение (PNG) *",
+      "uploadImage": "Загрузить изображение",
+      "changeImage": "Изменить изображение",
+      "imageFormat": "Формат: PNG, максимальный размер: 5MB",
+      "nameRu": "Название (Русский)",
+      "nameRuRequired": "Название (Русский) *",
+      "nameRuPlaceholder": "Например: Канцелярия",
+      "nameKg": "Название (Кыргызча)",
+      "nameKgRequired": "Название (Кыргызча) *",
+      "nameKgPlaceholder": "Мисалы: Канцелярия",
+      "status": "Статус",
+      "cancelButton": "Отмена",
+      "createButton": "Создать",
+      "creating": "Создание..."
+    },
+    "editModal": {
+      "title": "Редактировать категорию",
+      "saveButton": "Сохранить",
+      "saving": "Сохранение..."
+    },
+    "status": {
+      "active": "Активна",
+      "inactive": "Неактивна"
+    },
+    "stats": {
+      "subcategories": "Подкатегории",
+      "products": "Товары"
+    },
+    "actions": {
+      "edit": "Изменить",
+      "delete": "Удалить"
+    },
+    "deleteConfirm": "Вы уверены, что хотите удалить эту категорию?",
+    "errors": {
+      "pngOnly": "Допускаются только PNG изображения",
+      "maxSize": "Размер изображения не должен превышать 5MB",
+      "nameRuRequired": "Введите название на русском",
+      "nameKgRequired": "Введите название на кыргызском",
+      "imageRequired": "Загрузите изображение категории",
+      "createError": "Не удалось создать категорию",
+      "updateError": "Не удалось обновить категорию",
+      "deleteError": "Не удалось удалить категорию",
+      "deleteWithSubcategories": "Невозможно удалить категорию с подкатегориями",
+      "deleteWithProducts": "Невозможно удалить категорию с товарами",
+      "generalError": "Произошла ошибка"
+    }
+  }

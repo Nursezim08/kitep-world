@@ -29,6 +29,7 @@ export async function GET() {
         createdAt: true,
         branchUsers: {
           select: {
+            branchId: true,
             branch: {
               select: {
                 id: true,

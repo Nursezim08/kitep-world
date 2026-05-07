@@ -167,6 +167,7 @@ model Branch {
   longitude   Decimal?      @db.Decimal(10, 7)
   openTime    DateTime?     @map("open_time") @db.Time(6)
   closeTime   DateTime?     @map("close_time") @db.Time(6)
+  workDays    String[]      @default([]) @map("work_days")
   status      BranchStatus  @default(active)
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamp(6)

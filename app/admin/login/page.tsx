@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import { FiShield } from 'react-icons/fi';
+import EmailInput from '@/app/components/EmailInput';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -97,21 +98,16 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label
-              htmlFor="email"
-              className="block text-xs font-bold text-slate-300 mb-1"
-            >
-              Email администратора
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
+            <EmailInput
+              label="Email администратора"
               value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 bg-slate-700 border-2 border-slate-600 text-white rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent transition font-semibold text-sm placeholder-slate-500"
+              onChange={(value) => {
+                setFormData({ ...formData, email: value });
+                setError('');
+              }}
               placeholder="admin@example.com"
+              required
+              className="[&_input]:bg-slate-700 [&_input]:border-2 [&_input]:border-slate-600 [&_input]:text-white [&_input]:rounded-xl [&_input]:focus:ring-2 [&_input]:focus:ring-violet-500 [&_input]:placeholder-slate-500 [&_label]:text-slate-300"
             />
           </div>
 
