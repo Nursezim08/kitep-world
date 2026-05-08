@@ -3,8 +3,14 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { MdEmail } from 'react-icons/md';
 import { useTranslation } from '@/app/i18n/client';
+import AdminToast, { ToastType } from '@/app/components/AdminToast';
+
+interface Toast {
+  id: number;
+  message: string;
+  type: ToastType;
+}
 
 function VerifyEmailForm() {
   const router = useRouter();
@@ -18,13 +24,30 @@ function VerifyEmailForm() {
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     if (!userId || !email) {
       router.push('/register');
+    } else {
+      // Показываем уведомление о том, что код отправлен
+      showToast(t('verifyEmail.codeSent') || 'Код подтверждения отправлен на ваш email', 'info');
     }
   }, [userId, email, router]);
+
+  const showToast = (message: string, type: ToastType = 'info') => {
+    const newToast: Toast = {
+      id: Date.now(),
+      message,
+      type,
+    };
+    setToasts((prev) => [...prev, newToast]);
+  };
+
+  const removeToast = (id: number) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -137,15 +160,16 @@ function VerifyEmailForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || t('errors.serverError'));
+        showToast(data.error || t('errors.serverError'), 'error');
         return;
       }
 
+      showToast(t('verifyEmail.codeResent') || 'Код отправлен повторно на ваш email', 'success');
       setResendCooldown(60);
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch (err) {
-      setError(t('errors.connectionError'));
+      showToast(t('errors.connectionError'), 'error');
     } finally {
       setResendLoading(false);
     }
@@ -154,6 +178,25 @@ function VerifyEmailForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-violet-100 to-violet-50 px-4 py-12">
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+      
+      {/* Toast Container */}
+      <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2">
+        {toasts.map((toast, index) => (
+          <div
+            key={toast.id}
+            style={{
+              transform: `translateY(${index * 80}px)`,
+              transition: 'transform 0.3s ease-out',
+            }}
+          >
+            <AdminToast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          </div>
+        ))}
+      </div>
       
       <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 relative">
         {/* Logo */}
@@ -169,11 +212,6 @@ function VerifyEmailForm() {
         </div>
 
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-violet-100 rounded-full flex items-center justify-center">
-              <MdEmail className="text-violet-500 text-3xl" />
-            </div>
-          </div>
           <h1 className="text-3xl font-extrabold text-black mb-2">
             {t('verifyEmail.title')}
           </h1>

@@ -25,6 +25,8 @@ import {
   Filter,
   X,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
@@ -74,6 +76,7 @@ export default function UsersClient({ user }: UsersClientProps) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const menuItems = [
     { title: 'Панель управления', icon: LayoutDashboard, href: '/admin/dashboard' },
@@ -230,11 +233,18 @@ export default function UsersClient({ user }: UsersClientProps) {
       {/* Content Area - Flex container */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Fixed width, scrollable */}
-        <aside className="w-72 flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 overflow-y-auto">
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 overflow-y-auto transition-all duration-300`}>
           <div className="p-4 flex flex-col min-h-full">
             <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
-              <div className="flex items-center justify-between mb-4 px-2">
-                <span className="text-sm font-semibold text-gray-400">Навигация</span>
+              <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
+                {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-400">Навигация</span>}
+                <button
+                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  className="p-2 hover:bg-[#2a3347] rounded-lg transition-all text-gray-400 hover:text-white"
+                  title={sidebarCollapsed ? 'Развернуть' : 'Свернуть'}
+                >
+                  {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                </button>
               </div>
 
               <nav className="space-y-1">
@@ -242,14 +252,15 @@ export default function UsersClient({ user }: UsersClientProps) {
                   <button
                     key={index}
                     onClick={() => item.href !== '#' && router.push(item.href)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                    className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
                       item.active
                         ? 'bg-violet-500/15 text-violet-400'
                         : 'text-gray-400 hover:bg-[#2a3347] hover:text-white'
                     }`}
+                    title={sidebarCollapsed ? item.title : ''}
                   >
                     <item.icon size={18} className="flex-shrink-0" />
-                    <span className="text-sm font-medium">{item.title}</span>
+                    {!sidebarCollapsed && <span className="text-sm font-medium">{item.title}</span>}
                   </button>
                 ))}
               </nav>
@@ -259,10 +270,11 @@ export default function UsersClient({ user }: UsersClientProps) {
               <div className="bg-[#252d3d] rounded-2xl p-4">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-medium text-sm transition-all"
+                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-medium text-sm transition-all`}
+                  title={sidebarCollapsed ? 'Выйти' : ''}
                 >
                   <LogOut size={16} />
-                  <span>Выйти</span>
+                  {!sidebarCollapsed && <span>Выйти</span>}
                 </button>
               </div>
             </div>
@@ -463,7 +475,8 @@ export default function UsersClient({ user }: UsersClientProps) {
                       {users.map((userData) => (
                         <tr
                           key={userData.id}
-                          className="hover:bg-[#1e2533] transition-colors"
+                          onClick={() => router.push(`/admin/users/${userData.id}`)}
+                          className="hover:bg-[#1e2533] transition-colors cursor-pointer"
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
@@ -522,7 +535,8 @@ export default function UsersClient({ user }: UsersClientProps) {
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setSelectedUser(userData);
                                   setShowEditModal(true);
                                 }}
@@ -532,7 +546,8 @@ export default function UsersClient({ user }: UsersClientProps) {
                                 <Edit2 size={16} />
                               </button>
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setSelectedUser(userData);
                                   setShowDeleteModal(true);
                                 }}

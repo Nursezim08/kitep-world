@@ -11,7 +11,6 @@ import {
   Bell,
   Search,
   LayoutDashboard,
-  Warehouse,
   User,
   Menu,
   X,
@@ -82,11 +81,6 @@ export default function ManagerLayout({ user, children }: ManagerLayoutProps) {
       href: '/manager/products',
     },
     {
-      title: 'Склад',
-      icon: Warehouse,
-      href: '/manager/inventory',
-    },
-    {
       title: 'Отчеты',
       icon: FileText,
       href: '/manager/reports',
@@ -145,15 +139,18 @@ export default function ManagerLayout({ user, children }: ManagerLayoutProps) {
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full"></span>
               </button>
 
-              <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
+              <button
+                onClick={() => router.push('/manager/profile')}
+                className="flex items-center gap-3 pl-3 border-l border-gray-200 hover:bg-gray-50 rounded-xl p-2 transition-colors"
+              >
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
                   <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -217,19 +214,6 @@ export default function ManagerLayout({ user, children }: ManagerLayoutProps) {
                 <p className="text-xs text-gray-500 mb-1">Роль</p>
                 <p className="text-sm font-semibold text-gray-900">Менеджер</p>
               </div>
-            </div>
-          </div>
-
-          {/* Logout Button Card */}
-          <div className="mt-auto">
-            <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-medium text-sm transition-all"
-              >
-                <LogOut size={16} />
-                <span>Выйти</span>
-              </button>
             </div>
           </div>
         </aside>

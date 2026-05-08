@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import {
-  ArrowLeft,
   Mail,
   Phone,
   MapPin,
@@ -22,6 +22,8 @@ import {
   Package,
   Settings,
   FileText,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface Branch {
@@ -71,6 +73,7 @@ interface ManagerDetailClientProps {
 
 export default function ManagerDetailClient({ manager, currentUser }: ManagerDetailClientProps) {
   const router = useRouter();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -197,80 +200,95 @@ export default function ManagerDetailClient({ manager, currentUser }: ManagerDet
         </div>
       </header>
 
-      {/* Main Content */}
       <div className="flex pt-[73px] overflow-x-hidden">
         {/* Sidebar */}
-        <aside className="w-80 p-4 flex flex-col sticky top-[73px] h-fit z-40 flex-shrink-0">
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-80'} px-4 pt-4 flex flex-col flex-shrink-0 transition-all duration-300 sticky top-[73px] self-start`}>
           {/* Main Navigation Card */}
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
-            <div className="flex items-center justify-between mb-4 px-2">
-              <span className="text-sm font-semibold text-gray-400">Навигация</span>
+            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
+              {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-400">Навигация</span>}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="p-2 hover:bg-[#2a3347] rounded-lg transition-all text-gray-400 hover:text-white"
+                title={sidebarCollapsed ? 'Развернуть' : 'Свернуть'}
+              >
+                {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              </button>
             </div>
             
             <nav className="space-y-1">
               <button
                 onClick={() => router.push('/admin/dashboard')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
+                title={sidebarCollapsed ? 'Панель управления' : ''}
               >
                 <LayoutDashboard size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Панель управления</span>
+                {!sidebarCollapsed && <span className="text-sm font-medium">Панель управления</span>}
               </button>
               <button
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
+                title={sidebarCollapsed ? 'Пользователи' : ''}
               >
                 <Users size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Пользователи</span>
+                {!sidebarCollapsed && <span className="text-sm font-medium">Пользователи</span>}
               </button>
               <button
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
+                title={sidebarCollapsed ? 'Товары' : ''}
               >
                 <Package size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Товары</span>
+                {!sidebarCollapsed && <span className="text-sm font-medium">Товары</span>}
               </button>
               <button
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
+                title={sidebarCollapsed ? 'Заказы' : ''}
               >
                 <ShoppingCart size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Заказы</span>
+                {!sidebarCollapsed && <span className="text-sm font-medium">Заказы</span>}
               </button>
               <button
                 onClick={() => router.push('/admin/branches')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
+                title={sidebarCollapsed ? 'Филиалы' : ''}
               >
                 <MapPin size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Филиалы</span>
+                {!sidebarCollapsed && <span className="text-sm font-medium">Филиалы</span>}
               </button>
               <button
                 onClick={() => router.push('/admin/managers')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all bg-violet-500/15 text-violet-400"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all bg-violet-500/15 text-violet-400`}
+                title={sidebarCollapsed ? 'Менеджеры' : ''}
               >
                 <Users size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Менеджеры</span>
+                {!sidebarCollapsed && <span className="text-sm font-medium">Менеджеры</span>}
               </button>
               <button
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
+                title={sidebarCollapsed ? 'Отчеты' : ''}
               >
                 <FileText size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Отчеты</span>
+                {!sidebarCollapsed && <span className="text-sm font-medium">Отчеты</span>}
               </button>
               <button
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
+                title={sidebarCollapsed ? 'Настройки' : ''}
               >
                 <Settings size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Настройки</span>
+                {!sidebarCollapsed && <span className="text-sm font-medium">Настройки</span>}
               </button>
             </nav>
           </div>
 
           {/* Logout Button Card */}
-          <div className="mt-auto">
+          <div className="mt-4">
             <div className="bg-[#252d3d] rounded-2xl p-4">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-medium text-sm transition-all"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-medium text-sm transition-all`}
+                title={sidebarCollapsed ? 'Выйти' : ''}
               >
                 <LogOut size={16} />
-                <span>Выйти</span>
+                {!sidebarCollapsed && <span>Выйти</span>}
               </button>
             </div>
           </div>

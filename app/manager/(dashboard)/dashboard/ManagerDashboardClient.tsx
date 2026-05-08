@@ -64,7 +64,7 @@ export default function ManagerDashboardClient() {
     },
     {
       title: 'Выручка за день',
-      value: '₸45,600',
+      value: '45,600 с',
       change: '+18%',
       icon: DollarSign,
       color: 'green',
@@ -82,7 +82,7 @@ export default function ManagerDashboardClient() {
     {
       id: '#12345',
       customer: 'Айгерим Т.',
-      amount: '₸4,500',
+      amount: '4,500 с',
       status: 'completed',
       statusText: 'Завершен',
       time: '5 мин назад',
@@ -90,7 +90,7 @@ export default function ManagerDashboardClient() {
     {
       id: '#12344',
       customer: 'Бекжан И.',
-      amount: '₸2,300',
+      amount: '2,300 с',
       status: 'processing',
       statusText: 'В обработке',
       time: '12 мин назад',
@@ -98,7 +98,7 @@ export default function ManagerDashboardClient() {
     {
       id: '#12343',
       customer: 'Нурайым А.',
-      amount: '₸6,700',
+      amount: '6,700 с',
       status: 'pending',
       statusText: 'Ожидает',
       time: '25 мин назад',
@@ -106,7 +106,7 @@ export default function ManagerDashboardClient() {
     {
       id: '#12342',
       customer: 'Азамат К.',
-      amount: '₸1,200',
+      amount: '1,200 с',
       status: 'completed',
       statusText: 'Завершен',
       time: '1 час назад',

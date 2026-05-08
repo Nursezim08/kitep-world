@@ -14,7 +14,7 @@ export default function ManagerInventoryClient() {
     { label: 'Всего товаров', value: '1,234', icon: Package, color: 'blue' },
     { label: 'Низкий остаток', value: '8', icon: AlertTriangle, color: 'orange' },
     { label: 'Нет в наличии', value: '3', icon: TrendingDown, color: 'red' },
-    { label: 'Общая стоимость', value: '₸2.4M', icon: Warehouse, color: 'green' },
+    { label: 'Общая стоимость', value: '2.4M с', icon: Warehouse, color: 'green' },
   ];
 
   return (

@@ -263,89 +263,94 @@ export default function EditCategoryModal({
             </div>
           )}
 
-          {/* Image Upload - Drag and Drop */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Изображение (PNG) *
-            </label>
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={handleClick}
-              className={`w-full h-32 bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer transition-all border-2 border-dashed ${
-                isDragging
-                  ? 'border-blue-500 bg-blue-500/10'
-                  : imagePreview
-                  ? 'border-transparent'
-                  : 'border-gray-600 hover:border-gray-500 hover:bg-gray-600/50'
-              }`}
-            >
-              {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-full object-contain"
+          {/* Main Grid: Image Left, Names Right */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left Column: Image Upload - 1 колонка */}
+            <div className="md:col-span-1">
+              <label className="block text-xs font-medium text-gray-300 mb-1.5">
+                Изображение (PNG) *
+              </label>
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={handleClick}
+                className={`w-full h-[136px] bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer transition-all border-2 border-dashed ${
+                  isDragging
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : imagePreview
+                    ? 'border-transparent'
+                    : 'border-gray-600 hover:border-gray-500 hover:bg-gray-600/50'
+                }`}
+              >
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="text-center px-2">
+                    <Upload className="w-5 h-5 text-gray-500 mx-auto mb-1" />
+                    <p className="text-gray-400 text-[10px] mb-0.5">
+                      {isDragging ? 'Отпустите' : 'Перетащите'}
+                    </p>
+                    <p className="text-gray-500 text-[9px]">
+                      или кликните
+                    </p>
+                    <p className="text-gray-600 text-[9px] mt-0.5">
+                      PNG, макс 5MB
+                    </p>
+                  </div>
+                )}
+                <input
+                  id="image-upload-input-edit"
+                  type="file"
+                  accept="image/png"
+                  onChange={handleImageChange}
+                  className="hidden"
                 />
-              ) : (
-                <div className="text-center px-4">
-                  <Upload className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                  <p className="text-gray-400 text-xs mb-1">
-                    {isDragging ? 'Отпустите файл' : 'Перетащите изображение'}
-                  </p>
-                  <p className="text-gray-500 text-xs">
-                    или кликните для выбора
-                  </p>
-                  <p className="text-gray-600 text-xs mt-1">
-                    PNG, квадратное, макс 5MB
-                  </p>
+              </div>
+            </div>
+
+            {/* Right Column: Translations - 2 колонки */}
+            <div className="md:col-span-2">
+              {LOCALES.map((locale, index) => (
+                <div key={locale.code} className={index === 1 ? 'mt-10' : ''}>
+                  <label className="block text-xs font-medium text-gray-300 mb-1.5">
+                    Название ({locale.name}) *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.translations[locale.code] || ''}
+                    onChange={(e) => handleTranslationChange(locale.code, e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder={locale.placeholder}
+                  />
                 </div>
-              )}
-              <input
-                id="image-upload-input-edit"
-                type="file"
-                accept="image/png"
-                onChange={handleImageChange}
-                className="hidden"
-              />
+              ))}
             </div>
           </div>
 
-          {/* Translations - Dynamic based on LOCALES */}
-          {LOCALES.map((locale) => (
-            <div key={locale.code}>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Название ({locale.name}) *
-              </label>
-              <input
-                type="text"
-                value={formData.translations[locale.code] || ''}
-                onChange={(e) => handleTranslationChange(locale.code, e.target.value)}
-                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder={locale.placeholder}
-              />
-            </div>
-          ))}
-
           {/* Status - Toggle Switch */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3">
+            <label className="block text-xs font-medium text-gray-300 mb-2">
               Статус
             </label>
             <button
               type="button"
               onClick={() => setFormData({ ...formData, status: formData.status === 'active' ? 'inactive' : 'active' })}
-              className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+              className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
                 formData.status === 'active' ? 'bg-blue-600' : 'bg-gray-600'
               }`}
             >
               <span
-                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                  formData.status === 'active' ? 'translate-x-9' : 'translate-x-1'
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                  formData.status === 'active' ? 'translate-x-8' : 'translate-x-1'
                 }`}
               />
             </button>
-            <span className="ml-3 text-sm text-gray-400">
+            <span className="ml-3 text-xs text-gray-400">
               {formData.status === 'active' ? 'Активна' : 'Неактивна'}
             </span>
           </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Package, 
@@ -13,6 +14,7 @@ import {
   Bell,
   Search,
   ChevronRight,
+  ChevronLeft,
   Clock,
   TrendingUp,
   LayoutDashboard,
@@ -32,6 +34,7 @@ interface AdminDashboardClientProps {
 
 export default function AdminDashboardClient({ user }: AdminDashboardClientProps) {
   const router = useRouter();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -85,12 +88,12 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
   ];
 
   const quickActions = [
-    { title: 'Добавить филиал', desc: 'Создать новый филиал магазина', icon: MapPin },
-    { title: 'Управление филиалами', desc: 'Просмотр и редактирование филиалов', icon: MapPin },
-    { title: 'Управление заказами', desc: 'Просмотр и обработка заказов', icon: ShoppingCart },
-    { title: 'Управление пользователями', desc: 'Просмотр и редактирование пользователей', icon: Users },
-    { title: 'Отчеты', desc: 'Аналитика и статистика', icon: FileText },
-    { title: 'Настройки системы', desc: 'Конфигурация и параметры', icon: Settings },
+    { title: 'Добавить филиал', desc: 'Создать новый филиал магазина', icon: MapPin, href: '/admin/branches' },
+    { title: 'Управление филиалами', desc: 'Просмотр и редактирование филиалов', icon: MapPin, href: '/admin/branches' },
+    { title: 'Управление заказами', desc: 'Просмотр и обработка заказов', icon: ShoppingCart, href: '#' },
+    { title: 'Управление пользователями', desc: 'Просмотр и редактирование пользователей', icon: Users, href: '/admin/users' },
+    { title: 'Отчеты', desc: 'Аналитика и статистика', icon: FileText, href: '#' },
+    { title: 'Настройки системы', desc: 'Конфигурация и параметры', icon: Settings, href: '/admin/settings' },
   ];
 
   const recentOrders = [
@@ -165,11 +168,18 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
 
       <div className="flex pt-[73px]">
         {/* Sidebar */}
-        <aside className="w-72 p-4 pb-4 flex flex-col sticky top-[73px] h-fit z-40">
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[73px] self-start`}>
           {/* Main Navigation Card */}
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
-            <div className="flex items-center justify-between mb-4 px-2">
-              <span className="text-sm font-semibold text-gray-400">Навигация</span>
+            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
+              {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-400">Навигация</span>}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="p-2 hover:bg-[#2a3347] rounded-lg transition-all text-gray-400 hover:text-white"
+                title={sidebarCollapsed ? 'Развернуть' : 'Свернуть'}
+              >
+                {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              </button>
             </div>
             
             <nav className="space-y-1">
@@ -177,53 +187,57 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
                 <button
                   key={index}
                   onClick={() => item.href !== '#' && router.push(item.href)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                  className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
                     item.active 
                       ? 'bg-violet-500/15 text-violet-400' 
                       : 'text-gray-400 hover:bg-[#2a3347] hover:text-white'
                   }`}
+                  title={sidebarCollapsed ? item.title : ''}
                 >
                   <item.icon size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">{item.title}</span>
+                  {!sidebarCollapsed && <span className="text-sm font-medium">{item.title}</span>}
                 </button>
               ))}
             </nav>
           </div>
 
           {/* Quick Actions Card */}
-          <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
-            <div className="flex items-center gap-2 mb-4 px-2">
-              <span className="text-sm font-semibold text-gray-400">Быстрые действия</span>
+          {!sidebarCollapsed && (
+            <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
+              <div className="flex items-center gap-2 mb-4 px-2">
+                <span className="text-sm font-semibold text-gray-400">Быстрые действия</span>
+              </div>
+              
+              <div className="space-y-1">
+                <button
+                  onClick={() => router.push('/admin/branches')}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all"
+                >
+                  <MapPin size={18} className="flex-shrink-0" />
+                  <span className="text-sm font-medium">Филиалы</span>
+                </button>
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all">
+                  <FileText size={18} className="flex-shrink-0" />
+                  <span className="text-sm font-medium">Отчеты</span>
+                </button>
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all">
+                  <DollarSign size={18} className="flex-shrink-0" />
+                  <span className="text-sm font-medium">Финансы</span>
+                </button>
+              </div>
             </div>
-            
-            <div className="space-y-1">
-              <button
-                onClick={() => router.push('/admin/branches')}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all"
-              >
-                <MapPin size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Филиалы</span>
-              </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all">
-                <FileText size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Отчеты</span>
-              </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all">
-                <DollarSign size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">Финансы</span>
-              </button>
-            </div>
-          </div>
+          )}
 
           {/* Logout Button Card */}
-          <div className="mt-auto">
+          <div className="mt-4">
             <div className="bg-[#252d3d] rounded-2xl p-4">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-medium text-sm transition-all"
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl font-medium text-sm transition-all`}
+                title={sidebarCollapsed ? 'Выйти' : ''}
               >
                 <LogOut size={16} />
-                <span>Выйти</span>
+                {!sidebarCollapsed && <span>Выйти</span>}
               </button>
             </div>
           </div>
@@ -271,6 +285,7 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
                 {quickActions.map((action, index) => (
                   <button
                     key={index}
+                    onClick={() => action.href !== '#' && router.push(action.href)}
                     className="bg-[#1e2533] rounded-xl p-5 text-left transition-all hover:shadow-lg hover:shadow-violet-500/5 hover:scale-[1.02] group border border-gray-800/30 hover:border-violet-500/30"
                   >
                     <div className="flex items-start gap-4">

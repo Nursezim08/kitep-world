@@ -39,6 +39,30 @@ export async function GET(
             branchUsers: true,
           },
         },
+        orders: {
+          take: 10,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            id: true,
+            orderNumber: true,
+            total: true,
+            orderStatus: true,
+            createdAt: true,
+          },
+        },
+        branchUsers: {
+          select: {
+            branch: {
+              select: {
+                id: true,
+                name: true,
+                city: true,
+              },
+            },
+          },
+        },
       },
     });
 

@@ -1,105 +1,404 @@
 'use client';
 
-import { useState } from 'react';
-import { Package, Search, Filter, Plus, Edit, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Package, Search, Filter, Image as ImageIcon, Minus, Plus, Save, X } from 'lucide-react';
+import LightCustomSelect from '@/app/components/LightCustomSelect';
+
+interface ProductTranslation {
+  id: string;
+  locale: 'ru' | 'kg';
+  name: string;
+  description: string | null;
+}
+
+interface ProductImage {
+  id: string;
+  imageUrl: string;
+  status: string;
+}
+
+interface Category {
+  id: string;
+  translations: {
+    locale: string;
+    name: string;
+  }[];
+}
+
+interface Inventory {
+  quantity: number;
+}
+
+interface Product {
+  id: string;
+  sku: string;
+  categoryId: string;
+  brand: string | null;
+  price: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  translations: ProductTranslation[];
+  images: ProductImage[];
+  category: Category;
+  inventory: Inventory;
+  _count: {
+    reviews: number;
+  };
+}
 
 export default function ManagerProductsClient() {
+  const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [editingQuantity, setEditingQuantity] = useState<{ [key: string]: number }>({});
+  const [savingQuantity, setSavingQuantity] = useState<{ [key: string]: boolean }>({});
 
-  const products = [
-    {
-      id: '1',
-      name: 'Блокнот А5',
-      sku: 'BLK-A5-001',
-      category: 'Канцелярия',
-      price: '₸450',
-      stock: 45,
-      image: '/placeholder-product.jpg',
-    },
-    {
-      id: '2',
-      name: 'Ручка синяя',
-      sku: 'PEN-BLU-001',
-      category: 'Канцелярия',
-      price: '₸120',
-      stock: 156,
-      image: '/placeholder-product.jpg',
-    },
-    {
-      id: '3',
-      name: 'Манас - эпос',
-      sku: 'BOOK-MAN-001',
-      category: 'Книги',
-      price: '₸2,500',
-      stock: 23,
-      image: '/placeholder-product.jpg',
-    },
-  ];
+  useEffect(() => {
+    fetchCategories();
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [searchQuery, categoryFilter]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/admin/categories?parentId=null');
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+      
+      if (categoryFilter !== 'all') {
+        params.append('categoryId', categoryFilter);
+      }
+
+      const response = await fetch(`/api/manager/products?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data);
+      } else if (response.status === 401) {
+        window.location.href = '/manager/login';
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getProductName = (product: Product, locale: 'ru' | 'kg' = 'ru') => {
+    return product.translations.find((t) => t.locale === locale)?.name || 'Без названия';
+  };
+
+  const getCategoryName = (category: Category | undefined, locale: 'ru' | 'kg' = 'ru') => {
+    if (!category) return 'Без категории';
+    return category.translations.find((t) => t.locale === locale)?.name || 'Без категории';
+  };
+
+  const startEditingQuantity = (productId: string, currentQuantity: number) => {
+    setEditingQuantity({ ...editingQuantity, [productId]: currentQuantity });
+  };
+
+  const cancelEditingQuantity = (productId: string) => {
+    const newEditing = { ...editingQuantity };
+    delete newEditing[productId];
+    setEditingQuantity(newEditing);
+  };
+
+  const incrementQuantity = (productId: string) => {
+    setEditingQuantity({
+      ...editingQuantity,
+      [productId]: (editingQuantity[productId] || 0) + 1,
+    });
+  };
+
+  const decrementQuantity = (productId: string) => {
+    const current = editingQuantity[productId] || 0;
+    if (current > 0) {
+      setEditingQuantity({
+        ...editingQuantity,
+        [productId]: current - 1,
+      });
+    }
+  };
+
+  const saveQuantity = async (productId: string) => {
+    const newQuantity = editingQuantity[productId];
+    
+    if (newQuantity === undefined) return;
+
+    setSavingQuantity({ ...savingQuantity, [productId]: true });
+
+    try {
+      const response = await fetch(`/api/manager/products/${productId}/inventory`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: newQuantity }),
+      });
+
+      if (response.ok) {
+        // Обновляем локальное состояние
+        setProducts(products.map(p => 
+          p.id === productId 
+            ? { ...p, inventory: { quantity: newQuantity } }
+            : p
+        ));
+        
+        // Убираем из режима редактирования
+        cancelEditingQuantity(productId);
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Не удалось обновить количество');
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      alert('Произошла ошибка при обновлении количества');
+    } finally {
+      setSavingQuantity({ ...savingQuantity, [productId]: false });
+    }
+  };
 
   return (
     <div>
       <div className="mb-8">
         <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Товары</h2>
-        <p className="text-gray-600 font-medium">Управление товарами филиала</p>
+        <p className="text-gray-600 font-medium">Управление остатками товаров филиала</p>
       </div>
 
-      {/* Search & Actions */}
+      {/* Search & Filters */}
       <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Поиск товаров..."
+              placeholder="Поиск товаров по названию, SKU или бренду..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm"
             />
           </div>
-          <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium text-sm">
-            <Plus size={18} />
-            Добавить товар
-          </button>
+          <div className="w-full md:w-64">
+            <LightCustomSelect
+              value={categoryFilter}
+              onChange={(value) => setCategoryFilter(value)}
+              options={[
+                { value: 'all', label: 'Все категории' },
+                ...categories.map(cat => ({
+                  value: cat.id,
+                  label: getCategoryName(cat, 'ru')
+                }))
+              ]}
+            />
+          </div>
         </div>
       </div>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all group"
-          >
-            <div className="aspect-square bg-gray-100 flex items-center justify-center">
-              <Package className="text-gray-400" size={64} />
-            </div>
-            <div className="p-6">
-              <div className="mb-4">
-                <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                  {product.category}
-                </span>
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p className="mt-4 text-gray-600">Загрузка товаров...</p>
+        </div>
+      ) : products.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+          <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600 text-lg mb-2">
+            {searchQuery ? 'Товары не найдены' : 'Нет товаров'}
+          </p>
+          <p className="text-gray-500 text-sm">
+            {searchQuery ? 'Попробуйте изменить параметры поиска' : 'Товары появятся после добавления администратором'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {products.map((product) => {
+            const mainImage = product.images[0];
+            const isEditing = editingQuantity[product.id] !== undefined;
+            const isSaving = savingQuantity[product.id];
+            const currentQuantity = isEditing ? editingQuantity[product.id] : product.inventory.quantity;
+
+            return (
+              <div
+                key={product.id}
+                onClick={() => router.push(`/manager/products/${product.id}`)}
+                className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all group cursor-pointer"
+              >
+                {/* Image */}
+                <div className="aspect-square bg-gray-100 overflow-hidden relative">
+                  {mainImage ? (
+                    <img
+                      src={mainImage.imageUrl}
+                      alt={getProductName(product)}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon className="w-16 h-16 text-gray-400" />
+                    </div>
+                  )}
+                  
+                  {/* Status Badge */}
+                  <div className="absolute top-2 right-2">
+                    <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
+                      product.status === 'active' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-gray-100 text-gray-700'
+                    }`}>
+                      {product.status === 'active' ? 'Активен' : 'Неактивен'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-5">
+                  {/* Category */}
+                  <div className="mb-3">
+                    <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                      {getCategoryName(product.category, 'ru')}
+                    </span>
+                  </div>
+
+                  {/* Name */}
+                  <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-2">
+                    {getProductName(product, 'ru')}
+                  </h3>
+
+                  {/* SKU */}
+                  <div className="text-xs text-gray-500 mb-3">
+                    <p>SKU: {product.sku}</p>
+                  </div>
+
+                  {/* Price */}
+                  <div className="mb-4">
+                    <span className="text-2xl font-bold text-gray-900">
+                      {product.price.toLocaleString('ru-RU')} с
+                    </span>
+                  </div>
+
+                  {/* Quantity Control */}
+                  <div className="border-t border-gray-200 pt-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Остаток:</span>
+                      <span className={`text-sm font-bold ${
+                        currentQuantity === 0 ? 'text-red-600' :
+                        currentQuantity < 10 ? 'text-orange-600' :
+                        'text-green-600'
+                      }`}>
+                        {currentQuantity} шт
+                      </span>
+                    </div>
+
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        {/* Quantity Controls */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              decrementQuantity(product.id);
+                            }}
+                            disabled={isSaving}
+                            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all disabled:opacity-50"
+                          >
+                            <Minus size={16} className="text-gray-700" />
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={currentQuantity}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              setEditingQuantity({
+                                ...editingQuantity,
+                                [product.id]: Math.max(0, parseInt(e.target.value) || 0)
+                              });
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            disabled={isSaving}
+                            className="w-20 text-center px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                          />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              incrementQuantity(product.id);
+                            }}
+                            disabled={isSaving}
+                            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all disabled:opacity-50"
+                          >
+                            <Plus size={16} className="text-gray-700" />
+                          </button>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              saveQuantity(product.id);
+                            }}
+                            disabled={isSaving}
+                            className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all disabled:opacity-50 text-sm font-medium"
+                          >
+                            {isSaving ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span className="ml-2">Сохранение...</span>
+                              </>
+                            ) : (
+                              <span>Сохранить</span>
+                            )}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cancelEditingQuantity(product.id);
+                            }}
+                            disabled={isSaving}
+                            className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all disabled:opacity-50"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startEditingQuantity(product.id, product.inventory.quantity);
+                        }}
+                        className="w-full px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all text-sm font-medium"
+                      >
+                        Изменить количество
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">{product.name}</h3>
-              <p className="text-sm text-gray-500 mb-4">SKU: {product.sku}</p>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-2xl font-bold text-gray-900">{product.price}</span>
-                <span className="text-sm text-gray-600">
-                  Остаток: <span className="font-semibold">{product.stock}</span>
-                </span>
-              </div>
-              <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all">
-                  <Edit size={16} />
-                  Редактировать
-                </button>
-                <button className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

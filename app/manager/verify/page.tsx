@@ -3,7 +3,14 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { FiUser, FiMail } from 'react-icons/fi';
+import { FiUser } from 'react-icons/fi';
+import AdminToast, { ToastType } from '@/app/components/AdminToast';
+
+interface Toast {
+  id: number;
+  message: string;
+  type: ToastType;
+}
 
 function VerifyContent() {
   const router = useRouter();
@@ -15,13 +22,29 @@ function VerifyContent() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [resendSuccess, setResendSuccess] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
   useEffect(() => {
     if (!userId || !branchId) {
       router.push('/manager/login');
+    } else {
+      // Показываем уведомление о том, что код отправлен
+      showToast('Код подтверждения отправлен на ваш email', 'info');
     }
   }, [userId, branchId, router]);
+
+  const showToast = (message: string, type: ToastType = 'info') => {
+    const newToast: Toast = {
+      id: Date.now(),
+      message,
+      type,
+    };
+    setToasts((prev) => [...prev, newToast]);
+  };
+
+  const removeToast = (id: number) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
 
   const errorMessages: Record<string, string> = {
     invalidCode: 'Неверный код подтверждения',
@@ -40,7 +63,6 @@ function VerifyContent() {
     const value = e.target.value.replace(/\D/g, '').slice(0, 6);
     setCode(value);
     setError('');
-    setResendSuccess(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,7 +105,6 @@ function VerifyContent() {
   const handleResendCode = async () => {
     setResending(true);
     setError('');
-    setResendSuccess(false);
 
     try {
       const response = await fetch('/api/manager/resend-code', {
@@ -97,14 +118,14 @@ function VerifyContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(errorMessages[data.error] || data.error || 'Ошибка при отправке кода');
+        showToast(errorMessages[data.error] || data.error || 'Ошибка при отправке кода', 'error');
         return;
       }
 
-      setResendSuccess(true);
+      showToast('Код отправлен повторно на ваш email', 'success');
       setCode('');
     } catch (err) {
-      setError(errorMessages.connectionError);
+      showToast(errorMessages.connectionError, 'error');
     } finally {
       setResending(false);
     }
@@ -113,6 +134,25 @@ function VerifyContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-4">
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+      
+      {/* Toast Container */}
+      <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2">
+        {toasts.map((toast, index) => (
+          <div
+            key={toast.id}
+            style={{
+              transform: `translateY(${index * 80}px)`,
+              transition: 'transform 0.3s ease-out',
+            }}
+          >
+            <AdminToast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          </div>
+        ))}
+      </div>
       
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 relative border border-gray-200">
         {/* Logo */}
@@ -129,32 +169,13 @@ function VerifyContent() {
 
         <div className="text-center mb-6">
           <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Подтверждение входа</h1>
-          <p className="text-gray-500 font-medium text-sm">Код отправлен на email</p>
+          <p className="text-gray-500 font-medium text-sm">Введите код из email</p>
         </div>
-
-        {/* Email иконка */}
-        <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <FiMail className="text-white" size={36} />
-          </div>
-        </div>
-
-        <p className="text-center text-gray-600 text-sm mb-6">
-          Введите 6-значный код, который был отправлен на ваш email
-        </p>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
             <p className="text-red-600 text-sm font-medium">
               {error}
-            </p>
-          </div>
-        )}
-
-        {resendSuccess && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-            <p className="text-blue-600 text-sm font-medium">
-              Код отправлен повторно
             </p>
           </div>
         )}

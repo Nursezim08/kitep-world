@@ -311,7 +311,7 @@ export default function AddCategoryModal({
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={handleClick}
-                  className={`w-full aspect-square bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer transition-all border-2 border-dashed ${
+                  className={`w-full h-[136px] bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer transition-all border-2 border-dashed ${
                     isDragging
                       ? 'border-blue-500 bg-blue-500/10'
                       : imagePreview
@@ -327,7 +327,7 @@ export default function AddCategoryModal({
                     />
                   ) : (
                     <div className="text-center px-2">
-                      <Upload className="w-6 h-6 text-gray-500 mx-auto mb-1" />
+                      <Upload className="w-5 h-5 text-gray-500 mx-auto mb-1" />
                       <p className="text-gray-400 text-[10px] mb-0.5">
                         {isDragging ? 'Отпустите' : 'Перетащите'}
                       </p>
@@ -350,17 +350,17 @@ export default function AddCategoryModal({
               </div>
 
               {/* Right Column: Translations - 2 колонки */}
-              <div className="md:col-span-2 flex flex-col justify-center space-y-3">
-                {LOCALES.map((locale) => (
-                  <div key={locale.code}>
-                    <label className="block text-[11px] font-medium text-gray-300 mb-1">
+              <div className="md:col-span-2">
+                {LOCALES.map((locale, index) => (
+                  <div key={locale.code} className={index === 1 ? 'mt-10' : ''}>
+                    <label className="block text-xs font-medium text-gray-300 mb-1.5">
                       Название ({locale.name}) *
                     </label>
                     <input
                       type="text"
                       value={formData.translations[locale.code as keyof typeof formData.translations]}
                       onChange={(e) => handleTranslationChange(locale.code, e.target.value)}
-                      className="w-full px-3 py-1.5 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder={locale.placeholder}
                     />
                   </div>

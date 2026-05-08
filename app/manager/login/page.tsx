@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
@@ -16,6 +16,30 @@ export default function ManagerLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Проверяем авторизацию при загрузке страницы
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          // Если пользователь авторизован и является менеджером, перенаправляем на дашборд
+          if (data.user && data.user.role === 'manager') {
+            router.push('/manager/dashboard');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   const errorMessages: Record<string, string> = {
     invalidCredentials: 'Неверный email или пароль',
@@ -64,6 +88,18 @@ export default function ManagerLoginPage() {
       setLoading(false);
     }
   };
+
+  // Показываем загрузку пока проверяем авторизацию
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Проверка авторизации...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-4">

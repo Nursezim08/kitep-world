@@ -3,8 +3,14 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Toast from '@/app/components/Toast';
+import AdminToast, { ToastType } from '@/app/components/AdminToast';
 import { useTranslation } from '@/app/i18n/client';
+
+interface Toast {
+  id: number;
+  message: string;
+  type: ToastType;
+}
 
 function VerifyResetCodeForm() {
   const router = useRouter();
@@ -15,15 +21,29 @@ function VerifyResetCodeForm() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
   useEffect(() => {
     if (!email) {
       router.push('/forgot-password');
+    } else {
+      // Показываем уведомление о том, что код отправлен
+      showToast(t('resetPassword.verify.codeSent') || 'Код подтверждения отправлен на ваш email', 'info');
     }
   }, [email, router]);
+
+  const showToast = (message: string, type: ToastType = 'info') => {
+    const newToast: Toast = {
+      id: Date.now(),
+      message,
+      type,
+    };
+    setToasts((prev) => [...prev, newToast]);
+  };
+
+  const removeToast = (id: number) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
 
   const handleChange = (index: number, value: string) => {
     if (value.length > 1) return;
@@ -86,24 +106,18 @@ function VerifyResetCodeForm() {
 
       if (!response.ok) {
         setError(data.error || t('errors.invalidCode'));
-        setToastType('error');
-        setToastMessage(data.error || t('errors.invalidCode'));
-        setShowToast(true);
+        showToast(data.error || t('errors.invalidCode'), 'error');
         return;
       }
 
-      setToastType('success');
-      setToastMessage(t('resetPassword.verify.codeConfirmed'));
-      setShowToast(true);
+      showToast(t('resetPassword.verify.codeConfirmed') || 'Код подтвержден', 'success');
       
       setTimeout(() => {
         router.push(`/reset-password/new?email=${encodeURIComponent(email!)}&code=${fullCode}`);
       }, 1500);
     } catch (err) {
       setError(t('errors.connectionError'));
-      setToastType('error');
-      setToastMessage(t('errors.connectionError'));
-      setShowToast(true);
+      showToast(t('errors.connectionError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -117,14 +131,24 @@ function VerifyResetCodeForm() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-violet-100 to-violet-50 px-4 py-4">
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
       
-      {showToast && (
-        <Toast
-          message={toastMessage}
-          type={toastType}
-          duration={3000}
-          onClose={() => setShowToast(false)}
-        />
-      )}
+      {/* Toast Container */}
+      <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2">
+        {toasts.map((toast, index) => (
+          <div
+            key={toast.id}
+            style={{
+              transform: `translateY(${index * 80}px)`,
+              transition: 'transform 0.3s ease-out',
+            }}
+          >
+            <AdminToast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          </div>
+        ))}
+      </div>
 
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-5 relative">
         {/* Logo */}

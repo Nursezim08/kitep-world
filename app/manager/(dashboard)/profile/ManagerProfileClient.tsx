@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Building, Save } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { User, Mail, Phone, MapPin, Building, LogOut } from 'lucide-react';
 
 export default function ManagerProfileClient() {
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [branch, setBranch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -32,6 +35,20 @@ export default function ManagerProfileClient() {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+      router.push('/manager/login');
+      router.refresh();
+    } catch (error) {
+      console.error('Logout error:', error);
+      setLoggingOut(false);
     }
   };
 
@@ -156,9 +173,13 @@ export default function ManagerProfileClient() {
             )}
 
             <div className="pt-4">
-              <button className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium text-sm shadow-lg shadow-blue-500/30">
-                <Save size={18} />
-                Сохранить изменения
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-all font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <LogOut size={18} />
+                {loggingOut ? 'Выход...' : 'Выйти'}
               </button>
             </div>
           </div>
