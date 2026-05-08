@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ArrowRight, RefreshCw, AlertCircle, MoveRight } from 'lucide-react';
+import { X, RefreshCw, AlertCircle, MoveRight, CheckCircle } from 'lucide-react';
 import CustomSelect from '@/app/components/CustomSelect';
 import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
@@ -39,18 +39,27 @@ export default function ReassignManagersModal({
   const [toBranchId, setToBranchId] = useState('');
   const [selectedManagerIds, setSelectedManagerIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [animatingManagerIds, setAnimatingManagerIds] = useState<string[]>([]);
+  const [pendingReassignments, setPendingReassignments] = useState<{
+    fromBranchId: string;
+    toBranchId: string;
+    managerIds: string[];
+  }[]>([]);
 
   // Блокируем скролл страницы при открытии модального окна
   useBlockScroll(true);
   const [error, setError] = useState('');
 
+  // Локальное состояние для визуального отображения
+  const [visualBranches, setVisualBranches] = useState(branches);
+
   // Получить менеджеров выбранного филиала
   const fromBranchManagers = fromBranchId
-    ? branches.find(b => b.id === fromBranchId)?.branchUsers.map(bu => bu.user) || []
+    ? visualBranches.find(b => b.id === fromBranchId)?.branchUsers.map(bu => bu.user) || []
     : [];
 
   const toBranchManagers = toBranchId
-    ? branches.find(b => b.id === toBranchId)?.branchUsers.map(bu => bu.user) || []
+    ? visualBranches.find(b => b.id === toBranchId)?.branchUsers.map(bu => bu.user) || []
     : [];
 
   // Сброс выбранных менеджеров при смене филиала
@@ -67,8 +76,8 @@ export default function ReassignManagersModal({
     );
   };
 
-  // Выполнить переназначение
-  const handleReassign = async () => {
+  // Визуальное переназначение при клике на стрелку (без API запроса)
+  const handleVisualReassign = async () => {
     if (!fromBranchId || !toBranchId) {
       setError('Выберите оба филиала');
       return;
@@ -79,30 +88,88 @@ export default function ReassignManagersModal({
       return;
     }
 
+    setError('');
+    
+    // Запускаем анимацию для выбранных менеджеров
+    setAnimatingManagerIds(selectedManagerIds);
+
+    // Сохраняем информацию о переназначении для последующего сохранения
+    setPendingReassignments(prev => [
+      ...prev,
+      {
+        fromBranchId,
+        toBranchId,
+        managerIds: [...selectedManagerIds],
+      },
+    ]);
+
+    // Ждем завершения анимации (800ms)
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Обновляем визуальное состояние филиалов
+    setVisualBranches(prevBranches => {
+      return prevBranches.map(branch => {
+        if (branch.id === fromBranchId) {
+          // Удаляем менеджеров из исходного филиала
+          return {
+            ...branch,
+            branchUsers: branch.branchUsers.filter(
+              bu => !selectedManagerIds.includes(bu.user.id)
+            ),
+          };
+        } else if (branch.id === toBranchId) {
+          // Добавляем менеджеров в целевой филиал
+          const managersToAdd = fromBranchManagers.filter(m =>
+            selectedManagerIds.includes(m.id)
+          );
+          return {
+            ...branch,
+            branchUsers: [
+              ...branch.branchUsers,
+              ...managersToAdd.map(m => ({ user: m })),
+            ],
+          };
+        }
+        return branch;
+      });
+    });
+    
+    // Очищаем состояние
+    setSelectedManagerIds([]);
+    setAnimatingManagerIds([]);
+  };
+
+  // Сохранить все переназначения (реальный API запрос)
+  const handleSave = async () => {
+    if (pendingReassignments.length === 0) {
+      onClose();
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/api/admin/branches/reassign-managers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fromBranchId,
-          toBranchId,
-          managerIds: selectedManagerIds,
-        }),
-      });
+      // Выполняем все переназначения последовательно
+      for (const reassignment of pendingReassignments) {
+        const response = await fetch('/api/admin/branches/reassign-managers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reassignment),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok) {
-        onSuccess();
-      } else {
-        setError(data.error || 'Ошибка при переназначении менеджеров');
+        if (!response.ok) {
+          throw new Error(data.error || 'Ошибка при переназначении менеджеров');
+        }
       }
+
+      // Все переназначения успешны - закрываем модальное окно и обновляем данные
+      onSuccess();
     } catch (error) {
       console.error('Error reassigning managers:', error);
-      setError('Ошибка при переназначении менеджеров');
+      setError(error instanceof Error ? error.message : 'Ошибка при переназначении менеджеров');
     } finally {
       setLoading(false);
     }
@@ -190,6 +257,24 @@ export default function ReassignManagersModal({
           </div>
         )}
 
+        {/* Информация о незафиксированных изменениях */}
+        {pendingReassignments.length > 0 && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="text-blue-400 flex-shrink-0 mt-0.5" size={18} />
+              <div>
+                <p className="text-blue-300 text-sm font-semibold mb-1">
+                  Незафиксированные изменения
+                </p>
+                <p className="text-blue-300/80 text-xs">
+                  Переназначено менеджеров: {pendingReassignments.reduce((sum, r) => sum + r.managerIds.length, 0)}. 
+                  Нажмите "Сохранить", чтобы применить изменения.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Списки менеджеров */}
         {fromBranchId && toBranchId && (
           <div className="mb-6">
@@ -208,50 +293,64 @@ export default function ReassignManagersModal({
                   <p className="text-sm text-gray-500 text-center py-4">Нет менеджеров</p>
                 ) : (
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {fromBranchManagers.map((manager) => (
-                      <button
-                        key={manager.id}
-                        onClick={() => toggleManager(manager.id)}
-                        className={`w-full p-3 rounded-lg transition-all text-left ${
-                          selectedManagerIds.includes(manager.id)
-                            ? 'bg-blue-500/20 border-2 border-blue-500/50'
-                            : 'bg-[#252d3d] border-2 border-transparent hover:border-gray-700/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                            {manager.fullName.charAt(0)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">
-                              {manager.fullName}
-                            </p>
-                            <p className="text-xs text-gray-500 truncate">{manager.email}</p>
-                          </div>
-                          {selectedManagerIds.includes(manager.id) && (
-                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
+                    {fromBranchManagers.map((manager) => {
+                      const isAnimating = animatingManagerIds.includes(manager.id);
+                      return (
+                        <button
+                          key={manager.id}
+                          onClick={() => !isAnimating && toggleManager(manager.id)}
+                          disabled={isAnimating}
+                          className={`w-full p-3 rounded-lg transition-all text-left ${
+                            isAnimating
+                              ? 'animate-slide-out-right opacity-0'
+                              : selectedManagerIds.includes(manager.id)
+                              ? 'bg-blue-500/20 border-2 border-blue-500/50'
+                              : 'bg-[#252d3d] border-2 border-transparent hover:border-gray-700/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                              {manager.fullName.charAt(0)}
                             </div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-white truncate">
+                                {manager.fullName}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">{manager.email}</p>
+                            </div>
+                            {selectedManagerIds.includes(manager.id) && !isAnimating && (
+                              <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
-              {/* Стрелка */}
+              {/* Стрелка с кнопкой переназначения */}
               <div className="flex items-center justify-center">
-                <div className="flex flex-col items-center gap-2">
-                  <MoveRight className="text-blue-400" size={32} />
+                <button
+                  onClick={handleVisualReassign}
+                  disabled={loading || selectedManagerIds.length === 0}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all group"
+                  title="Переместить выбранных менеджеров"
+                >
+                  <MoveRight 
+                    className="text-blue-400 transition-transform group-hover:translate-x-1" 
+                    size={32} 
+                  />
                   {selectedManagerIds.length > 0 && (
                     <span className="text-xs font-semibold text-blue-400">
-                      {selectedManagerIds.length} выбрано
+                      Переместить {selectedManagerIds.length}
                     </span>
                   )}
-                </div>
+                </button>
               </div>
 
               {/* Список менеджеров целевого филиала */}
@@ -260,10 +359,34 @@ export default function ReassignManagersModal({
                   {branches.find(b => b.id === toBranchId)?.name}
                 </h5>
                 
-                {toBranchManagers.length === 0 ? (
+                {toBranchManagers.length === 0 && animatingManagerIds.length === 0 ? (
                   <p className="text-sm text-gray-500 text-center py-4">Нет менеджеров</p>
                 ) : (
                   <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {/* Показываем анимирующихся менеджеров */}
+                    {animatingManagerIds.map((managerId) => {
+                      const manager = fromBranchManagers.find(m => m.id === managerId);
+                      if (!manager) return null;
+                      return (
+                        <div
+                          key={`animating-${manager.id}`}
+                          className="p-3 bg-[#252d3d] rounded-lg border border-gray-800/30 animate-slide-in-left"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-violet-600 rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                              {manager.fullName.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-white truncate">
+                                {manager.fullName}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">{manager.email}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {/* Показываем существующих менеджеров */}
                     {toBranchManagers.map((manager) => (
                       <div
                         key={manager.id}
@@ -299,20 +422,26 @@ export default function ReassignManagersModal({
             Отмена
           </button>
           <button
-            onClick={handleReassign}
-            disabled={loading || !fromBranchId || !toBranchId || selectedManagerIds.length === 0}
-            className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+            onClick={handleSave}
+            disabled={loading}
+            className={`flex-1 px-4 py-3 ${
+              pendingReassignments.length > 0
+                ? 'bg-green-500 hover:bg-green-600'
+                : 'bg-gray-700 hover:bg-gray-600'
+            } disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2`}
           >
             {loading ? (
               <>
                 <RefreshCw className="animate-spin" size={16} />
-                Переназначение...
+                Сохранение...
+              </>
+            ) : pendingReassignments.length > 0 ? (
+              <>
+                <CheckCircle size={16} />
+                Сохранить изменения
               </>
             ) : (
-              <>
-                <RefreshCw size={16} />
-                Переназначить ({selectedManagerIds.length})
-              </>
+              'Закрыть'
             )}
           </button>
         </div>
