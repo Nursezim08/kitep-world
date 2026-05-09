@@ -53,10 +53,10 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
     { title: 'Пользователи', icon: Users, active: false, href: '/admin/users' },
     { title: 'Категории', icon: FolderTree, active: false, href: '/admin/categories' },
     { title: 'Товары', icon: Package, active: false, href: '/admin/products' },
-    { title: 'Заказы', icon: ShoppingCart, active: false, href: '#' },
+    { title: 'Заказы', icon: ShoppingCart, active: false, href: '/admin/orders' },
     { title: 'Филиалы', icon: MapPin, active: false, href: '/admin/branches' },
     { title: 'Менеджеры', icon: Users, active: false, href: '/admin/managers' },
-    { title: 'Отчеты', icon: FileText, active: false, href: '#' },
+    { title: 'Отчеты', icon: FileText, active: false, href: '/admin/reports' },
     { title: 'Настройки', icon: Settings, active: false, href: '/admin/settings' },
   ];
 
@@ -90,9 +90,9 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
   const quickActions = [
     { title: 'Добавить филиал', desc: 'Создать новый филиал магазина', icon: MapPin, href: '/admin/branches' },
     { title: 'Управление филиалами', desc: 'Просмотр и редактирование филиалов', icon: MapPin, href: '/admin/branches' },
-    { title: 'Управление заказами', desc: 'Просмотр и обработка заказов', icon: ShoppingCart, href: '#' },
+    { title: 'Управление заказами', desc: 'Просмотр и обработка заказов', icon: ShoppingCart, href: '/admin/orders' },
     { title: 'Управление пользователями', desc: 'Просмотр и редактирование пользователей', icon: Users, href: '/admin/users' },
-    { title: 'Отчеты', desc: 'Аналитика и статистика', icon: FileText, href: '#' },
+    { title: 'Отчеты', desc: 'Аналитика и статистика', icon: FileText, href: '/admin/reports' },
     { title: 'Настройки системы', desc: 'Конфигурация и параметры', icon: Settings, href: '/admin/settings' },
   ];
 
@@ -219,7 +219,10 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
                   <MapPin size={18} className="flex-shrink-0" />
                   <span className="text-sm font-medium">Филиалы</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all">
+                <button
+                  onClick={() => router.push('/admin/reports')}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all"
+                >
                   <FileText size={18} className="flex-shrink-0" />
                   <span className="text-sm font-medium">Отчеты</span>
                 </button>
@@ -312,7 +315,10 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
               <div className="lg:col-span-2 bg-[#252d3d] rounded-2xl p-6 border border-gray-800/50">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-white">Последние заказы</h3>
-                  <button className="text-violet-400 hover:text-violet-300 font-semibold text-sm flex items-center gap-1">
+                  <button
+                    onClick={() => router.push('/admin/orders')}
+                    className="text-violet-400 hover:text-violet-300 font-semibold text-sm flex items-center gap-1"
+                  >
                     Все заказы
                     <ChevronRight size={16} />
                   </button>

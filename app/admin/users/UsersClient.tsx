@@ -373,7 +373,6 @@ export default function UsersClient({ user }: UsersClientProps) {
                         onChange={(value) => setRoleFilter(value)}
                         options={[
                           { value: 'all', label: 'Все роли' },
-                          { value: 'admin', label: 'Администраторы' },
                           { value: 'manager', label: 'Менеджеры' },
                           { value: 'user', label: 'Пользователи' },
                         ]}
@@ -405,7 +404,7 @@ export default function UsersClient({ user }: UsersClientProps) {
                       <div className="flex flex-wrap gap-2">
                         {roleFilter !== 'all' && (
                           <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-500/15 text-violet-400 rounded-lg text-sm font-medium">
-                            Роль: {roleFilter === 'admin' ? 'Администраторы' : roleFilter === 'manager' ? 'Менеджеры' : 'Пользователи'}
+                            Роль: {roleFilter === 'manager' ? 'Менеджеры' : 'Пользователи'}
                             <button
                               onClick={() => setRoleFilter('all')}
                               className="hover:bg-violet-500/20 rounded p-0.5 transition-colors"

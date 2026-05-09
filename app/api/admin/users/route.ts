@@ -20,7 +20,12 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get('role') || '';
     const status = searchParams.get('status') || '';
 
-    const where: any = {};
+    const where: any = {
+      // Исключаем текущего администратора из списка
+      id: {
+        not: user.userId,
+      },
+    };
 
     // Поиск по имени или email
     if (search) {
