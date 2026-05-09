@@ -19,58 +19,58 @@ export default function ManagerInventoryClient() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Склад</h2>
-        <p className="text-gray-600 font-medium">Управление остатками товаров</p>
+      <div className="mb-6 sm:mb-8 text-center">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">Склад</h2>
+        <p className="text-sm sm:text-base text-gray-600 font-medium">Управление остатками товаров</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all"
+            className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-all"
           >
-            <div className={`w-12 h-12 bg-${stat.color}-100 rounded-xl flex items-center justify-center mb-4`}>
-              <stat.icon className={`text-${stat.color}-600`} size={24} />
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-${stat.color}-100 rounded-xl flex items-center justify-center mb-3 sm:mb-4`}>
+              <stat.icon className={`text-${stat.color}-600`} size={20} strokeWidth={2} />
             </div>
-            <p className="text-gray-600 text-sm font-medium mb-1">{stat.label}</p>
-            <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+            <p className="text-gray-600 text-xs sm:text-sm font-medium mb-1">{stat.label}</p>
+            <p className="text-xl sm:text-3xl font-bold text-gray-900">{stat.value}</p>
           </div>
         ))}
       </div>
 
       {/* Low Stock Alert */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-            <AlertTriangle className="text-orange-600" size={24} />
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <AlertTriangle className="text-orange-600" size={20} strokeWidth={2} />
           </div>
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">Товары с низким остатком</h3>
-            <p className="text-sm text-gray-600">Требуется пополнение</p>
+          <div className="min-w-0">
+            <h3 className="text-base sm:text-xl font-bold text-gray-900">Товары с низким остатком</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Требуется пополнение</p>
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {lowStockItems.map((item, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-4 bg-orange-50 rounded-xl border border-orange-200"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-orange-50 rounded-xl border border-orange-200 gap-3"
             >
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h4 className="text-lg font-semibold text-gray-900">{item.name}</h4>
-                  <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                  <h4 className="text-sm sm:text-lg font-semibold text-gray-900">{item.name}</h4>
+                  <span className="text-[10px] sm:text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded">
                     {item.sku}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-3">{item.category}</p>
-                <div className="flex items-center gap-4">
+                <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3">{item.category}</p>
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div className="flex-1 max-w-xs">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-gray-600">Остаток</span>
-                      <span className="text-xs font-bold text-orange-600">
+                      <span className="text-[10px] sm:text-xs font-medium text-gray-600">Остаток</span>
+                      <span className="text-[10px] sm:text-xs font-bold text-orange-600">
                         {item.current}/{item.min}
                       </span>
                     </div>
@@ -83,7 +83,7 @@ export default function ManagerInventoryClient() {
                   </div>
                 </div>
               </div>
-              <button className="ml-4 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all font-medium text-sm">
+              <button className="w-full sm:w-auto sm:ml-4 px-4 sm:px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all font-medium text-xs sm:text-sm whitespace-nowrap">
                 Заказать
               </button>
             </div>

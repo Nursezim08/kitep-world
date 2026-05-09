@@ -120,63 +120,66 @@ export default function ManagerOrdersClient() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8">
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Заказы</h2>
-        <p className="text-gray-600 font-medium">Управление заказами филиала</p>
+      <div className="mb-6 sm:mb-8 text-center">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">Заказы</h2>
+        <p className="text-sm sm:text-base text-gray-600 font-medium">Управление заказами филиала</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all"
+            className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 hover:shadow-lg transition-all"
           >
-            <p className="text-gray-600 text-sm font-medium mb-1">{stat.label}</p>
-            <p className={`text-3xl font-bold text-${stat.color}-600`}>{stat.value}</p>
+            <p className="text-gray-600 text-xs sm:text-sm font-medium mb-1">{stat.label}</p>
+            <p className={`text-xl sm:text-3xl font-bold text-${stat.color}-600`}>{stat.value}</p>
           </div>
         ))}
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm mb-4 sm:mb-6">
+        <div className="flex flex-col gap-3 sm:gap-4">
           {/* Search */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Поиск по номеру заказа, клиенту..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-sm"
+              className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-xs sm:text-sm"
             />
           </div>
 
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-sm font-medium"
-          >
-            <option value="all">Все статусы</option>
-            <option value="pending">Ожидает</option>
-            <option value="processing">В обработке</option>
-            <option value="completed">Завершен</option>
-            <option value="cancelled">Отменен</option>
-          </select>
+          <div className="flex gap-3 sm:gap-4">
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-xs sm:text-sm font-medium"
+            >
+              <option value="all">Все статусы</option>
+              <option value="pending">Ожидает</option>
+              <option value="processing">В обработке</option>
+              <option value="completed">Завершен</option>
+              <option value="cancelled">Отменен</option>
+            </select>
 
-          {/* Export Button */}
-          <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium text-sm shadow-lg shadow-blue-500/30">
-            <Download size={18} />
-            Экспорт
-          </button>
+            {/* Export Button */}
+            <button className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium text-xs sm:text-sm shadow-lg shadow-blue-500/30 whitespace-nowrap">
+              <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="hidden sm:inline">Экспорт</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Orders Table */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -254,14 +257,67 @@ export default function ManagerOrdersClient() {
           </table>
         </div>
 
+        {/* Mobile Cards */}
+        <div className="lg:hidden divide-y divide-gray-200">
+          {orders.map((order, index) => (
+            <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <ShoppingCart className="text-white" size={16} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{order.id}</p>
+                    <p className="text-xs text-gray-500">{order.paymentMethod}</p>
+                  </div>
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border ${getStatusColor(
+                    order.status
+                  )}`}
+                >
+                  {getStatusIcon(order.status)}
+                  {order.statusText}
+                </span>
+              </div>
+              
+              <div className="space-y-2 mb-3">
+                <div>
+                  <p className="text-xs text-gray-500">Клиент</p>
+                  <p className="text-sm font-medium text-gray-900">{order.customer}</p>
+                  <p className="text-xs text-gray-500">{order.phone}</p>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500">Товары</p>
+                    <p className="text-sm font-medium text-gray-900">{order.items} шт</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Сумма</p>
+                    <p className="text-sm font-bold text-gray-900">{order.total}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <span className="text-xs text-gray-500">{order.date}</span>
+                <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600">
+                  <Eye size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <p className="text-sm text-gray-600">Показано 1-5 из 156 заказов</p>
+        <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+          <p className="text-xs sm:text-sm text-gray-600">Показано 1-5 из 156 заказов</p>
           <div className="flex gap-2">
-            <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+            <button className="px-3 sm:px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs sm:text-sm font-medium">
               Назад
             </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+            <button className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
               Далее
             </button>
           </div>

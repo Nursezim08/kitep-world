@@ -69,59 +69,55 @@ export default function ManagerLayout({ user, children }: ManagerLayoutProps) {
       title: 'Дашборд',
       icon: LayoutDashboard,
       href: '/manager/dashboard',
+      shortTitle: 'Главная',
     },
     {
       title: 'Заказы',
       icon: ShoppingCart,
       href: '/manager/orders',
+      shortTitle: 'Заказы',
     },
     {
       title: 'Товары',
       icon: Package,
       href: '/manager/products',
+      shortTitle: 'Товары',
     },
     {
       title: 'Отчеты',
       icon: FileText,
       href: '/manager/reports',
+      shortTitle: 'Отчеты',
     },
     {
       title: 'Профиль',
       icon: User,
       href: '/manager/profile',
+      shortTitle: 'Профиль',
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      {/* Header - скрыт на мобильных */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo & Menu Toggle */}
+            {/* Logo */}
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-              </button>
-              
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                  <Package className="text-white" size={20} />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-gray-900">
-                    Nur-Kitep
-                  </h1>
-                  <p className="text-xs text-gray-500">Панель менеджера</p>
-                </div>
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <Package className="text-white" size={20} />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">
+                  Nur-Kitep
+                </h1>
+                <p className="text-xs text-gray-500">Панель менеджера</p>
               </div>
             </div>
 
             {/* Search */}
-            <div className="hidden md:flex items-center gap-4 flex-1 max-w-xl mx-8">
+            <div className="flex items-center gap-4 flex-1 max-w-xl mx-8">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -146,7 +142,7 @@ export default function ManagerLayout({ user, children }: ManagerLayoutProps) {
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block text-left">
+                <div className="text-left">
                   <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
                   <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
@@ -156,13 +152,9 @@ export default function ManagerLayout({ user, children }: ManagerLayoutProps) {
         </div>
       </header>
 
-      <div className="flex pt-[73px]">
-        {/* Sidebar */}
-        <aside
-          className={`fixed lg:sticky top-[73px] left-0 h-[calc(100vh-73px)] w-72 p-4 flex flex-col z-40 transition-transform duration-300 ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-          }`}
-        >
+      <div className="flex lg:pt-[73px]">
+        {/* Sidebar - только для десктопа */}
+        <aside className="hidden lg:block sticky top-[73px] h-[calc(100vh-73px)] w-72 p-4 flex-col">
           {/* Main Navigation Card */}
           <div className="bg-white rounded-2xl p-4 mb-4 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between mb-4 px-2">
@@ -178,10 +170,7 @@ export default function ManagerLayout({ user, children }: ManagerLayoutProps) {
                 return (
                   <button
                     key={index}
-                    onClick={() => {
-                      router.push(item.href);
-                      setSidebarOpen(false);
-                    }}
+                    onClick={() => router.push(item.href)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                       isActive
                         ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
@@ -218,19 +207,34 @@ export default function ManagerLayout({ user, children }: ManagerLayoutProps) {
           </div>
         </aside>
 
-        {/* Overlay for mobile */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/20 z-30 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
         {/* Main Content */}
         <div className="flex-1 min-w-0">
-          <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+          <main className="p-4 sm:p-6 lg:p-8 pt-12 sm:pt-12 lg:pt-8 pb-24 lg:pb-8">{children}</main>
         </div>
       </div>
+
+      {/* Bottom Navigation - только для мобильных и планшетов */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
+        <div className="grid grid-cols-5 h-16">
+          {menuItems.map((item, index) => {
+            const isActive = pathname === item.href;
+            return (
+              <button
+                key={index}
+                onClick={() => router.push(item.href)}
+                className={`flex flex-col items-center justify-center gap-1 transition-all ${
+                  isActive
+                    ? 'text-blue-600'
+                    : 'text-gray-500 hover:text-blue-600'
+                }`}
+              >
+                <item.icon size={20} className="flex-shrink-0" strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-medium">{item.shortTitle}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

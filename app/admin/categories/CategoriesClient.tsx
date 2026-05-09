@@ -340,7 +340,10 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-violet-500 rounded-full"></span>
               </button>
 
-              <div className="flex items-center gap-3 pl-3 border-l border-gray-700">
+              <button 
+                onClick={() => router.push('/admin/profile')}
+                className="flex items-center gap-3 pl-3 hover:bg-[#2a3347] rounded-xl transition-colors px-3 py-2"
+              >
                 <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                   {user.fullName.charAt(0)}
                 </div>
@@ -348,7 +351,7 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
                   <p className="text-sm font-semibold text-white">{user.fullName}</p>
                   <p className="text-xs text-gray-400">{user.email}</p>
                 </div>
-              </div>
+              </button>
             </div>
           </div>
         </div>

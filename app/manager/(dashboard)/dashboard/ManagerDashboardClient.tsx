@@ -169,78 +169,78 @@ export default function ManagerDashboardClient() {
   return (
     <div>
       {/* Welcome Section */}
-      <div className="mb-8">
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
+      <div className="mb-6 sm:mb-8 text-center">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
           Дашборд
         </h2>
-        <p className="text-gray-600 font-medium">
+        <p className="text-sm sm:text-base text-gray-600 font-medium">
           {branch ? `${branch.name} - ${branch.city}` : 'Обзор статистики филиала'}
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group"
+            className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group"
           >
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-3 sm:mb-4">
               <div
-                className={`w-12 h-12 bg-${stat.color}-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}
+                className={`w-10 h-10 sm:w-12 sm:h-12 bg-${stat.color}-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}
               >
-                <stat.icon className={`text-${stat.color}-600`} size={24} strokeWidth={2.5} />
+                <stat.icon className={`text-${stat.color}-600`} size={20} strokeWidth={2.5} />
               </div>
               <div
                 className={`flex items-center gap-1 ${
                   stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
                 }`}
               >
-                <TrendingUp size={14} />
+                <TrendingUp size={12} />
                 <span className="text-xs font-bold">{stat.change}</span>
               </div>
             </div>
-            <h3 className="text-gray-600 text-sm font-semibold mb-1">{stat.title}</h3>
-            <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+            <h3 className="text-gray-600 text-xs sm:text-sm font-semibold mb-1">{stat.title}</h3>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stat.value}</p>
           </div>
         ))}
       </div>
 
       {/* Recent Orders & Low Stock */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {/* Recent Orders */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-900">Последние заказы</h3>
-            <button className="text-blue-600 hover:text-blue-700 font-semibold text-sm flex items-center gap-1 hover:gap-2 transition-all">
-              Все заказы
+        <div className="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">Последние заказы</h3>
+            <button className="text-blue-600 hover:text-blue-700 font-semibold text-xs sm:text-sm flex items-center gap-1 hover:gap-2 transition-all">
+              <span className="hidden sm:inline">Все заказы</span>
               <ChevronRight size={16} />
             </button>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {recentOrders.map((order, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all group border border-gray-100"
+                className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all group border border-gray-100"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
+                <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
                     {order.customer.charAt(0)}
                   </div>
-                  <div>
-                    <p className="text-gray-900 font-semibold text-sm">{order.customer}</p>
-                    <p className="text-gray-500 text-xs">{order.id}</p>
+                  <div className="min-w-0">
+                    <p className="text-gray-900 font-semibold text-xs sm:text-sm truncate">{order.customer}</p>
+                    <p className="text-gray-500 text-[10px] sm:text-xs">{order.id}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                   <span
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold border ${getStatusColor(
+                    className={`px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-semibold border ${getStatusColor(
                       order.status
                     )}`}
                   >
                     {order.statusText}
                   </span>
-                  <div className="text-right">
+                  <div className="text-right hidden sm:block">
                     <p className="text-gray-900 font-semibold text-sm">{order.amount}</p>
                     <p className="text-gray-500 text-xs">{order.time}</p>
                   </div>
@@ -251,13 +251,13 @@ export default function ManagerDashboardClient() {
         </div>
 
         {/* Low Stock Items */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Низкий остаток</h3>
-          <div className="space-y-4">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Низкий остаток</h3>
+          <div className="space-y-3 sm:space-y-4">
             {lowStockItems.map((item, index) => (
-              <div key={index} className="border-l-4 border-orange-500 pl-4 py-2">
-                <p className="text-gray-900 font-semibold text-sm">{item.name}</p>
-                <p className="text-gray-500 text-xs mb-2">{item.category}</p>
+              <div key={index} className="border-l-4 border-orange-500 pl-3 sm:pl-4 py-2">
+                <p className="text-gray-900 font-semibold text-xs sm:text-sm">{item.name}</p>
+                <p className="text-gray-500 text-[10px] sm:text-xs mb-2">{item.category}</p>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-gray-200 rounded-full h-2">
                     <div
@@ -265,7 +265,7 @@ export default function ManagerDashboardClient() {
                       style={{ width: `${(item.current / item.min) * 100}%` }}
                     ></div>
                   </div>
-                  <span className="text-xs font-semibold text-gray-600">
+                  <span className="text-[10px] sm:text-xs font-semibold text-gray-600">
                     {item.current}/{item.min}
                   </span>
                 </div>
@@ -276,16 +276,16 @@ export default function ManagerDashboardClient() {
       </div>
 
       {/* Activity Feed */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">Последняя активность</h3>
-        <div className="space-y-4">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Последняя активность</h3>
+        <div className="space-y-3 sm:space-y-4">
           {recentActivity.map((activity, index) => (
-            <div key={index} className="flex gap-3 items-start">
+            <div key={index} className="flex gap-2 sm:gap-3 items-start">
               <div className="mt-1">{getActivityIcon(activity.type)}</div>
-              <div className="flex-1">
-                <p className="text-gray-900 text-sm font-medium">{activity.text}</p>
-                <div className="flex items-center gap-1 text-gray-500 text-xs mt-1">
-                  <Clock size={12} />
+              <div className="flex-1 min-w-0">
+                <p className="text-gray-900 text-xs sm:text-sm font-medium">{activity.text}</p>
+                <div className="flex items-center gap-1 text-gray-500 text-[10px] sm:text-xs mt-1">
+                  <Clock size={10} className="sm:w-3 sm:h-3" />
                   {activity.time}
                 </div>
               </div>

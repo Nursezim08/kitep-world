@@ -180,25 +180,25 @@ export default function ManagerProductsClient() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Товары</h2>
-        <p className="text-gray-600 font-medium">Управление остатками товаров филиала</p>
+      <div className="mb-6 sm:mb-8 text-center">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">Товары</h2>
+        <p className="text-sm sm:text-base text-gray-600 font-medium">Управление остатками товаров филиала</p>
       </div>
 
       {/* Search & Filters */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm mb-4 sm:mb-6">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Поиск товаров по названию, SKU или бренду..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm"
+              className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-xs sm:text-sm"
             />
           </div>
-          <div className="w-full md:w-64">
+          <div className="w-full">
             <LightCustomSelect
               value={categoryFilter}
               onChange={(value) => setCategoryFilter(value)}
@@ -231,7 +231,7 @@ export default function ManagerProductsClient() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {products.map((product) => {
             const mainImage = product.images[0];
             const isEditing = editingQuantity[product.id] !== undefined;
@@ -254,13 +254,13 @@ export default function ManagerProductsClient() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon className="w-16 h-16 text-gray-400" />
+                      <ImageIcon className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" />
                     </div>
                   )}
                   
                   {/* Status Badge */}
                   <div className="absolute top-2 right-2">
-                    <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
+                    <div className={`px-2 py-1 rounded-lg text-[10px] sm:text-xs font-semibold ${
                       product.status === 'active' 
                         ? 'bg-green-100 text-green-700' 
                         : 'bg-gray-100 text-gray-700'
@@ -271,36 +271,36 @@ export default function ManagerProductsClient() {
                 </div>
 
                 {/* Content */}
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   {/* Category */}
-                  <div className="mb-3">
-                    <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                  <div className="mb-2 sm:mb-3">
+                    <span className="text-[10px] sm:text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
                       {getCategoryName(product.category, 'ru')}
                     </span>
                   </div>
 
                   {/* Name */}
-                  <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-2">
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1 line-clamp-2">
                     {getProductName(product, 'ru')}
                   </h3>
 
                   {/* SKU */}
-                  <div className="text-xs text-gray-500 mb-3">
+                  <div className="text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3">
                     <p>SKU: {product.sku}</p>
                   </div>
 
                   {/* Price */}
-                  <div className="mb-4">
-                    <span className="text-2xl font-bold text-gray-900">
+                  <div className="mb-3 sm:mb-4">
+                    <span className="text-xl sm:text-2xl font-bold text-gray-900">
                       {product.price.toLocaleString('ru-RU')} с
                     </span>
                   </div>
 
                   {/* Quantity Control */}
-                  <div className="border-t border-gray-200 pt-4" onClick={(e) => e.stopPropagation()}>
+                  <div className="border-t border-gray-200 pt-3 sm:pt-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Остаток:</span>
-                      <span className={`text-sm font-bold ${
+                      <span className="text-xs sm:text-sm font-medium text-gray-700">Остаток:</span>
+                      <span className={`text-xs sm:text-sm font-bold ${
                         currentQuantity === 0 ? 'text-red-600' :
                         currentQuantity < 10 ? 'text-orange-600' :
                         'text-green-600'
@@ -319,9 +319,9 @@ export default function ManagerProductsClient() {
                               decrementQuantity(product.id);
                             }}
                             disabled={isSaving}
-                            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all disabled:opacity-50"
+                            className="p-1.5 sm:p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all disabled:opacity-50"
                           >
-                            <Minus size={16} className="text-gray-700" />
+                            <Minus size={14} className="sm:w-4 sm:h-4 text-gray-700" />
                           </button>
                           <input
                             type="number"
@@ -336,7 +336,7 @@ export default function ManagerProductsClient() {
                             }}
                             onClick={(e) => e.stopPropagation()}
                             disabled={isSaving}
-                            className="w-20 text-center px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                            className="w-16 sm:w-20 text-center px-2 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 text-sm"
                           />
                           <button
                             onClick={(e) => {
@@ -344,9 +344,9 @@ export default function ManagerProductsClient() {
                               incrementQuantity(product.id);
                             }}
                             disabled={isSaving}
-                            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all disabled:opacity-50"
+                            className="p-1.5 sm:p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all disabled:opacity-50"
                           >
-                            <Plus size={16} className="text-gray-700" />
+                            <Plus size={14} className="sm:w-4 sm:h-4 text-gray-700" />
                           </button>
                         </div>
 
@@ -358,12 +358,12 @@ export default function ManagerProductsClient() {
                               saveQuantity(product.id);
                             }}
                             disabled={isSaving}
-                            className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all disabled:opacity-50 text-sm font-medium"
+                            className="flex-1 flex items-center justify-center px-3 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all disabled:opacity-50 text-xs sm:text-sm font-medium"
                           >
                             {isSaving ? (
                               <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span className="ml-2">Сохранение...</span>
+                                <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span className="ml-2 hidden sm:inline">Сохранение...</span>
                               </>
                             ) : (
                               <span>Сохранить</span>
@@ -375,9 +375,9 @@ export default function ManagerProductsClient() {
                               cancelEditingQuantity(product.id);
                             }}
                             disabled={isSaving}
-                            className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all disabled:opacity-50"
+                            className="p-1.5 sm:p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all disabled:opacity-50"
                           >
-                            <X size={16} />
+                            <X size={14} className="sm:w-4 sm:h-4" />
                           </button>
                         </div>
                       </div>
@@ -387,7 +387,7 @@ export default function ManagerProductsClient() {
                           e.stopPropagation();
                           startEditingQuantity(product.id, product.inventory.quantity);
                         }}
-                        className="w-full px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all text-sm font-medium"
+                        className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all text-xs sm:text-sm font-medium"
                       >
                         Изменить количество
                       </button>

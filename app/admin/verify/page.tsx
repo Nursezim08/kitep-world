@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FiShield } from 'react-icons/fi';
-import { FaTelegram } from 'react-icons/fa';
 
 function VerifyContent() {
   const router = useRouter();
@@ -121,21 +120,10 @@ function VerifyContent() {
           </div>
         </div>
 
-        <div className="text-center mb-4">
+        <div className="text-center mb-6">
           <h1 className="text-xl font-extrabold text-white mb-0.5">Подтверждение входа</h1>
           <p className="text-slate-400 font-semibold text-xs">Код отправлен в Telegram</p>
         </div>
-
-        {/* Telegram иконка */}
-        <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <FaTelegram className="text-white" size={32} />
-          </div>
-        </div>
-
-        <p className="text-center text-slate-300 text-sm mb-4">
-          Введите 6-значный код, который был отправлен в ваш Telegram
-        </p>
 
         {error && (
           <div className="mb-3 p-2.5 bg-red-900/30 border-2 border-red-500/50 rounded-xl">

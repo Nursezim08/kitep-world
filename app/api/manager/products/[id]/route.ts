@@ -24,7 +24,7 @@ export async function GET(
 
     // Получаем филиал менеджера
     const branchUser = await prisma.branchUser.findFirst({
-      where: { userId: user.id },
+      where: { userId: user.id as string },
       select: { branchId: true },
     });
     console.log('[Manager Product Detail] Branch:', branchUser?.branchId);
