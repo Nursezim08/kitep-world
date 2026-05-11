@@ -100,3 +100,43 @@ body {
 .animate-slide-in-left {
   animation: slide-in-left 0.8s ease-in-out;
 }
+
+/* NoUiSlider Custom Styles */
+.noUi-target {
+  background: #e5e7eb;
+  border-radius: 9999px;
+  border: none;
+  box-shadow: none;
+}
+
+.noUi-connect {
+  background: #8b5cf6;
+}
+
+.noUi-handle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  border: 4px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.noUi-handle:before,
+.noUi-handle:after {
+  display: none;
+}
+
+.noUi-horizontal {
+  height: 8px;
+}
+
+.noUi-horizontal .noUi-handle {
+  width: 18px;
+  height: 18px;
+  right: -9px;
+  top: -5px;
+}

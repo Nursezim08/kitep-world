@@ -10,10 +10,10 @@ export async function GET(
     console.log('[Manager Product Detail] Starting request');
     
     // Проверка авторизации
-    const user = await verifyAuth(request);
-    console.log('[Manager Product Detail] User:', user?.id, user?.role);
+    const payload = await verifyAuth(request);
+    console.log('[Manager Product Detail] User:', payload?.userId, payload?.role);
 
-    if (!user || user.role !== 'manager') {
+    if (!payload || payload.role !== 'manager') {
       console.log('[Manager Product Detail] Unauthorized');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -24,7 +24,7 @@ export async function GET(
 
     // Получаем филиал менеджера
     const branchUser = await prisma.branchUser.findFirst({
-      where: { userId: user.id as string },
+      where: { userId: payload.userId },
       select: { branchId: true },
     });
     console.log('[Manager Product Detail] Branch:', branchUser?.branchId);

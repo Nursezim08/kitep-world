@@ -5,8 +5,8 @@ import { prisma } from '@/lib/prisma';
 // GET /api/admin/orders - Получение списка заказов
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await verifyAuth(request, ['admin']);
-    if (!authResult.authenticated || !authResult.user) {
+    const payload = await verifyAuth(request);
+    if (!payload || payload.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
