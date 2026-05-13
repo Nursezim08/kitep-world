@@ -130,40 +130,147 @@ body {
 
 /* NoUiSlider Custom Styles */
 .noUi-target {
-  background: #e5e7eb;
-  border-radius: 9999px;
-  border: none;
-  box-shadow: none;
+  background: #e5e7eb !important;
+  border-radius: 9999px !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .noUi-connect {
-  background: #8b5cf6;
+  background: #8b5cf6 !important;
+  border-radius: 9999px !important;
 }
 
 .noUi-handle {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #8b5cf6;
-  border: 4px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  background: white !important;
+  border: 3px solid #8b5cf6 !important;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
+  cursor: pointer !important;
 }
 
 .noUi-handle:before,
 .noUi-handle:after {
-  display: none;
+  display: none !important;
 }
 
 .noUi-horizontal {
-  height: 8px;
+  height: 8px !important;
 }
 
 .noUi-horizontal .noUi-handle {
-  width: 18px;
-  height: 18px;
-  right: -9px;
-  top: -5px;
+  width: 20px !important;
+  height: 20px !important;
+  right: -10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+/* Убираем стандартные стили ручек */
+.noUi-touch-area {
+  display: none !important;
+}
+
+.noUi-handle:focus {
+  outline: none !important;
+}
+
+.noUi-handle:active {
+  transform: translateY(-50%) scale(1.1) !important;
+}
+
+/* Filter Modal Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Custom Number Input Styles */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Range Input Styles (если используется input[type="range"]) */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 9999px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #8b5cf6;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #8b5cf6;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(to right, #8b5cf6 0%, #8b5cf6 var(--value), #e5e7eb var(--value), #e5e7eb 100%);
+  border-radius: 9999px;
+}
+
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 9999px;
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 8px;
+  background: #8b5cf6;
+  border-radius: 9999px;
 }

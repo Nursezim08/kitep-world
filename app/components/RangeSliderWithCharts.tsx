@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ApexCharts from 'apexcharts';
 import noUiSlider from 'nouislider';
 import 'nouislider/dist/nouislider.css';
@@ -28,8 +28,13 @@ export default function RangeSliderWithCharts({
   const sliderInstanceRef = useRef<any>(null);
   const backgroundChartInstanceRef = useRef<any>(null);
   const foregroundChartInstanceRef = useRef<any>(null);
+  const lastValuesRef = useRef<[number, number]>(start);
+  const [isFirstRender, setIsFirstRender] = useState(true);
 
   useEffect(() => {
+    // Обновляем lastValuesRef при изменении start prop
+    lastValuesRef.current = start;
+    
     if (!sliderRef.current || !backgroundChartRef.current || !foregroundChartRef.current || !foregroundParentRef.current) return;
 
     // Функция для обновления foreground графика
@@ -55,11 +60,25 @@ export default function RangeSliderWithCharts({
         type: 'bar' as const,
         sparkline: {
           enabled: true
+        },
+        animations: {
+          enabled: isFirstRender,
+          easing: 'easeinout' as const,
+          speed: 800,
+          animateGradually: {
+            enabled: true,
+            delay: 30
+          },
+          dynamicAnimation: {
+            enabled: false
+          }
         }
       },
       colors: ['#e5e7eb'],
       plotOptions: {
         bar: {
+          columnWidth: '60%',
+          borderRadius: 8,
           colors: {
             ranges: [{
               from: -45,
@@ -110,11 +129,25 @@ export default function RangeSliderWithCharts({
         type: 'bar' as const,
         sparkline: {
           enabled: true
+        },
+        animations: {
+          enabled: isFirstRender,
+          easing: 'easeinout' as const,
+          speed: 800,
+          animateGradually: {
+            enabled: true,
+            delay: 30
+          },
+          dynamicAnimation: {
+            enabled: false
+          }
         }
       },
       colors: ['#8b5cf6'],
       plotOptions: {
         bar: {
+          columnWidth: '60%',
+          borderRadius: 8,
           colors: {
             ranges: [{
               from: -45,
@@ -154,6 +187,13 @@ export default function RangeSliderWithCharts({
     foregroundChartInstanceRef.current = new ApexCharts(foregroundChartRef.current, foregroundChartOptions);
     foregroundChartInstanceRef.current.render();
 
+    // Отключаем анимацию после первого рендера
+    if (isFirstRender) {
+      setTimeout(() => {
+        setIsFirstRender(false);
+      }, 1000); // Отключаем после завершения анимации (800ms + запас)
+    }
+
     // Создание range slider
     if (!sliderInstanceRef.current) {
       sliderInstanceRef.current = noUiSlider.create(sliderRef.current, {
@@ -175,7 +215,12 @@ export default function RangeSliderWithCharts({
         if (minInputRef.current) minInputRef.current.value = numValues[0].toString();
         if (maxInputRef.current) maxInputRef.current.value = numValues[1].toString();
         updateForegroundChart(foregroundParentRef.current!, foregroundChartRef.current!, numValues);
-        onChange([numValues[0], numValues[1]]);
+        
+        // Вызываем onChange только если значения действительно изменились
+        if (numValues[0] !== lastValuesRef.current[0] || numValues[1] !== lastValuesRef.current[1]) {
+          lastValuesRef.current = [numValues[0], numValues[1]];
+          onChange([numValues[0], numValues[1]]);
+        }
       });
     }
 
@@ -233,7 +278,7 @@ export default function RangeSliderWithCharts({
       }
       window.removeEventListener('resize', handleResize);
     };
-  }, [min, max, start, onChange]);
+  }, [min, max, start]);
 
   return (
     <div className="w-full">
@@ -269,7 +314,7 @@ export default function RangeSliderWithCharts({
               ref={minInputRef}
               type="number"
               defaultValue={start[0]}
-              className="py-2.5 sm:py-3 px-4 block w-full bg-gray-50 border-2 border-gray-200 rounded-lg sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-500 disabled:opacity-50 disabled:pointer-events-none"
+              className="py-2.5 sm:py-3 px-4 block w-full bg-white border-2 border-violet-500/30 rounded-2xl sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50 disabled:pointer-events-none transition-all"
             />
           </div>
           <div className="basis-1/2">
@@ -277,7 +322,7 @@ export default function RangeSliderWithCharts({
               ref={maxInputRef}
               type="number"
               defaultValue={start[1]}
-              className="py-2.5 sm:py-3 px-4 block w-full bg-gray-50 border-2 border-gray-200 rounded-lg sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-violet-500 focus:ring-violet-500 disabled:opacity-50 disabled:pointer-events-none"
+              className="py-2.5 sm:py-3 px-4 block w-full bg-white border-2 border-violet-500/30 rounded-2xl sm:text-sm text-gray-900 placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50 disabled:pointer-events-none transition-all"
             />
           </div>
         </div>

@@ -11,6 +11,15 @@ import {
   ArrowLeft,
   Package,
   CreditCard,
+  Home,
+  Grid,
+  MessageCircle,
+  User,
+  Bell,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
 } from 'lucide-react';
 
 interface User {
@@ -50,6 +59,8 @@ export default function CartClient({ user }: { user: User }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchCart();
@@ -166,6 +177,27 @@ export default function CartClient({ user }: { user: User }) {
     );
   };
 
+  const menuItems = [
+    { title: 'Главная', icon: Home, href: '/home', active: false },
+    { title: 'Каталог', icon: Grid, href: '/catalog', active: false },
+    { title: 'Заказы', icon: Package, href: '/orders', active: false },
+    { title: 'Корзина', icon: ShoppingCart, href: '/cart', active: true },
+    { title: 'AI Чат', icon: MessageCircle, href: '/ai-chat', active: false },
+    { title: 'Профиль', icon: User, href: '/profile', active: false },
+  ];
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+      router.push('/login');
+      router.refresh();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
@@ -175,28 +207,148 @@ export default function CartClient({ user }: { user: User }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+        <div className="px-8 py-4">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => router.push('/home')}
-              className="flex items-center gap-2 text-gray-600 hover:text-violet-600 transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span className="font-medium">Назад к покупкам</span>
-            </button>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <ShoppingCart size={28} className="text-violet-600" />
-              Корзина
-            </h1>
-            <div className="w-32"></div>
+            {/* Logo */}
+            <div className="flex items-center gap-3 w-72">
+              <img 
+                src="/logonur.png" 
+                alt="Nur-Kitep Logo" 
+                className="w-10 h-10 rounded-xl object-cover"
+              />
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">
+                  Nur-Kitep
+                </h1>
+                <p className="text-xs text-gray-500">Книги и канцелярия</p>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="flex items-center gap-4 flex-1 max-w-xl mx-8">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Поиск товаров..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-sm text-gray-900 placeholder-gray-400"
+                />
+              </div>
+            </div>
+
+            {/* User & Notifications */}
+            <div className="flex items-center gap-3">
+              <button className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
+                <Bell size={20} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-violet-500 rounded-full"></span>
+              </button>
+
+              <button 
+                onClick={() => router.push('/cart')}
+                className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
+              >
+                <ShoppingCart size={20} />
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {cartItems.length}
+                  </span>
+                )}
+              </button>
+
+              <button 
+                onClick={() => router.push('/profile')}
+                className="flex items-center gap-3 pl-3 hover:bg-gray-50 rounded-xl transition-colors px-3 py-2"
+              >
+                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
+                  {user.fullName.charAt(0)}
+                </div>
+                <div className="hidden lg:block">
+                  <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
+                  <p className="text-xs text-gray-500">{user.email}</p>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex pt-[73px]">
+        {/* Sidebar */}
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[73px] self-start`}>
+          {/* Main Navigation Card */}
+          <div className="bg-white rounded-2xl shadow-sm p-4 mb-4">
+            <div className="flex items-center justify-between mb-4">
+              {!sidebarCollapsed && (
+                <h3 className="text-sm font-bold text-gray-900">Навигация</h3>
+              )}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
+              >
+                {sidebarCollapsed ? (
+                  <ChevronRight size={18} className="text-gray-600" />
+                ) : (
+                  <ChevronLeft size={18} className="text-gray-600" />
+                )}
+              </button>
+            </div>
+
+            <nav className="space-y-1">
+              {menuItems.map((item) => (
+                <button
+                  key={item.title}
+                  onClick={() => router.push(item.href)}
+                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-xl transition-all ${
+                    item.active
+                      ? 'bg-gradient-to-r from-violet-500 to-violet-600 text-white shadow-lg shadow-violet-500/30'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <item.icon size={20} />
+                  {!sidebarCollapsed && (
+                    <span className="text-sm font-medium">{item.title}</span>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Logout Button */}
+          <div className="mt-4">
+            <button
+              onClick={handleLogout}
+              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all`}
+            >
+              <LogOut size={20} />
+              {!sidebarCollapsed && (
+                <span className="text-sm font-medium">Выйти</span>
+              )}
+            </button>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Page Title */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <ShoppingCart size={32} className="text-violet-600" />
+                Корзина
+              </h1>
+              <p className="text-gray-600 mt-2">
+                {cartItems.length > 0 
+                  ? `У вас ${cartItems.length} ${cartItems.length === 1 ? 'товар' : 'товаров'} в корзине`
+                  : 'Ваша корзина пуста'
+                }
+              </p>
+            </div>
+
         {cartItems.length === 0 ? (
           // Пустая корзина
           <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
@@ -278,7 +430,7 @@ export default function CartClient({ user }: { user: User }) {
                         <div className="text-right">
                           <p className="text-2xl font-bold text-gray-900">
                             {Number(item.product.price).toLocaleString('ru-RU')}{' '}
-                            ₸
+                            сом
                           </p>
                         </div>
                       </div>
@@ -328,7 +480,7 @@ export default function CartClient({ user }: { user: User }) {
                             {(
                               Number(item.product.price) * item.quantity
                             ).toLocaleString('ru-RU')}{' '}
-                            ₸
+                            сом
                           </span>
                         </div>
                       </div>
@@ -349,13 +501,7 @@ export default function CartClient({ user }: { user: User }) {
                   <div className="flex items-center justify-between text-gray-600">
                     <span>Товары ({cartItems.length}):</span>
                     <span className="font-semibold">
-                      {calculateTotal().toLocaleString('ru-RU')} ₸
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-gray-600">
-                    <span>Доставка:</span>
-                    <span className="font-semibold text-green-600">
-                      Бесплатно
+                      {calculateTotal().toLocaleString('ru-RU')} сом
                     </span>
                   </div>
                   <div className="pt-3 border-t border-gray-200">
@@ -364,7 +510,7 @@ export default function CartClient({ user }: { user: User }) {
                         Итого:
                       </span>
                       <span className="text-2xl font-bold text-violet-600">
-                        {calculateTotal().toLocaleString('ru-RU')} ₸
+                        {calculateTotal().toLocaleString('ru-RU')} сом
                       </span>
                     </div>
                   </div>
@@ -393,6 +539,8 @@ export default function CartClient({ user }: { user: User }) {
             </div>
           </div>
         )}
+          </div>
+        </main>
       </div>
     </div>
   );

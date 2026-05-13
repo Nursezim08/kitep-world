@@ -91,9 +91,15 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
   const [quantity, setQuantity] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [inCart, setInCart] = useState(false);
+  const [cartItemId, setCartItemId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProduct();
+    fetchCartCount();
+    checkIfInCart();
   }, [productId]);
 
   const fetchProduct = async () => {
@@ -111,6 +117,78 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
       router.push('/catalog');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCartCount = async () => {
+    try {
+      const response = await fetch('/api/user/cart');
+      if (response.ok) {
+        const data = await response.json();
+        setCartCount(data.cartItems.length);
+      }
+    } catch (error) {
+      console.error('Error fetching cart count:', error);
+    }
+  };
+
+  const checkIfInCart = async () => {
+    try {
+      const response = await fetch('/api/user/cart');
+      if (response.ok) {
+        const data = await response.json();
+        const cartItem = data.cartItems.find((item: any) => item.product.id === productId);
+        if (cartItem) {
+          setInCart(true);
+          setCartItemId(cartItem.id);
+          setQuantity(cartItem.quantity);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking cart:', error);
+    }
+  };
+
+  const addToCart = async () => {
+    if (!product) return;
+    
+    setAddingToCart(true);
+
+    try {
+      const response = await fetch('/api/user/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, quantity }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setInCart(true);
+        setCartItemId(data.cartItem.id);
+        await fetchCartCount();
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const updateCartQuantity = async (newQuantity: number) => {
+    if (!cartItemId || newQuantity < 1) return;
+
+    try {
+      const response = await fetch(`/api/user/cart/${cartItemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: newQuantity }),
+      });
+
+      if (response.ok) {
+        setQuantity(newQuantity);
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error);
     }
   };
 
@@ -145,11 +223,6 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
     } catch (error) {
       console.error('Logout error:', error);
     }
-  };
-
-  const handleAddToCart = () => {
-    // TODO: Implement add to cart
-    console.log('Add to cart:', productId, quantity);
   };
 
   if (loading) {
@@ -214,9 +287,11 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                 className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
               >
                 <ShoppingCart size={20} />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                  3
-                </span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </button>
 
               <button 
@@ -408,13 +483,45 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
 
                 {/* Action Buttons */}
                 <div className="space-y-3">
-                  <button
-                    onClick={handleAddToCart}
-                    className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-semibold text-sm transition-all"
-                  >
-                    <ShoppingBag size={18} />
-                    <span>Добавить в корзину</span>
-                  </button>
+                  {!inCart ? (
+                    <button
+                      onClick={addToCart}
+                      disabled={addingToCart}
+                      className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm transition-all"
+                    >
+                      {addingToCart ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Добавление...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag size={18} />
+                          <span>Добавить в корзину</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => updateCartQuantity(quantity - 1)}
+                        disabled={quantity <= 1}
+                        className="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                      >
+                        <Minus size={20} />
+                      </button>
+                      <div className="flex-1 text-center">
+                        <span className="text-2xl font-bold text-gray-900">{quantity}</span>
+                        <p className="text-xs text-gray-500 mt-1">В корзине</p>
+                      </div>
+                      <button
+                        onClick={() => updateCartQuantity(quantity + 1)}
+                        className="w-12 h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center transition-colors"
+                      >
+                        <Plus size={20} />
+                      </button>
+                    </div>
+                  )}
 
                   <button className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-violet-50 hover:bg-violet-100 text-violet-600 rounded-xl font-semibold text-sm transition-all">
                     <span>Купить сейчас</span>

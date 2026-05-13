@@ -558,17 +558,14 @@ export default function HomeClient({ user }: HomeClientProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {products.map((product) => {
                   const mainImage = product.images[0];
-                  const isAdding = addingToCart.has(product.id);
                   return (
                     <div
                       key={product.id}
-                      className="group bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all border border-gray-200"
+                      onClick={() => router.push(`/product/${product.id}`)}
+                      className="group bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all border border-gray-200 cursor-pointer"
                     >
                       {/* Product Image */}
-                      <div 
-                        onClick={() => router.push(`/product/${product.id}`)}
-                        className="relative aspect-square bg-white overflow-hidden p-4 cursor-pointer"
-                      >
+                      <div className="relative aspect-square bg-white overflow-hidden p-4">
                         {mainImage ? (
                           <img
                             src={mainImage.imageUrl}
@@ -595,10 +592,7 @@ export default function HomeClient({ user }: HomeClientProps) {
 
                       {/* Product Info */}
                       <div className="p-5 space-y-3">
-                        <h3 
-                          onClick={() => router.push(`/product/${product.id}`)}
-                          className="text-base font-bold text-gray-900 line-clamp-2 min-h-[3rem] cursor-pointer hover:text-violet-600 transition-colors"
-                        >
+                        <h3 className="text-base font-bold text-gray-900 line-clamp-2 min-h-[3rem]">
                           {getProductName(product)}
                         </h3>
 
@@ -627,28 +621,6 @@ export default function HomeClient({ user }: HomeClientProps) {
                             {product.price}с
                           </span>
                         </div>
-
-                        {/* Add to Cart Button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(product.id);
-                          }}
-                          disabled={isAdding}
-                          className="w-full py-2.5 bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                          {isAdding ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              <span>Добавление...</span>
-                            </>
-                          ) : (
-                            <>
-                              <ShoppingCart size={18} />
-                              <span>В корзину</span>
-                            </>
-                          )}
-                        </button>
                       </div>
                     </div>
                   );

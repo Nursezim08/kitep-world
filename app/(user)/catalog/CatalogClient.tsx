@@ -376,9 +376,11 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                 className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
               >
                 <ShoppingCart size={20} />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                  3
-                </span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </button>
 
               <button 
@@ -521,7 +523,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
 
             {/* Filter Modal */}
             {showFilters && (
-              <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
                 {/* Backdrop */}
                 <div 
                   className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -529,25 +531,25 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                 />
                 
                 {/* Modal */}
-                <div className="relative bg-white rounded-3xl w-full sm:max-w-2xl shadow-2xl">
+                <div className="relative bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-slide-up">
                   {/* Handle (mobile) */}
-                  <div className="sm:hidden flex justify-center pt-3 pb-2">
+                  <div className="sm:hidden flex justify-center pt-3 pb-2 sticky top-0 bg-white z-10">
                     <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
                   </div>
 
-                  <div className="p-6">
+                  <div className="p-4 sm:p-5">
                     {/* Header */}
-                    <h2 className="text-xl font-bold text-gray-900 text-center mb-5">
+                    <h2 className="text-lg font-bold text-gray-900 text-center mb-3">
                       Сортировка и фильтры
                     </h2>
 
                     {/* Categories */}
-                    <div className="mb-4">
-                      <h3 className="text-sm font-bold text-gray-900 mb-2">Категории</h3>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="mb-3">
+                      <h3 className="text-xs font-bold text-gray-900 mb-1.5">Категории</h3>
+                      <div className="flex flex-wrap gap-1.5">
                         <button
                           onClick={() => setTempCategory('all')}
-                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                             tempCategory === 'all'
                               ? 'bg-violet-600 text-white'
                               : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-violet-300'
@@ -559,7 +561,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                           <button
                             key={category.id}
                             onClick={() => setTempCategory(category.id)}
-                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                               tempCategory === category.id
                                 ? 'bg-violet-600 text-white'
                                 : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-violet-300'
@@ -572,8 +574,8 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                     </div>
 
                     {/* Price Range */}
-                    <div className="mb-4">
-                      <h3 className="text-sm font-bold text-gray-900 mb-2">Цена</h3>
+                    <div className="mb-3">
+                      <h3 className="text-xs font-bold text-gray-900 mb-1.5">Цена</h3>
                       <RangeSliderWithCharts
                         min={0}
                         max={maxPrice}
@@ -583,14 +585,14 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                     </div>
 
                     {/* Sort By */}
-                    <div className="mb-4">
-                      <h3 className="text-sm font-bold text-gray-900 mb-2">Сортировка</h3>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="mb-3">
+                      <h3 className="text-xs font-bold text-gray-900 mb-1.5">Сортировка</h3>
+                      <div className="flex flex-wrap gap-1.5">
                         {sortOptions.map((option) => (
                           <button
                             key={option.value}
                             onClick={() => setTempSortBy(option.value)}
-                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                               tempSortBy === option.value
                                 ? 'bg-violet-600 text-white'
                                 : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-violet-300'
@@ -603,20 +605,20 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                     </div>
 
                     {/* Rating */}
-                    <div className="mb-5">
-                      <h3 className="text-sm font-bold text-gray-900 mb-2">Рейтинг</h3>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="mb-4">
+                      <h3 className="text-xs font-bold text-gray-900 mb-1.5">Рейтинг</h3>
+                      <div className="flex flex-wrap gap-1.5">
                         {ratingOptions.map((option) => (
                           <button
                             key={option.value || 'all'}
                             onClick={() => setTempRating(option.value)}
-                            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                               tempRating === option.value
                                 ? 'bg-violet-600 text-white'
                                 : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-violet-300'
                             }`}
                           >
-                            {option.value && <Star size={14} className="fill-current" />}
+                            {option.value && <Star size={12} className="fill-current" />}
                             <span>{option.label}</span>
                           </button>
                         ))}
@@ -624,16 +626,16 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 sticky bottom-0 bg-white pt-2">
                       <button
                         onClick={resetFilters}
-                        className="flex-1 px-5 py-3 bg-gray-100 text-gray-900 rounded-full text-sm font-bold hover:bg-gray-200 transition-all"
+                        className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-900 rounded-full text-sm font-bold hover:bg-gray-200 transition-all"
                       >
                         Сбросить
                       </button>
                       <button
                         onClick={applyFilters}
-                        className="flex-1 px-5 py-3 bg-gradient-to-r from-violet-500 to-violet-600 text-white rounded-full text-sm font-bold hover:shadow-lg hover:scale-105 transition-all"
+                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-violet-500 to-violet-600 text-white rounded-full text-sm font-bold hover:shadow-lg hover:scale-105 transition-all"
                       >
                         Применить
                       </button>
@@ -688,7 +690,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                     <div
                       key={product.id}
                       onClick={() => router.push(`/product/${product.id}`)}
-                      className="group bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all cursor-pointer border border-gray-200"
+                      className="group bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all border border-gray-200 cursor-pointer"
                     >
                       {/* Product Image */}
                       <div className="relative aspect-square bg-white overflow-hidden p-4">
@@ -717,7 +719,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                       </div>
 
                       {/* Product Info */}
-                      <div className="p-5 space-y-2">
+                      <div className="p-5 space-y-3">
                         <h3 className="text-base font-bold text-gray-900 line-clamp-2 min-h-[3rem]">
                           {getProductName(product)}
                         </h3>
