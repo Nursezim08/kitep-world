@@ -65,6 +65,8 @@ interface Product {
   category: {
     translations: CategoryTranslation[];
   };
+  averageRating: number;
+  totalSold: number;
   _count: {
     reviews: number;
   };
@@ -94,9 +96,19 @@ export default function CatalogClient({ user }: CatalogClientProps) {
   const [tempRating, setTempRating] = useState<number | null>(null);
   const [maxPrice] = useState<number>(15000); // Фиксированная максимальная цена
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [addingToCart, setAddingToCart] = useState<Set<string>>(new Set());
+  const [cartCount, setCartCount] = useState(0);
+
+  // Очистка overflow при размонтировании компонента
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   useEffect(() => {
     fetchCategories();
+    fetchCartCount();
   }, []);
 
   useEffect(() => {
@@ -182,6 +194,42 @@ export default function CatalogClient({ user }: CatalogClientProps) {
       console.error('Error fetching products:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCartCount = async () => {
+    try {
+      const response = await fetch('/api/user/cart');
+      if (response.ok) {
+        const data = await response.json();
+        setCartCount(data.cartItems.length);
+      }
+    } catch (error) {
+      console.error('Error fetching cart count:', error);
+    }
+  };
+
+  const addToCart = async (productId: string) => {
+    setAddingToCart((prev) => new Set(prev).add(productId));
+
+    try {
+      const response = await fetch('/api/user/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity: 1 }),
+      });
+
+      if (response.ok) {
+        await fetchCartCount();
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setAddingToCart((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
     }
   };
 
@@ -599,12 +647,15 @@ export default function CatalogClient({ user }: CatalogClientProps) {
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {[...Array(12)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
+                  <div key={i} className="bg-white rounded-3xl overflow-hidden animate-pulse border border-gray-200">
                     <div className="aspect-square bg-gray-200" />
-                    <div className="p-4 space-y-3">
+                    <div className="p-5 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
                       <div className="h-4 bg-gray-200 rounded w-3/4" />
-                      <div className="h-4 bg-gray-200 rounded w-1/2" />
-                      <div className="h-10 bg-gray-200 rounded" />
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="h-4 bg-gray-200 rounded w-16" />
+                        <div className="h-4 bg-gray-200 rounded w-16" />
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -637,7 +688,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                     <div
                       key={product.id}
                       onClick={() => router.push(`/product/${product.id}`)}
-                      className="group bg-gray-50 rounded-3xl overflow-hidden hover:shadow-xl transition-all cursor-pointer"
+                      className="group bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all cursor-pointer border border-gray-200"
                     >
                       {/* Product Image */}
                       <div className="relative aspect-square bg-white overflow-hidden p-4">
@@ -671,29 +722,28 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                           {getProductName(product)}
                         </h3>
 
-                        {/* Rating */}
-                        <div className="flex items-center gap-1.5">
-                          {/* Star with partial fill */}
-                          <div className="relative w-4 h-4">
-                            {/* Background star (empty) */}
-                            <Star className="w-4 h-4 text-gray-300 absolute top-0 left-0" />
-                            {/* Foreground star (filled) with clip */}
-                            <div 
-                              className="absolute top-0 left-0 overflow-hidden"
-                              style={{ width: `${(4.6 / 5) * 100}%` }}
-                            >
-                              <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
+                        {/* Rating and Price */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            {/* Star with partial fill */}
+                            <div className="relative w-4 h-4">
+                              {/* Background star (empty) */}
+                              <Star className="w-4 h-4 text-gray-300 absolute top-0 left-0" />
+                              {/* Foreground star (filled) with clip */}
+                              <div 
+                                className="absolute top-0 left-0 overflow-hidden"
+                                style={{ width: `${(product.averageRating / 5) * 100}%` }}
+                              >
+                                <Star className="w-4 h-4 fill-violet-600 text-violet-600" />
+                              </div>
                             </div>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {product.averageRating > 0 ? product.averageRating.toFixed(1) : '0'}
+                            </span>
                           </div>
-                          <span className="text-sm font-semibold text-gray-900">4.6</span>
-                          <span className="text-sm text-gray-500 ml-1">
-                            | 6,641 sold
-                          </span>
-                        </div>
 
-                        {/* Price */}
-                        <div className="pt-1">
-                          <span className="text-xl font-bold text-gray-900">
+                          {/* Price */}
+                          <span className="text-base font-bold text-gray-900">
                             {product.price}с
                           </span>
                         </div>

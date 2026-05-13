@@ -28,24 +28,51 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e2533;
+  background: #f3f4f6;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a3347;
+  background: #d1d5db;
   border-radius: 4px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: #9ca3af;
 }
 
 /* Firefox Scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2a3347 #1e2533;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+/* Dark Scrollbar for Admin Pages */
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: #1e2533;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #2a3347;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}
+
+/* Violet Scrollbar for Product Images */
+.violet-scrollbar::-webkit-scrollbar-track {
+  background: #f5f3ff;
+}
+
+.violet-scrollbar::-webkit-scrollbar-thumb {
+  background: #c4b5fd;
+  border-radius: 4px;
+}
+
+.violet-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a78bfa;
 }
 
 body {

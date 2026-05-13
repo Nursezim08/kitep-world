@@ -296,7 +296,8 @@ export default function EditProductModal({ product, onClose, onSuccess }: EditPr
     }
   };
 
-  const getCategoryName = (category: Category) => {
+  const getCategoryName = (category: Category | undefined) => {
+    if (!category || !category.translations) return 'Без категории';
     return category.translations.find((t) => t.locale === 'ru')?.name || 'Без названия';
   };
 
@@ -422,7 +423,7 @@ export default function EditProductModal({ product, onClose, onSuccess }: EditPr
                   >
                     <span className={formData.categoryId ? 'text-white' : 'text-gray-400'}>
                       {formData.categoryId
-                        ? getCategoryName(categories.find(c => c.id === formData.categoryId)!)
+                        ? getCategoryName(categories.find(c => c.id === formData.categoryId))
                         : 'Выберите категорию'}
                     </span>
                     <ChevronDown

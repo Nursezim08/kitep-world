@@ -62,6 +62,8 @@ interface Product {
   price: number;
   translations: ProductTranslation[];
   images: ProductImage[];
+  averageRating: number;
+  totalSold: number;
   _count: {
     reviews: number;
   };
@@ -87,9 +89,12 @@ export default function HomeClient({ user }: HomeClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentBanner, setCurrentBanner] = useState(0);
+  const [addingToCart, setAddingToCart] = useState<Set<string>>(new Set());
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     fetchData();
+    fetchCartCount();
   }, []);
 
   useEffect(() => {
@@ -129,6 +134,43 @@ export default function HomeClient({ user }: HomeClientProps) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCartCount = async () => {
+    try {
+      const response = await fetch('/api/user/cart');
+      if (response.ok) {
+        const data = await response.json();
+        setCartCount(data.cartItems.length);
+      }
+    } catch (error) {
+      console.error('Error fetching cart count:', error);
+    }
+  };
+
+  const addToCart = async (productId: string) => {
+    setAddingToCart((prev) => new Set(prev).add(productId));
+
+    try {
+      const response = await fetch('/api/user/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity: 1 }),
+      });
+
+      if (response.ok) {
+        await fetchCartCount();
+        // Можно добавить toast уведомление
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setAddingToCart((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
     }
   };
 
@@ -220,9 +262,11 @@ export default function HomeClient({ user }: HomeClientProps) {
                 className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
               >
                 <ShoppingCart size={20} />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                  3
-                </span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </button>
 
               <button 
@@ -514,14 +558,17 @@ export default function HomeClient({ user }: HomeClientProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {products.map((product) => {
                   const mainImage = product.images[0];
+                  const isAdding = addingToCart.has(product.id);
                   return (
                     <div
                       key={product.id}
-                      onClick={() => router.push(`/product/${product.id}`)}
-                      className="group bg-gray-50 rounded-3xl overflow-hidden hover:shadow-xl transition-all cursor-pointer"
+                      className="group bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all border border-gray-200"
                     >
                       {/* Product Image */}
-                      <div className="relative aspect-square bg-white overflow-hidden p-4">
+                      <div 
+                        onClick={() => router.push(`/product/${product.id}`)}
+                        className="relative aspect-square bg-white overflow-hidden p-4 cursor-pointer"
+                      >
                         {mainImage ? (
                           <img
                             src={mainImage.imageUrl}
@@ -547,37 +594,61 @@ export default function HomeClient({ user }: HomeClientProps) {
                       </div>
 
                       {/* Product Info */}
-                      <div className="p-5 space-y-2">
-                        <h3 className="text-base font-bold text-gray-900 line-clamp-2 min-h-[3rem]">
+                      <div className="p-5 space-y-3">
+                        <h3 
+                          onClick={() => router.push(`/product/${product.id}`)}
+                          className="text-base font-bold text-gray-900 line-clamp-2 min-h-[3rem] cursor-pointer hover:text-violet-600 transition-colors"
+                        >
                           {getProductName(product)}
                         </h3>
 
-                        {/* Rating */}
-                        <div className="flex items-center gap-1.5">
-                          {/* Star with partial fill */}
-                          <div className="relative w-4 h-4">
-                            {/* Background star (empty) */}
-                            <Star className="w-4 h-4 text-gray-300 absolute top-0 left-0" />
-                            {/* Foreground star (filled) with clip */}
-                            <div 
-                              className="absolute top-0 left-0 overflow-hidden"
-                              style={{ width: `${(4.6 / 5) * 100}%` }}
-                            >
-                              <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
+                        {/* Rating and Price */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            {/* Star with partial fill */}
+                            <div className="relative w-4 h-4">
+                              {/* Background star (empty) */}
+                              <Star className="w-4 h-4 text-gray-300 absolute top-0 left-0" />
+                              {/* Foreground star (filled) with clip */}
+                              <div 
+                                className="absolute top-0 left-0 overflow-hidden"
+                                style={{ width: `${(product.averageRating / 5) * 100}%` }}
+                              >
+                                <Star className="w-4 h-4 fill-violet-600 text-violet-600" />
+                              </div>
                             </div>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {product.averageRating > 0 ? product.averageRating.toFixed(1) : '0'}
+                            </span>
                           </div>
-                          <span className="text-sm font-semibold text-gray-900">4.6</span>
-                          <span className="text-sm text-gray-500 ml-1">
-                            | 6,641 sold
-                          </span>
-                        </div>
 
-                        {/* Price */}
-                        <div className="pt-1">
-                          <span className="text-xl font-bold text-gray-900">
+                          {/* Price */}
+                          <span className="text-base font-bold text-gray-900">
                             {product.price}с
                           </span>
                         </div>
+
+                        {/* Add to Cart Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(product.id);
+                          }}
+                          disabled={isAdding}
+                          className="w-full py-2.5 bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isAdding ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span>Добавление...</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingCart size={18} />
+                              <span>В корзину</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
                   );
