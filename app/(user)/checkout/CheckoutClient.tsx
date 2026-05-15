@@ -195,7 +195,7 @@ export default function CheckoutClient({ user }: { user: User }) {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-        <div className="px-8 py-4">
+        <div className="px-8 py-2.5">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3 w-72">
@@ -252,7 +252,7 @@ export default function CheckoutClient({ user }: { user: User }) {
                 <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
                   <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
@@ -262,9 +262,9 @@ export default function CheckoutClient({ user }: { user: User }) {
         </div>
       </header>
 
-      <div className="flex pt-[73px]">
+      <div className="flex pt-[57px]">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[73px] self-start`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
           {/* Main Navigation Card */}
           <div className="bg-white rounded-2xl shadow-sm p-4 mb-4">
             <div className="flex items-center justify-between mb-4">
@@ -302,6 +302,32 @@ export default function CheckoutClient({ user }: { user: User }) {
               ))}
             </nav>
           </div>
+
+          {/* Quick Actions Card */}
+          {!sidebarCollapsed && (
+            <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-2 mb-4 px-2">
+                <span className="text-sm font-semibold text-gray-500">Быстрые действия</span>
+              </div>
+              
+              <div className="space-y-1">
+                <button
+                  onClick={() => router.push('/catalog')}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
+                >
+                  <Grid size={18} className="flex-shrink-0" />
+                  <span className="text-sm font-medium">Каталог</span>
+                </button>
+                <button
+                  onClick={() => router.push('/orders')}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
+                >
+                  <Package size={18} className="flex-shrink-0" />
+                  <span className="text-sm font-medium">Мои заказы</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Logout Button */}
           <div className="mt-4">

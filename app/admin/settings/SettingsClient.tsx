@@ -21,7 +21,7 @@ import {
   Clock,
   CreditCard,
   Bot,
-  Image,
+  Image as ImageIcon,
   FileText as FileTextIcon,
   ChevronLeft,
   ChevronRight,
@@ -88,10 +88,11 @@ export default function SettingsClient({ user }: SettingsClientProps) {
     { title: 'Пользователи', icon: Users, href: '/admin/users' },
     { title: 'Категории', icon: FolderTree, href: '/admin/categories' },
     { title: 'Товары', icon: Package, href: '/admin/products' },
+    { title: 'Баннеры', icon: ImageIcon, href: '/admin/banners' },
     { title: 'Заказы', icon: ShoppingCart, href: '#' },
     { title: 'Филиалы', icon: MapPin, href: '/admin/branches' },
     { title: 'Менеджеры', icon: Users, href: '/admin/managers' },
-    { title: 'Отчеты', icon: FileText, href: '#' },
+    { title: 'Отчеты', icon: FileText, href: '/admin/reports' },
     { title: 'Настройки', icon: Settings, active: true, href: '/admin/settings' },
   ];
 

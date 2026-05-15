@@ -72,7 +72,8 @@ interface Product {
 interface Banner {
   id: string;
   title: string;
-  image: string;
+  desktopImage: string;
+  mobileImage: string;
   url: string | null;
 }
 
@@ -91,6 +92,19 @@ export default function HomeClient({ user }: HomeClientProps) {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [addingToCart, setAddingToCart] = useState<Set<string>>(new Set());
   const [cartCount, setCartCount] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Определяем тип устройства
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -219,20 +233,20 @@ export default function HomeClient({ user }: HomeClientProps) {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-        <div className="px-8 py-4">
+        <div className="px-8 py-2.5">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3 w-72">
               <img 
                 src="/logonur.png" 
                 alt="Nur-Kitep Logo" 
-                className="w-10 h-10 rounded-xl object-cover"
+                className="w-9 h-9 rounded-xl object-cover"
               />
               <div>
-                <h1 className="text-lg font-bold text-gray-900">
+                <h1 className="text-base font-bold text-gray-900">
                   Nur-Kitep
                 </h1>
-                <p className="text-xs text-gray-500">Книги и канцелярия</p>
+                <p className="text-[10px] text-gray-500">Книги и канцелярия</p>
               </div>
             </div>
 
@@ -245,23 +259,23 @@ export default function HomeClient({ user }: HomeClientProps) {
                   placeholder="Поиск товаров..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-sm text-gray-900 placeholder-gray-400"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-sm text-gray-900 placeholder-gray-400"
                 />
               </div>
             </div>
 
             {/* User & Notifications */}
             <div className="flex items-center gap-3">
-              <button className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
-                <Bell size={20} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-violet-500 rounded-full"></span>
+              <button className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
+                <Bell size={18} />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full"></span>
               </button>
 
               <button 
                 onClick={() => router.push('/cart')}
-                className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
+                className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
               >
-                <ShoppingCart size={20} />
+                <ShoppingCart size={18} />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                     {cartCount}
@@ -271,14 +285,14 @@ export default function HomeClient({ user }: HomeClientProps) {
 
               <button 
                 onClick={() => router.push('/profile')}
-                className="flex items-center gap-3 pl-3 hover:bg-gray-50 rounded-xl transition-colors px-3 py-2"
+                className="flex items-center gap-2.5 hover:bg-gray-50 rounded-xl transition-colors px-2.5 py-1.5"
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
+                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
+                  <p className="text-[10px] text-gray-500">{user.email}</p>
                 </div>
               </button>
             </div>
@@ -286,9 +300,9 @@ export default function HomeClient({ user }: HomeClientProps) {
         </div>
       </header>
 
-      <div className="flex pt-[73px]">
+      <div className="flex pt-[57px]">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[73px] self-start`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
           {/* Main Navigation Card */}
           <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
@@ -366,112 +380,115 @@ export default function HomeClient({ user }: HomeClientProps) {
         <div className="flex-1">
           <main className="p-8">
             {/* Banner */}
-            <div className="mb-8 relative rounded-2xl overflow-hidden shadow-xl">
-              <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-violet-600 via-violet-500 to-indigo-600">
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
-                
-                <div className="relative h-full flex items-center">
-                  <div className="container mx-auto px-6 sm:px-8">
-                    <div className="max-w-2xl">
-                      <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-bold mb-4">
-                        🎉 Новинки сезона
-                      </div>
-                      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight">
-                        Добро пожаловать в<br />Nur-Kitep!
-                      </h1>
-                      <p className="text-lg sm:text-xl text-white/90 mb-6 font-medium">
-                        Книги, канцелярия и товары для творчества с доставкой по всему Кыргызстану
-                      </p>
-                      <button
-                        onClick={() => router.push('/catalog')}
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-white text-violet-600 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all"
-                      >
-                        Перейти в каталог
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Decorative Elements */}
-                <div className="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-10 right-32 w-40 h-40 bg-indigo-400/20 rounded-full blur-3xl"></div>
-              </div>
-            </div>
-
-            {/* Old banner code - will be used when banners are loaded from API */}
-            {banners.length > 0 && false && (
-            <div className="mb-8 relative rounded-2xl overflow-hidden shadow-xl">
-              <div className="relative h-64 sm:h-80 lg:h-96">
-                {banners.map((banner, index) => (
-                  <div
-                    key={banner.id}
-                    className={`absolute inset-0 transition-opacity duration-1000 ${
-                      index === currentBanner ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  >
-                    <img
-                      src={banner.image}
-                      alt={banner.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-2">
-                        {banner.title}
-                      </h2>
-                      {banner.url && (
-                        <button
-                          onClick={() => router.push(banner.url!)}
-                          className="inline-flex items-center gap-2 px-6 py-3 bg-white text-violet-600 rounded-xl font-bold hover:shadow-lg transition-all"
-                        >
-                          Подробнее
-                          <ChevronRight className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Banner Indicators */}
-              {banners.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                  {banners.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentBanner(index)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index === currentBanner
-                          ? 'bg-white w-8'
-                          : 'bg-white/50 hover:bg-white/75'
+            {banners.length > 0 ? (
+              <div className="mb-8 relative rounded-2xl overflow-hidden shadow-xl">
+                <div className="relative h-64 sm:h-80 lg:h-96">
+                  {banners.map((banner, index) => (
+                    <div
+                      key={banner.id}
+                      className={`absolute inset-0 transition-opacity duration-1000 ${
+                        index === currentBanner ? 'opacity-100' : 'opacity-0'
                       }`}
-                    />
+                    >
+                      <img
+                        src={isMobile ? banner.mobileImage : banner.desktopImage}
+                        alt={banner.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-2">
+                          {banner.title}
+                        </h2>
+                        {banner.url && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(banner.url!);
+                            }}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-violet-600 rounded-xl font-bold hover:shadow-lg transition-all"
+                          >
+                            Подробнее
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* Categories */}
-          <section className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
-                  Категории
-                </h2>
-                <p className="text-gray-600">
-                  Выберите категорию для просмотра товаров
-                </p>
+                {/* Banner Indicators */}
+                {banners.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                    {banners.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentBanner(index)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index === currentBanner
+                            ? 'bg-white w-8'
+                            : 'bg-white/50 hover:bg-white/75'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-              <button
-                onClick={() => router.push('/catalog')}
-                className="flex items-center gap-2 text-violet-600 hover:text-violet-700 font-semibold"
-              >
-                Все категории
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
+            ) : (
+              // Fallback banner если нет баннеров в БД
+              <div className="mb-8 relative rounded-2xl overflow-hidden shadow-xl">
+                <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-violet-600 via-violet-500 to-indigo-600">
+                  <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
+                  
+                  <div className="relative h-full flex items-center">
+                    <div className="container mx-auto px-6 sm:px-8">
+                      <div className="max-w-2xl">
+                        <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-bold mb-4">
+                          🎉 Новинки сезона
+                        </div>
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight">
+                          Добро пожаловать в<br />Nur-Kitep!
+                        </h1>
+                        <p className="text-lg sm:text-xl text-white/90 mb-6 font-medium">
+                          Книги, канцелярия и товары для творчества с доставкой по всему Кыргызстану
+                        </p>
+                        <button
+                          onClick={() => router.push('/catalog')}
+                          className="inline-flex items-center gap-2 px-8 py-4 bg-white text-violet-600 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all"
+                        >
+                          Перейти в каталог
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Decorative Elements */}
+                  <div className="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+                  <div className="absolute bottom-10 right-32 w-40 h-40 bg-indigo-400/20 rounded-full blur-3xl"></div>
+                </div>
+              </div>
+            )}
+
+            {/* Categories */}
+            <section className="mb-12">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
+                    Категории
+                  </h2>
+                  <p className="text-gray-600">
+                    Выберите категорию для просмотра товаров
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push('/catalog/categories')}
+                  className="flex items-center gap-2 text-violet-600 hover:text-violet-700 font-semibold"
+                >
+                  Все категории
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
 
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
@@ -516,53 +533,53 @@ export default function HomeClient({ user }: HomeClientProps) {
                 })}
               </div>
             )}
-          </section>
+            </section>
 
-          {/* Popular Products */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <TrendingUp className="w-6 h-6 text-violet-600" />
-                  <h2 className="text-2xl font-extrabold text-gray-900">
-                    Популярные товары
-                  </h2>
-                </div>
-                <p className="text-gray-600">
-                  Самые популярные товары этого месяца
-                </p>
-              </div>
-              <button
-                onClick={() => router.push('/catalog')}
-                className="flex items-center gap-2 text-violet-600 hover:text-violet-700 font-semibold"
-              >
-                Все товары
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[...Array(8)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
-                    <div className="aspect-square bg-gray-200" />
-                    <div className="p-4 space-y-3">
-                      <div className="h-4 bg-gray-200 rounded w-3/4" />
-                      <div className="h-4 bg-gray-200 rounded w-1/2" />
-                      <div className="h-10 bg-gray-200 rounded" />
-                    </div>
+            {/* Popular Products */}
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="w-6 h-6 text-violet-600" />
+                    <h2 className="text-2xl font-extrabold text-gray-900">
+                      Популярные товары
+                    </h2>
                   </div>
-                ))}
+                  <p className="text-gray-600">
+                    Самые продаваемые товары за последний месяц
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push('/catalog')}
+                  className="flex items-center gap-2 text-violet-600 hover:text-violet-700 font-semibold"
+                >
+                  Все товары
+                  <ChevronRight className="w-5 h-5" />
+                </button>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
+                      <div className="aspect-square bg-gray-200" />
+                      <div className="p-4 space-y-3">
+                        <div className="h-4 bg-gray-200 rounded w-3/4" />
+                        <div className="h-4 bg-gray-200 rounded w-1/2" />
+                        <div className="h-10 bg-gray-200 rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {products.map((product) => {
                   const mainImage = product.images[0];
                   return (
                     <div
                       key={product.id}
                       onClick={() => router.push(`/product/${product.id}`)}
-                      className="group bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all border border-gray-200 cursor-pointer"
+                      className="group bg-white rounded-2xl overflow-hidden hover:shadow-xl transition-all border border-gray-200 cursor-pointer"
                     >
                       {/* Product Image */}
                       <div className="relative aspect-square bg-white overflow-hidden p-4">
@@ -570,10 +587,10 @@ export default function HomeClient({ user }: HomeClientProps) {
                           <img
                             src={mainImage.imageUrl}
                             alt={getProductName(product)}
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-contain rounded-xl"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-full h-full flex items-center justify-center rounded-xl">
                             <Package className="w-24 h-24 text-gray-300" />
                           </div>
                         )}

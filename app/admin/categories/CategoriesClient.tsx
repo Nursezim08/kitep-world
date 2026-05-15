@@ -26,6 +26,7 @@ import {
   ArrowUp,
   ArrowDown,
   ChevronLeft,
+  Image as ImageIcon,
 } from 'lucide-react';
 import AddCategoryModal from './AddCategoryModal';
 import EditCategoryModal from './EditCategoryModal';
@@ -102,6 +103,7 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
     { title: 'Пользователи', icon: Users, active: false, href: '/admin/users' },
     { title: 'Категории', icon: FolderTree, active: true, href: '/admin/categories' },
     { title: 'Товары', icon: Package, active: false, href: '/admin/products' },
+    { title: 'Баннеры', icon: ImageIcon, active: false, href: '/admin/banners' },
     { title: 'Заказы', icon: ShoppingCart, active: false, href: '#' },
     { title: 'Филиалы', icon: MapPin, active: false, href: '/admin/branches' },
     { title: 'Менеджеры', icon: Users, active: false, href: '/admin/managers' },

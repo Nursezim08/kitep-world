@@ -39,7 +39,8 @@ import {
   Clock,
   Code,
   Check,
-  FolderTree
+  FolderTree,
+  Image as ImageIcon
 } from 'lucide-react';
 
 interface User {
@@ -509,6 +510,14 @@ export default function BranchesClient({ user }: BranchesClientProps) {
               >
                 <Package size={18} className="flex-shrink-0" />
                 {!sidebarCollapsed && <span className="text-sm font-medium">Товары</span>}
+              </button>
+              <button
+                onClick={() => router.push('/admin/banners')}
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
+                title={sidebarCollapsed ? 'Баннеры' : ''}
+              >
+                <ImageIcon size={18} className="flex-shrink-0" />
+                {!sidebarCollapsed && <span className="text-sm font-medium">Баннеры</span>}
               </button>
               <button
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}

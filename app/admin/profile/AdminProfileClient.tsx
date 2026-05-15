@@ -19,7 +19,8 @@ import {
   Mail,
   Phone,
   Shield,
-  Calendar
+  Calendar,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 interface User {
@@ -59,6 +60,7 @@ export default function AdminProfileClient({ user }: AdminProfileClientProps) {
     { title: 'Пользователи', icon: Users, active: false, href: '/admin/users' },
     { title: 'Категории', icon: FolderTree, active: false, href: '/admin/categories' },
     { title: 'Товары', icon: Package, active: false, href: '/admin/products' },
+    { title: 'Баннеры', icon: ImageIcon, active: false, href: '/admin/banners' },
     { title: 'Заказы', icon: ShoppingCart, active: false, href: '#' },
     { title: 'Филиалы', icon: MapPin, active: false, href: '/admin/branches' },
     { title: 'Менеджеры', icon: Users, active: false, href: '/admin/managers' },

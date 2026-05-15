@@ -26,6 +26,8 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
+  Image as ImageIcon,
+  FolderTree,
 } from 'lucide-react';
 
 interface BranchUser {
@@ -271,6 +273,7 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
                 {!sidebarCollapsed && <span className="text-sm font-medium">Панель управления</span>}
               </button>
               <button
+                onClick={() => router.push('/admin/users')}
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
                 title={sidebarCollapsed ? 'Пользователи' : ''}
               >
@@ -278,6 +281,15 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
                 {!sidebarCollapsed && <span className="text-sm font-medium">Пользователи</span>}
               </button>
               <button
+                onClick={() => router.push('/admin/categories')}
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
+                title={sidebarCollapsed ? 'Категории' : ''}
+              >
+                <FolderTree size={18} className="flex-shrink-0" />
+                {!sidebarCollapsed && <span className="text-sm font-medium">Категории</span>}
+              </button>
+              <button
+                onClick={() => router.push('/admin/products')}
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
                 title={sidebarCollapsed ? 'Товары' : ''}
               >
@@ -285,6 +297,15 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
                 {!sidebarCollapsed && <span className="text-sm font-medium">Товары</span>}
               </button>
               <button
+                onClick={() => router.push('/admin/banners')}
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
+                title={sidebarCollapsed ? 'Баннеры' : ''}
+              >
+                <ImageIcon size={18} className="flex-shrink-0" />
+                {!sidebarCollapsed && <span className="text-sm font-medium">Баннеры</span>}
+              </button>
+              <button
+                onClick={() => router.push('/admin/orders')}
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
                 title={sidebarCollapsed ? 'Заказы' : ''}
               >
@@ -308,6 +329,7 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
                 {!sidebarCollapsed && <span className="text-sm font-medium">Менеджеры</span>}
               </button>
               <button
+                onClick={() => router.push('/admin/reports')}
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
                 title={sidebarCollapsed ? 'Отчеты' : ''}
               >
@@ -315,6 +337,7 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
                 {!sidebarCollapsed && <span className="text-sm font-medium">Отчеты</span>}
               </button>
               <button
+                onClick={() => router.push('/admin/settings')}
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all text-gray-400 hover:bg-[#2a3347] hover:text-white`}
                 title={sidebarCollapsed ? 'Настройки' : ''}
               >

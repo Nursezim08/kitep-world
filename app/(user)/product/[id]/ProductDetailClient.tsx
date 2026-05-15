@@ -20,6 +20,8 @@ import {
   Plus,
   Minus,
   ShoppingBag,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface User {
@@ -95,12 +97,20 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
   const [cartCount, setCartCount] = useState(0);
   const [inCart, setInCart] = useState(false);
   const [cartItemId, setCartItemId] = useState<string | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProduct();
     fetchCartCount();
     checkIfInCart();
   }, [productId]);
+
+  useEffect(() => {
+    if (product) {
+      fetchRelatedProducts();
+    }
+  }, [product]);
 
   const fetchProduct = async () => {
     try {
@@ -146,6 +156,39 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
       }
     } catch (error) {
       console.error('Error checking cart:', error);
+    }
+  };
+
+  const fetchRelatedProducts = async () => {
+    if (!product) return;
+    
+    try {
+      // Загружаем ВСЕ товары из той же категории
+      const sameCategoryRes = await fetch(`/api/user/products?categoryId=${product.category.id}&limit=1000`);
+      let sameCategoryProducts: Product[] = [];
+      
+      if (sameCategoryRes.ok) {
+        const sameCategoryData = await sameCategoryRes.json();
+        // Исключаем текущий товар
+        sameCategoryProducts = sameCategoryData.filter((p: Product) => p.id !== productId);
+      }
+      
+      // Загружаем ВСЕ товары из других категорий
+      const allProductsRes = await fetch(`/api/user/products?limit=1000`);
+      let otherProducts: Product[] = [];
+      
+      if (allProductsRes.ok) {
+        const allProductsData = await allProductsRes.json();
+        // Исключаем текущий товар и товары из той же категории
+        otherProducts = allProductsData.filter(
+          (p: Product) => p.id !== productId && !sameCategoryProducts.find((sp: Product) => sp.id === p.id)
+        );
+      }
+      
+      // Объединяем: сначала товары из той же категории, потом из других
+      setRelatedProducts([...sameCategoryProducts, ...otherProducts]);
+    } catch (error) {
+      console.error('Error fetching related products:', error);
     }
   };
 
@@ -225,6 +268,16 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
     }
   };
 
+  const copyToClipboard = async (label: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(`${label}: ${value}`);
+      setCopiedField(label);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -244,7 +297,7 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-        <div className="px-8 py-4">
+        <div className="px-8 py-2.5">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3 w-72">
@@ -301,7 +354,7 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                 <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
                   <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
@@ -311,9 +364,9 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
         </div>
       </header>
 
-      <div className="flex pt-[73px]">
+      <div className="flex pt-[57px]">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[73px] self-start`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
           {/* Main Navigation Card */}
           <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
@@ -403,15 +456,15 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
               {/* Left Column: Images */}
               <div className="space-y-4">
                 {/* Main Image */}
-                <div className="bg-gray-100 rounded-3xl p-8 aspect-square relative">
+                <div className="aspect-square relative">
                   {product.images.length > 0 ? (
                     <img
                       src={product.images[selectedImage].imageUrl}
                       alt={getProductName(product)}
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain rounded-3xl"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-3xl">
                       <div className="text-center text-gray-400">
                         <Package className="w-32 h-32 mx-auto mb-4" />
                         <p className="text-lg">Изображение отсутствует</p>
@@ -461,71 +514,85 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                   {getProductName(product)}
                 </h1>
 
-                {/* Rating */}
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <Star size={16} className="fill-amber-400 text-amber-400" />
-                    <span className="text-sm font-semibold text-gray-900">
-                      {product.averageRating.toFixed(1)}
+                {/* Rating & Price */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <Star size={16} className="fill-amber-400 text-amber-400" />
+                      <span className="text-sm font-semibold text-gray-900">
+                        {product.averageRating.toFixed(1)}
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      · {product._count.reviews} оценок
                     </span>
                   </div>
-                  <span className="text-sm text-gray-500">
-                    · {product._count.reviews} оценок
-                  </span>
-                </div>
-
-                {/* Price */}
-                <div className="flex items-baseline gap-3">
+                  
                   <span className="text-2xl font-bold text-violet-600">
                     {product.price} сом
                   </span>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="space-y-3">
+                <div className="flex flex-col items-center gap-2">
                   {!inCart ? (
-                    <button
-                      onClick={addToCart}
-                      disabled={addingToCart}
-                      className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm transition-all"
-                    >
-                      {addingToCart ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Добавление...</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingBag size={18} />
-                          <span>Добавить в корзину</span>
-                        </>
-                      )}
-                    </button>
+                    <>
+                      <button
+                        onClick={addToCart}
+                        disabled={addingToCart}
+                        className="w-64 flex items-center justify-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm transition-all"
+                      >
+                        {addingToCart ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Добавление...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingBag size={16} />
+                            <span>Добавить в корзину</span>
+                          </>
+                        )}
+                      </button>
+                      <button className="w-64 flex items-center justify-center gap-2 px-6 py-3 bg-violet-100 hover:bg-violet-200 text-violet-700 rounded-xl font-semibold text-sm transition-all">
+                        <span>Купить сейчас</span>
+                      </button>
+                    </>
                   ) : (
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => updateCartQuantity(quantity - 1)}
-                        disabled={quantity <= 1}
-                        className="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-                      >
-                        <Minus size={20} />
-                      </button>
-                      <div className="flex-1 text-center">
-                        <span className="text-2xl font-bold text-gray-900">{quantity}</span>
-                        <p className="text-xs text-gray-500 mt-1">В корзине</p>
+                    <>
+                      <div className="flex items-center gap-2 w-64">
+                        {/* Счетчик в сером блоке */}
+                        <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2">
+                          <button
+                            onClick={() => updateCartQuantity(quantity - 1)}
+                            disabled={quantity <= 1}
+                            className="text-violet-600 hover:text-violet-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <Minus size={16} strokeWidth={3} />
+                          </button>
+                          <span className="text-lg font-bold text-gray-900 min-w-[24px] text-center">{quantity}</span>
+                          <button
+                            onClick={() => updateCartQuantity(quantity + 1)}
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            <Plus size={16} strokeWidth={3} />
+                          </button>
+                        </div>
+                        
+                        {/* Кнопка В корзине */}
+                        <button
+                          onClick={() => router.push('/cart')}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-semibold text-sm transition-all"
+                        >
+                          <span>В корзине</span>
+                          <ChevronRight size={16} />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => updateCartQuantity(quantity + 1)}
-                        className="w-12 h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center transition-colors"
-                      >
-                        <Plus size={20} />
+                      <button className="w-64 flex items-center justify-center gap-2 px-6 py-3 bg-violet-100 hover:bg-violet-200 text-violet-700 rounded-xl font-semibold text-sm transition-all">
+                        <span>Купить сейчас</span>
                       </button>
-                    </div>
+                    </>
                   )}
-
-                  <button className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-violet-50 hover:bg-violet-100 text-violet-600 rounded-xl font-semibold text-sm transition-all">
-                    <span>Купить сейчас</span>
-                  </button>
                 </div>
 
                 {/* Category Info */}
@@ -540,27 +607,87 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                 <div className="border-t border-gray-200 pt-6">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Характеристики и описание</h3>
                   
-                  <div className="space-y-3 mb-6">
-                    <div className="grid grid-cols-2 gap-4 py-2">
-                      <span className="text-sm text-gray-600">Артикул</span>
-                      <span className="text-sm text-gray-900 font-medium">{product.sku}</span>
+                  <div className="space-y-2 mb-6">
+                    {/* Артикул */}
+                    <div className="group flex items-center justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-sm text-gray-600 whitespace-nowrap">Артикул</span>
+                        <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px]"></div>
+                        <span className="text-sm text-gray-900 font-medium">{product.sku}</span>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard('Артикул', product.sku)}
+                        className="ml-3 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-gray-200 rounded transition-all"
+                        title="Копировать"
+                      >
+                        {copiedField === 'Артикул' ? (
+                          <Check size={14} className="text-green-600" />
+                        ) : (
+                          <Copy size={14} className="text-gray-600" />
+                        )}
+                      </button>
                     </div>
                     
+                    {/* Бренд */}
                     {product.brand && (
-                      <div className="grid grid-cols-2 gap-4 py-2">
-                        <span className="text-sm text-gray-600">Бренд</span>
-                        <span className="text-sm text-gray-900 font-medium">{product.brand}</span>
+                      <div className="group flex items-center justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-sm text-gray-600 whitespace-nowrap">Бренд</span>
+                          <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px]"></div>
+                          <span className="text-sm text-gray-900 font-medium">{product.brand}</span>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard('Бренд', product.brand!)}
+                          className="ml-3 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-gray-200 rounded transition-all"
+                          title="Копировать"
+                        >
+                          {copiedField === 'Бренд' ? (
+                            <Check size={14} className="text-green-600" />
+                          ) : (
+                            <Copy size={14} className="text-gray-600" />
+                          )}
+                        </button>
                       </div>
                     )}
                     
-                    <div className="grid grid-cols-2 gap-4 py-2">
-                      <span className="text-sm text-gray-600">Категория</span>
-                      <span className="text-sm text-gray-900 font-medium">{getCategoryName(product.category)}</span>
+                    {/* Категория */}
+                    <div className="group flex items-center justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-sm text-gray-600 whitespace-nowrap">Категория</span>
+                        <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px]"></div>
+                        <span className="text-sm text-gray-900 font-medium">{getCategoryName(product.category)}</span>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard('Категория', getCategoryName(product.category))}
+                        className="ml-3 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-gray-200 rounded transition-all"
+                        title="Копировать"
+                      >
+                        {copiedField === 'Категория' ? (
+                          <Check size={14} className="text-green-600" />
+                        ) : (
+                          <Copy size={14} className="text-gray-600" />
+                        )}
+                      </button>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4 py-2">
-                      <span className="text-sm text-gray-600">Статус</span>
-                      <span className="text-sm text-gray-900 font-medium">В наличии</span>
+                    {/* Статус */}
+                    <div className="group flex items-center justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-sm text-gray-600 whitespace-nowrap">Статус</span>
+                        <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px]"></div>
+                        <span className="text-sm text-gray-900 font-medium">В наличии</span>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard('Статус', 'В наличии')}
+                        className="ml-3 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-gray-200 rounded transition-all"
+                        title="Копировать"
+                      >
+                        {copiedField === 'Статус' ? (
+                          <Check size={14} className="text-green-600" />
+                        ) : (
+                          <Copy size={14} className="text-gray-600" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -578,45 +705,155 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
             </div>
 
             {/* Reviews Section (Full Width at Bottom) */}
-            {product.reviews.length > 0 && (
-              <div className="mt-8 bg-white rounded-2xl p-8 border border-gray-200">
+            <div className="mt-8 bg-white rounded-2xl p-8 border border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Отзывы
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Примерные отзывы - только вторая строка */}
+                {[
+                  {
+                    id: '4',
+                    userName: 'Дмитрий',
+                    date: '13 мая',
+                    rating: 5,
+                    comment: 'Товар пришел быстро, упаковка отличная. Качество на высоте!',
+                    tags: ['КАЧЕСТВО', 'ДОСТАВКА']
+                  },
+                  {
+                    id: '5',
+                    userName: 'Ольга',
+                    date: '12 мая',
+                    rating: 4,
+                    comment: 'Хороший товар за свою цену. Рекомендую!',
+                    tags: ['ЦЕНА', 'КАЧЕСТВО']
+                  },
+                  {
+                    id: '6',
+                    userName: 'Сергей',
+                    date: '11 мая',
+                    rating: 5,
+                    comment: 'Очень доволен покупкой. Буду заказывать еще.',
+                    tags: ['КАЧЕСТВО']
+                  },
+                ].map((review) => (
+                  <div key={review.id} className="bg-gray-50 rounded-2xl p-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="font-bold text-gray-900 mb-1">{review.userName}</h4>
+                        <span className="text-sm text-gray-500">{review.date}</span>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            size={16}
+                            className={`${
+                              i < review.rating
+                                ? 'fill-orange-400 text-orange-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Tags */}
+                    {review.tags && review.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {review.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-gray-200 text-gray-600 rounded text-xs font-medium"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Comment */}
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {review.comment}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              
+              {/* View All Button */}
+              <div className="mt-6 flex justify-center">
+                <button className="px-6 py-3 bg-violet-100 hover:bg-violet-200 text-violet-700 rounded-xl font-semibold text-sm transition-all">
+                  Смотреть все отзывы
+                </button>
+              </div>
+            </div>
+
+            {/* Related Products Section */}
+            {relatedProducts.length > 0 && (
+              <div className="mt-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Отзывы ({product._count.reviews})
+                  Смотрите также
                 </h2>
                 
-                <div className="space-y-6">
-                  {product.reviews.map((review) => (
-                    <div key={review.id} className="border-b border-gray-100 pb-6 last:border-0">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-violet-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
-                          {review.user.fullName.charAt(0)}
-                        </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {relatedProducts.map((relatedProduct) => (
+                    <div
+                      key={relatedProduct.id}
+                      onClick={() => router.push(`/product/${relatedProduct.id}`)}
+                      className="bg-gray-50 rounded-3xl overflow-hidden cursor-pointer transition-all hover:shadow-lg group"
+                    >
+                      {/* Image */}
+                      <div className="relative p-4 aspect-square">
+                        {relatedProduct.images.length > 0 ? (
+                          <img
+                            src={relatedProduct.images[0].imageUrl}
+                            alt={getProductName(relatedProduct)}
+                            className="w-full h-full object-contain rounded-2xl"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-white rounded-2xl">
+                            <Package className="w-16 h-16 text-gray-300" />
+                          </div>
+                        )}
                         
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-bold text-gray-900">{review.user.fullName}</h4>
-                            <span className="text-sm text-gray-500">
-                              {new Date(review.createdAt).toLocaleDateString('ru-RU')}
-                            </span>
+                        {/* Favorite Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="absolute top-6 right-6 w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                        >
+                          <Heart size={18} className="text-gray-700" />
+                        </button>
+                      </div>
+
+                      {/* Info */}
+                      <div className="p-4">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[40px]">
+                          {getProductName(relatedProduct)}
+                        </h3>
+
+                        {/* Rating */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="relative w-4 h-4">
+                            <Star className="absolute inset-0 text-gray-300" size={16} />
+                            <div
+                              className="absolute inset-0 overflow-hidden"
+                              style={{ width: `${(relatedProduct.averageRating / 5) * 100}%` }}
+                            >
+                              <Star className="fill-violet-600 text-violet-600" size={16} />
+                            </div>
                           </div>
-                          
-                          <div className="flex items-center gap-1 mb-2">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                size={16}
-                                className={`${
-                                  i < review.rating
-                                    ? 'fill-violet-600 text-violet-600'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          
-                          {review.comment && (
-                            <p className="text-gray-700">{review.comment}</p>
-                          )}
+                          <span className="text-xs text-gray-600">
+                            {relatedProduct.averageRating.toFixed(1)} | {relatedProduct._count.reviews} отзывов
+                          </span>
+                        </div>
+
+                        {/* Price */}
+                        <div className="text-2xl font-bold text-gray-900">
+                          {relatedProduct.price} сом
                         </div>
                       </div>
                     </div>

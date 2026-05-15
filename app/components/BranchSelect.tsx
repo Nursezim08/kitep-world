@@ -77,7 +77,7 @@ export default function BranchSelect({ branches, value, onChange }: BranchSelect
               </p>
             </div>
           ) : (
-            <p className="text-gray-500">Выберите филиал для самовывоза</p>
+            <p className="text-gray-500">Выберите филиал</p>
           )}
         </div>
         <ChevronDown

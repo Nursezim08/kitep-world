@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const limit = searchParams.get('limit');
+
     // Получаем только активные корневые категории
     const categories = await prisma.category.findMany({
       where: {
@@ -26,6 +29,12 @@ export async function GET(request: NextRequest) {
           },
         },
       },
+      orderBy: {
+        products: {
+          _count: 'desc', // Сортировка по количеству товаров (популярности)
+        },
+      },
+      take: limit ? parseInt(limit) : undefined, // Ограничение количества
     });
 
     return NextResponse.json(categories);

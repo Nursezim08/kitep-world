@@ -23,6 +23,7 @@ import {
   BarChart3,
   PieChart,
   Activity,
+  Image as ImageIcon,
 } from 'lucide-react';
 import CustomSelect from '@/app/components/CustomSelect';
 import DatePicker from '@/app/components/DatePicker';
@@ -193,6 +194,7 @@ export default function ReportsClient({ user }: ReportsClientProps) {
     { title: 'Пользователи', icon: Users, active: false, href: '/admin/users' },
     { title: 'Категории', icon: FolderTree, active: false, href: '/admin/categories' },
     { title: 'Товары', icon: Package, active: false, href: '/admin/products' },
+    { title: 'Баннеры', icon: ImageIcon, active: false, href: '/admin/banners' },
     { title: 'Заказы', icon: ShoppingCart, active: false, href: '/admin/orders' },
     { title: 'Филиалы', icon: MapPin, active: false, href: '/admin/branches' },
     { title: 'Менеджеры', icon: Users, active: false, href: '/admin/managers' },

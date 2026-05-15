@@ -333,7 +333,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-        <div className="px-8 py-4">
+        <div className="px-8 py-2.5">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3 w-72">
@@ -385,12 +385,12 @@ export default function CatalogClient({ user }: CatalogClientProps) {
 
               <button 
                 onClick={() => router.push('/profile')}
-                className="flex items-center gap-3 pl-3 hover:bg-gray-50 rounded-xl transition-colors px-3 py-2"
+                className="flex items-center gap-3 hover:bg-gray-50 rounded-xl transition-colors px-3 py-2"
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
                   <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
@@ -400,9 +400,9 @@ export default function CatalogClient({ user }: CatalogClientProps) {
         </div>
       </header>
 
-      <div className="flex pt-[73px]">
+      <div className="flex pt-[57px]">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[73px] self-start`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
           {/* Main Navigation Card */}
           <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
@@ -434,6 +434,32 @@ export default function CatalogClient({ user }: CatalogClientProps) {
               ))}
             </nav>
           </div>
+
+          {/* Quick Actions Card */}
+          {!sidebarCollapsed && (
+            <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-2 mb-4 px-2">
+                <span className="text-sm font-semibold text-gray-500">Быстрые действия</span>
+              </div>
+              
+              <div className="space-y-1">
+                <button
+                  onClick={() => router.push('/catalog')}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
+                >
+                  <Grid size={18} className="flex-shrink-0" />
+                  <span className="text-sm font-medium">Каталог</span>
+                </button>
+                <button
+                  onClick={() => router.push('/orders')}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
+                >
+                  <Package size={18} className="flex-shrink-0" />
+                  <span className="text-sm font-medium">Мои заказы</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Categories Card */}
           {!sidebarCollapsed && (
@@ -491,34 +517,46 @@ export default function CatalogClient({ user }: CatalogClientProps) {
         {/* Main Content */}
         <div className="flex-1">
           <main className="p-8">
-            {/* Page Header */}
+            {/* Page Header with Search and Filters */}
             <div className="mb-8">
-              <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
-                Каталог товаров
-              </h1>
-              <p className="text-gray-600">
+              <div className="flex items-end gap-4 mb-1">
+                {/* Title */}
+                <h1 className="text-3xl font-extrabold text-gray-900 flex-shrink-0">
+                  Каталог
+                </h1>
+
+                {/* Spacer */}
+                <div className="w-32 flex-shrink-0"></div>
+
+                {/* Search - занимает всё доступное пространство */}
+                <div className="relative flex-1 max-w-xl">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Поиск товаров..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-sm text-gray-900 placeholder-gray-400"
+                  />
+                </div>
+
+                {/* Filters Button */}
+                <button
+                  onClick={openFilters}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:border-violet-300 hover:bg-violet-50/50 transition-all text-gray-900 font-semibold text-sm flex-shrink-0"
+                >
+                  <SlidersHorizontal size={18} />
+                  <span>Фильтры</span>
+                </button>
+              </div>
+
+              {/* Subtitle */}
+              <p className="text-sm text-gray-600">
                 {selectedCategory === 'all' 
                   ? `Найдено ${filteredProducts.length} товаров`
                   : `${getCategoryName(categories.find(c => c.id === selectedCategory))} — ${filteredProducts.length} товаров`
                 }
               </p>
-            </div>
-
-            {/* Filters & Sort */}
-            <div className="mb-6 flex items-center gap-4">
-              {/* Filters Button */}
-              <button
-                onClick={openFilters}
-                className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 rounded-full hover:border-violet-300 hover:bg-violet-50/50 transition-all text-gray-900 font-semibold"
-              >
-                <SlidersHorizontal size={20} />
-                <span>Фильтры</span>
-              </button>
-
-              {/* Results Count */}
-              <div className="ml-auto text-sm text-gray-600">
-                <span className="font-bold text-gray-900">{filteredProducts.length}</span> товаров найдено
-              </div>
             </div>
 
             {/* Filter Modal */}
@@ -538,10 +576,18 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                   </div>
 
                   <div className="p-4 sm:p-5">
-                    {/* Header */}
-                    <h2 className="text-lg font-bold text-gray-900 text-center mb-3">
-                      Сортировка и фильтры
-                    </h2>
+                    {/* Header with Close Button */}
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-lg font-bold text-gray-900">
+                        Сортировка и фильтры
+                      </h2>
+                      <button
+                        onClick={() => setShowFilters(false)}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-900"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
 
                     {/* Categories */}
                     <div className="mb-3">
@@ -690,7 +736,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                     <div
                       key={product.id}
                       onClick={() => router.push(`/product/${product.id}`)}
-                      className="group bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all border border-gray-200 cursor-pointer"
+                      className="group bg-white rounded-2xl overflow-hidden hover:shadow-xl transition-all border border-gray-200 cursor-pointer"
                     >
                       {/* Product Image */}
                       <div className="relative aspect-square bg-white overflow-hidden p-4">
@@ -698,10 +744,10 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                           <img
                             src={mainImage.imageUrl}
                             alt={getProductName(product)}
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-contain rounded-xl"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-full h-full flex items-center justify-center rounded-xl">
                             <Package className="w-24 h-24 text-gray-300" />
                           </div>
                         )}

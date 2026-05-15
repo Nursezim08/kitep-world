@@ -44,6 +44,11 @@ export async function GET(request: NextRequest) {
         orderItems: {
           select: {
             quantity: true,
+            order: {
+              select: {
+                createdAt: true,
+              },
+            },
           },
         },
         _count: {
@@ -52,16 +57,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: popular
-        ? {
-            reviews: {
-              _count: 'desc',
-            },
-          }
-        : {
-            createdAt: 'desc',
-          },
-      take: limit,
+      take: popular ? undefined : limit, // Для популярных загружаем все, потом отсортируем
     });
 
     // Рассчитываем средний рейтинг и количество проданных для каждого товара
@@ -71,8 +67,17 @@ export async function GET(request: NextRequest) {
         ? Number((totalRating / product.reviews.length).toFixed(1))
         : 0;
 
-      // Подсчитываем общее количество проданных товаров
-      const totalSold = product.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+      // Подсчитываем общее количество проданных товаров за последние 30 дней
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const totalSold = product.orderItems.reduce((sum, item) => {
+        const orderDate = new Date(item.order.createdAt);
+        if (orderDate >= thirtyDaysAgo) {
+          return sum + item.quantity;
+        }
+        return sum;
+      }, 0);
 
       // Убираем reviews и orderItems из ответа
       const { reviews, orderItems, ...productWithoutReviews } = product;
@@ -83,6 +88,12 @@ export async function GET(request: NextRequest) {
         totalSold,
       };
     });
+
+    // Если запрос популярных товаров, сортируем по количеству продаж
+    if (popular) {
+      productsWithRating.sort((a, b) => b.totalSold - a.totalSold);
+      return NextResponse.json(productsWithRating.slice(0, limit));
+    }
 
     return NextResponse.json(productsWithRating);
   } catch (error) {

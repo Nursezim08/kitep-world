@@ -422,11 +422,12 @@ model Review {
 
 // 18. Баннеры
 model Banner {
-  id     String       @id @default(uuid()) @db.Uuid
-  title  String       @db.VarChar(255)
-  image  String       @db.Text
-  url    String?      @db.Text
-  status BannerStatus @default(active)
+  id           String       @id @default(uuid()) @db.Uuid
+  title        String       @db.VarChar(255)
+  desktopImage String       @map("desktop_image") @db.Text
+  mobileImage  String       @map("mobile_image") @db.Text
+  url          String?      @db.Text
+  status       BannerStatus @default(active)
 
   @@map("banners")
 }

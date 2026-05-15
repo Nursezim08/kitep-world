@@ -5,13 +5,13 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     // Проверка авторизации
-    const authResult = await verifyAuth(request);
-    if (!authResult.authenticated || !authResult.user) {
+    const user = await verifyAuth(request);
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Проверка роли
-    if (authResult.user.role !== 'user') {
+    if (user.role !== 'user') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -34,19 +34,14 @@ export async function GET(request: NextRequest) {
       address: branch.address,
       phone: branch.phone,
       email: branch.email,
-      workDays: branch.workDays,
-      // Форматируем время в строку HH:MM
+      // workDays уже массив в БД
+      workDays: branch.workDays || [],
+      // Форматируем время из Time в строку HH:MM
       openTime: branch.openTime
-        ? new Date(branch.openTime).toLocaleTimeString('ru-RU', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })
+        ? branch.openTime.toString().substring(0, 5) // "09:00:00" -> "09:00"
         : '09:00',
       closeTime: branch.closeTime
-        ? new Date(branch.closeTime).toLocaleTimeString('ru-RU', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })
+        ? branch.closeTime.toString().substring(0, 5) // "18:00:00" -> "18:00"
         : '18:00',
     }));
 

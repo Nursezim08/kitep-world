@@ -28,6 +28,7 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  Image as ImageIcon,
 } from 'lucide-react';
 import EditUserModal from '../EditUserModal';
 import DeleteUserModal from '../DeleteUserModal';

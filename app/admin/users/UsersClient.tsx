@@ -27,6 +27,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Image as ImageIcon,
 } from 'lucide-react';
 import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
@@ -83,6 +84,7 @@ export default function UsersClient({ user }: UsersClientProps) {
     { title: 'Пользователи', icon: Users, active: true, href: '/admin/users' },
     { title: 'Категории', icon: FolderTree, href: '/admin/categories' },
     { title: 'Товары', icon: Package, href: '/admin/products' },
+    { title: 'Баннеры', icon: ImageIcon, href: '/admin/banners' },
     { title: 'Заказы', icon: ShoppingCart, href: '#' },
     { title: 'Филиалы', icon: MapPin, href: '/admin/branches' },
     { title: 'Менеджеры', icon: Users, href: '/admin/managers' },

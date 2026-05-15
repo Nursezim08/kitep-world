@@ -125,6 +125,7 @@ export default function ProductsClient({ user }: ProductsClientProps) {
     { title: 'Пользователи', icon: Users, active: false, href: '/admin/users' },
     { title: 'Категории', icon: FolderTree, active: false, href: '/admin/categories' },
     { title: 'Товары', icon: Package, active: true, href: '/admin/products' },
+    { title: 'Баннеры', icon: ImageIcon, active: false, href: '/admin/banners' },
     { title: 'Заказы', icon: ShoppingCart, active: false, href: '#' },
     { title: 'Филиалы', icon: MapPin, active: false, href: '/admin/branches' },
     { title: 'Менеджеры', icon: Users, active: false, href: '/admin/managers' },

@@ -5,13 +5,13 @@ import { prisma } from '@/lib/prisma';
 export async function POST(request: NextRequest) {
   try {
     // Проверка авторизации
-    const authResult = await verifyAuth(request);
-    if (!authResult.authenticated || !authResult.user) {
+    const user = await verifyAuth(request);
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Проверка роли
-    if (authResult.user.role !== 'user') {
+    if (user.role !== 'user') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     // Получаем корзину пользователя
     const cartItems = await prisma.cart.findMany({
       where: {
-        userId: authResult.user.id,
+        userId: user.userId,
       },
       include: {
         product: {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       const newOrder = await tx.order.create({
         data: {
           orderNumber,
-          userId: authResult.user!.id,
+          userId: user.userId,
           branchId,
           totalAmount,
           status: 'pending', // Ожидает оплаты
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       // Очищаем корзину
       await tx.cart.deleteMany({
         where: {
-          userId: authResult.user!.id,
+          userId: user.userId,
         },
       });
 
