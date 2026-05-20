@@ -1,9 +1,41 @@
 import { PrismaClient } from '@prisma/client';
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+// Создаем глобальный тип для Prisma
+declare global {
+  var prisma: PrismaClient | undefined;
+}
+
+// Функция для создания Prisma клиента
+const createPrismaClient = () => {
+  console.log('[PRISMA] Creating new Prisma client...');
+  return new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+  });
 };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+// Используем глобальный экземпляр или создаем новый
+let prismaInstance: PrismaClient | null = null;
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+export const getPrismaClient = (): PrismaClient => {
+  if (prismaInstance) {
+    return prismaInstance;
+  }
+
+  if (global.prisma) {
+    prismaInstance = global.prisma;
+    return prismaInstance;
+  }
+
+  prismaInstance = createPrismaClient();
+  
+  // В режиме разработки сохраняем экземпляр глобально
+  if (process.env.NODE_ENV !== 'production') {
+    global.prisma = prismaInstance;
+  }
+
+  console.log('[PRISMA] Prisma client initialized successfully');
+  return prismaInstance;
+};
+
+// Экспортируем клиент для обратной совместимости
+export const prisma = getPrismaClient();

@@ -1,17 +1,13 @@
-import { getCurrentUser } from '@/lib/auth';
+import { checkUserAccess } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import HomeClient from './HomeClient';
 
 export default async function HomePage() {
-  const user = await getCurrentUser();
+  const access = await checkUserAccess();
 
-  if (!user) {
-    redirect('/login');
+  if (!access.allowed) {
+    redirect(access.redirectTo!);
   }
 
-  if (user.role !== 'user') {
-    redirect('/admin/dashboard');
-  }
-
-  return <HomeClient user={user} />;
+  return <HomeClient user={access.user!} />;
 }

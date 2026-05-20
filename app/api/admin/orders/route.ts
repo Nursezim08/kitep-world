@@ -1,24 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth } from "@/lib/auth";
+import { getPrismaClient } from "@/lib/prisma";
 
 // GET /api/admin/orders - Получение списка заказов
 export async function GET(request: NextRequest) {
+  const prisma = getPrismaClient();
+
   try {
     const payload = await verifyAuth(request);
-    if (!payload || payload.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (!payload || payload.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search') || '';
-    const status = searchParams.get('status') || 'all';
-    const branchId = searchParams.get('branchId') || 'all';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "all";
+    const branchId = searchParams.get("branchId") || "all";
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "50");
     const skip = (page - 1) * limit;
 
     // Построение фильтров
@@ -27,48 +26,48 @@ export async function GET(request: NextRequest) {
     // Поиск по номеру заказа или имени клиента
     if (search) {
       where.OR = [
-        { orderNumber: { contains: search, mode: 'insensitive' } },
-        { user: { fullName: { contains: search, mode: 'insensitive' } } },
-        { user: { email: { contains: search, mode: 'insensitive' } } },
+        { order_number: { contains: search, mode: "insensitive" } },
+        { users: { full_name: { contains: search, mode: "insensitive" } } },
+        { users: { email: { contains: search, mode: "insensitive" } } },
       ];
     }
 
     // Фильтр по статусу
-    if (status !== 'all') {
-      where.orderStatus = status;
+    if (status !== "all") {
+      where.order_status = status;
     }
 
     // Фильтр по филиалу
-    if (branchId !== 'all') {
-      where.branchId = branchId;
+    if (branchId !== "all") {
+      where.branch_id = branchId;
     }
 
     // Получение заказов
     const [orders, total] = await Promise.all([
-      prisma.order.findMany({
+      prisma.orders.findMany({
         where,
         include: {
-          user: {
+          users: {
             select: {
               id: true,
-              fullName: true,
+              full_name: true,
               email: true,
               phone: true,
             },
           },
-          branch: {
+          branches: {
             select: {
               id: true,
               name: true,
               city: true,
             },
           },
-          items: {
+          order_items: {
             include: {
-              product: {
+              products: {
                 include: {
-                  translations: {
-                    where: { locale: 'ru' },
+                  product_translations: {
+                    where: { locale: "ru" },
                   },
                 },
               },
@@ -76,11 +75,11 @@ export async function GET(request: NextRequest) {
           },
           payments: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { created_at: "desc" },
         skip,
         take: limit,
       }),
-      prisma.order.count({ where }),
+      prisma.orders.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -93,10 +92,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching orders:', error);
+    console.error("Error fetching orders:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch orders' },
-      { status: 500 }
+      { error: "Failed to fetch orders" },
+      { status: 500 },
     );
   }
 }

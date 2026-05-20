@@ -1,28 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { generateVerificationCode, sendTelegramCode } from '@/lib/telegram';
+import { NextRequest, NextResponse } from "next/server";
+import { getPrismaClient } from "@/lib/prisma";
+import { generateVerificationCode, sendTelegramCode } from "@/lib/telegram";
+import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
+  const prisma = getPrismaClient();
+
   try {
     const { userId } = await request.json();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'userId обязателен' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "userId обязателен" }, { status: 400 });
     }
 
     // Проверяем существование пользователя
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
     });
 
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'notAdmin' },
-        { status: 403 }
-      );
+    if (!user || user.role !== "admin") {
+      return NextResponse.json({ error: "notAdmin" }, { status: 403 });
     }
 
     // Генерируем новый код
@@ -30,19 +27,20 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 минут
 
     // Удаляем старые неиспользованные коды
-    await prisma.adminVerification.deleteMany({
+    await prisma.admin_verifications.deleteMany({
       where: {
-        userId: user.id,
+        user_id: user.id,
         verified: false,
       },
     });
 
     // Создаем новый код
-    await prisma.adminVerification.create({
+    await prisma.admin_verifications.create({
       data: {
-        userId: user.id,
+        id: crypto.randomUUID(),
+        user_id: user.id,
         code,
-        expiresAt,
+        expires_at: expiresAt,
       },
     });
 
@@ -50,21 +48,15 @@ export async function POST(request: NextRequest) {
     const sent = await sendTelegramCode(user.id, code);
 
     if (!sent) {
-      return NextResponse.json(
-        { error: 'codeNotSent' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "codeNotSent" }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Код отправлен повторно',
+      message: "Код отправлен повторно",
     });
   } catch (error) {
-    console.error('Admin resend code error:', error);
-    return NextResponse.json(
-      { error: 'serverError' },
-      { status: 500 }
-    );
+    console.error("Admin resend code error:", error);
+    return NextResponse.json({ error: "serverError" }, { status: 500 });
   }
 }

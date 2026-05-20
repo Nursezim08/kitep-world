@@ -21,6 +21,7 @@ export function getLanguageCookie(): Language | null {
 export function useTranslation(ns: string = 'landing') {
   const [translations, setTranslations] = useState<any>({});
   const [lang, setLang] = useState<Language>(fallbackLng);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   useEffect(() => {
     const currentLang = getLanguageCookie() || fallbackLng;
@@ -32,7 +33,21 @@ export function useTranslation(ns: string = 'landing') {
         import(`./locales/${fallbackLng}/${ns}.json`)
           .then(module => setTranslations(module.default));
       });
-  }, [ns]);
+  }, [ns, reloadTrigger]);
+
+  // Слушаем изменения cookie
+  useEffect(() => {
+    const checkCookie = () => {
+      const currentLang = getLanguageCookie() || fallbackLng;
+      if (currentLang !== lang) {
+        setReloadTrigger(prev => prev + 1);
+      }
+    };
+
+    // Проверяем каждые 100ms (только когда компонент активен)
+    const interval = setInterval(checkCookie, 100);
+    return () => clearInterval(interval);
+  }, [lang]);
 
   const t = (key: string): string => {
     const keys = key.split('.');

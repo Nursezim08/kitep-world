@@ -1,83 +1,85 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { createToken, setAuthCookie } from '@/lib/auth';
+import { NextRequest, NextResponse } from "next/server";
+import { getPrismaClient } from "@/lib/prisma";
+import { createToken, setAuthCookie } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  const prisma = getPrismaClient();
+
   try {
     const body = await request.json();
     const { userId, code } = body;
 
     if (!userId || !code) {
       return NextResponse.json(
-        { error: 'Необходимо указать userId и код верификации' },
-        { status: 400 }
+        { error: "Необходимо указать userId и код верификации" },
+        { status: 400 },
       );
     }
 
     // Проверка кода верификации
-    const verification = await prisma.emailVerification.findFirst({
+    const verification = await prisma.email_verifications.findFirst({
       where: {
-        userId,
+        user_id: userId,
         code,
         verified: false,
-        expiresAt: {
+        expires_at: {
           gt: new Date(),
         },
       },
       include: {
-        user: true,
+        users: true,
       },
     });
 
     if (!verification) {
       return NextResponse.json(
-        { error: 'Неверный или истекший код верификации' },
-        { status: 400 }
+        { error: "Неверный или истекший код верификации" },
+        { status: 400 },
       );
     }
 
     // Обновление статуса верификации
     await prisma.$transaction([
-      prisma.emailVerification.update({
+      prisma.email_verifications.update({
         where: { id: verification.id },
         data: { verified: true },
       }),
-      prisma.user.update({
+      prisma.users.update({
         where: { id: userId },
-        data: { emailVerified: true },
+        data: { email_verified: true },
       }),
     ]);
 
     // Создание токена и установка cookie
     const token = await createToken({
-      userId: verification.user.id,
-      email: verification.user.email,
-      role: verification.user.role,
+      userId: verification.users.id,
+      email: verification.users.email,
+      role: verification.users.role,
     });
 
     await setAuthCookie(token);
 
     return NextResponse.json(
       {
-        message: 'Email успешно верифицирован',
+        message: "Email успешно верифицирован",
         user: {
-          id: verification.user.id,
-          fullName: verification.user.fullName,
-          email: verification.user.email,
-          role: verification.user.role,
-          phone: verification.user.phone,
-          avatar: verification.user.avatar,
-          status: verification.user.status,
+          id: verification.users.id,
+          fullName: verification.users.full_name,
+          email: verification.users.email,
+          role: verification.users.role,
+          phone: verification.users.phone,
+          avatar: verification.users.avatar,
+          status: verification.users.status,
           emailVerified: true,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
-    console.error('Email verification error:', error);
+    console.error("Email verification error:", error);
     return NextResponse.json(
-      { error: 'Ошибка при верификации email' },
-      { status: 500 }
+      { error: "Ошибка при верификации email" },
+      { status: 500 },
     );
   }
 }

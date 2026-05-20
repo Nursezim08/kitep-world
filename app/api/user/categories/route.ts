@@ -1,19 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { getPrismaClient } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
+  const prisma = getPrismaClient();
+
   try {
     const { searchParams } = new URL(request.url);
-    const limit = searchParams.get('limit');
+    const limit = searchParams.get("limit");
 
     // Получаем только активные корневые категории
-    const categories = await prisma.category.findMany({
+    const categories = await prisma.categories.findMany({
       where: {
-        parentId: null,
-        status: 'active',
+        parent_id: null,
+        status: "active",
       },
       include: {
-        translations: {
+        category_translations: {
           select: {
             locale: true,
             name: true,
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
           select: {
             products: {
               where: {
-                status: 'active',
+                status: "active",
               },
             },
           },
@@ -31,18 +33,27 @@ export async function GET(request: NextRequest) {
       },
       orderBy: {
         products: {
-          _count: 'desc', // Сортировка по количеству товаров (популярности)
+          _count: "desc",
         },
       },
-      take: limit ? parseInt(limit) : undefined, // Ограничение количества
+      take: limit ? parseInt(limit) : undefined,
     });
 
-    return NextResponse.json(categories);
+    // Переименовываем поля в camelCase для клиента
+    const result = categories.map((cat) => ({
+      id: cat.id,
+      image: cat.image,
+      status: cat.status,
+      translations: cat.category_translations,
+      _count: cat._count,
+    }));
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    console.error("Error fetching categories:", error);
     return NextResponse.json(
-      { error: 'Не удалось загрузить категории' },
-      { status: 500 }
+      { error: "Не удалось загрузить категории" },
+      { status: 500 },
     );
   }
 }

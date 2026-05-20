@@ -1,23 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth } from "@/lib/auth";
+import { getPrismaClient } from "@/lib/prisma";
 
 // GET /api/admin/reports - Получение данных для отчетов
 export async function GET(request: NextRequest) {
+  const prisma = getPrismaClient();
+
   try {
     const payload = await verifyAuth(request);
-    if (!payload || payload.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (!payload || payload.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type') || 'overview';
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
-    const branchId = searchParams.get('branchId');
+    const type = searchParams.get("type") || "overview";
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const branchId = searchParams.get("branchId");
 
     // Построение фильтра по датам
     const dateFilter: any = {};
@@ -30,14 +29,14 @@ export async function GET(request: NextRequest) {
 
     const where: any = {};
     if (Object.keys(dateFilter).length > 0) {
-      where.createdAt = dateFilter;
+      where.created_at = dateFilter;
     }
-    if (branchId && branchId !== 'all') {
-      where.branchId = branchId;
+    if (branchId && branchId !== "all") {
+      where.branch_id = branchId;
     }
 
     switch (type) {
-      case 'overview': {
+      case "overview": {
         // Общая статистика
         const [
           totalOrders,
@@ -47,39 +46,39 @@ export async function GET(request: NextRequest) {
           ordersByStatus,
           revenueByBranch,
         ] = await Promise.all([
-          prisma.order.count({ where }),
-          prisma.order.aggregate({
-            where: { ...where, orderStatus: { not: 'cancelled' } },
+          prisma.orders.count({ where }),
+          prisma.orders.aggregate({
+            where: { ...where, order_status: { not: "cancelled" } },
             _sum: { total: true },
           }),
-          prisma.user.count({ where: { role: 'user', status: 'active' } }),
-          prisma.product.count({ where: { status: 'active' } }),
-          prisma.order.groupBy({
-            by: ['orderStatus'],
+          prisma.users.count({ where: { role: "user", status: "active" } }),
+          prisma.products.count({ where: { status: "active" } }),
+          prisma.orders.groupBy({
+            by: ["order_status"],
             where,
             _count: true,
           }),
-          prisma.order.groupBy({
-            by: ['branchId'],
-            where: { ...where, orderStatus: { not: 'cancelled' } },
+          prisma.orders.groupBy({
+            by: ["branch_id"],
+            where: { ...where, order_status: { not: "cancelled" } },
             _sum: { total: true },
             _count: true,
           }),
         ]);
 
         // Получение названий филиалов
-        const branchIds = revenueByBranch.map((b) => b.branchId);
-        const branches = await prisma.branch.findMany({
+        const branchIds = revenueByBranch.map((b) => b.branch_id);
+        const branches = await prisma.branches.findMany({
           where: { id: { in: branchIds } },
           select: { id: true, name: true, city: true },
         });
 
         const revenueByBranchWithNames = revenueByBranch.map((item) => {
-          const branch = branches.find((b) => b.id === item.branchId);
+          const branch = branches.find((b) => b.id === item.branch_id);
           return {
-            branchId: item.branchId,
-            branchName: branch?.name || 'Неизвестно',
-            city: branch?.city || '',
+            branchId: item.branch_id,
+            branchName: branch?.name || "Неизвестно",
+            city: branch?.city || "",
             revenue: item._sum.total || 0,
             orders: item._count,
           };
@@ -95,12 +94,12 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      case 'sales': {
+      case "sales": {
         // Отчет по продажам
-        const salesData = await prisma.orderItem.groupBy({
-          by: ['productId'],
+        const salesData = await prisma.order_items.groupBy({
+          by: ["product_id"],
           where: {
-            order: where,
+            orders: where,
           },
           _sum: {
             quantity: true,
@@ -109,34 +108,34 @@ export async function GET(request: NextRequest) {
           _count: true,
           orderBy: {
             _sum: {
-              total: 'desc',
+              total: "desc",
             },
           },
           take: 20,
         });
 
         // Получение информации о товарах
-        const productIds = salesData.map((item) => item.productId);
-        const products = await prisma.product.findMany({
+        const productIds = salesData.map((item) => item.product_id);
+        const products = await prisma.products.findMany({
           where: { id: { in: productIds } },
           include: {
-            translations: {
-              where: { locale: 'ru' },
+            product_translations: {
+              where: { locale: "ru" },
             },
-            images: {
-              where: { status: 'active' },
+            product_images: {
+              where: { status: "active" },
               take: 1,
             },
           },
         });
 
         const salesWithProducts = salesData.map((item) => {
-          const product = products.find((p) => p.id === item.productId);
+          const product = products.find((p) => p.id === item.product_id);
           return {
-            productId: item.productId,
-            productName: product?.translations[0]?.name || 'Неизвестно',
-            sku: product?.sku || '',
-            image: product?.images[0]?.imageUrl || null,
+            productId: item.product_id,
+            productName: product?.product_translations[0]?.name || "Неизвестно",
+            sku: product?.sku || "",
+            image: product?.product_images[0]?.image_url || null,
             quantity: item._sum.quantity || 0,
             revenue: item._sum.total || 0,
             orders: item._count,
@@ -146,30 +145,30 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ sales: salesWithProducts });
       }
 
-      case 'customers': {
+      case "customers": {
         // Отчет по клиентам
-        const topCustomers = await prisma.order.groupBy({
-          by: ['userId'],
-          where: { ...where, orderStatus: { not: 'cancelled' } },
+        const topCustomers = await prisma.orders.groupBy({
+          by: ["user_id"],
+          where: { ...where, order_status: { not: "cancelled" } },
           _sum: {
             total: true,
           },
           _count: true,
           orderBy: {
             _sum: {
-              total: 'desc',
+              total: "desc",
             },
           },
           take: 20,
         });
 
         // Получение информации о пользователях
-        const userIds = topCustomers.map((item) => item.userId);
-        const users = await prisma.user.findMany({
+        const userIds = topCustomers.map((item) => item.user_id);
+        const users = await prisma.users.findMany({
           where: { id: { in: userIds } },
           select: {
             id: true,
-            fullName: true,
+            full_name: true,
             email: true,
             phone: true,
             avatar: true,
@@ -177,12 +176,12 @@ export async function GET(request: NextRequest) {
         });
 
         const customersWithInfo = topCustomers.map((item) => {
-          const user = users.find((u) => u.id === item.userId);
+          const user = users.find((u) => u.id === item.user_id);
           return {
-            userId: item.userId,
-            fullName: user?.fullName || 'Неизвестно',
-            email: user?.email || '',
-            phone: user?.phone || '',
+            userId: item.user_id,
+            fullName: user?.full_name || "Неизвестно",
+            email: user?.email || "",
+            phone: user?.phone || "",
             avatar: user?.avatar || null,
             totalSpent: item._sum.total || 0,
             orders: item._count,
@@ -192,23 +191,23 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ customers: customersWithInfo });
       }
 
-      case 'inventory': {
+      case "inventory": {
         // Отчет по остаткам
-        const inventory = await prisma.branchInventory.findMany({
-          where: branchId && branchId !== 'all' ? { branchId } : {},
+        const inventory = await prisma.branch_inventory.findMany({
+          where: branchId && branchId !== "all" ? { branch_id: branchId } : {},
           include: {
-            product: {
+            products: {
               include: {
-                translations: {
-                  where: { locale: 'ru' },
+                product_translations: {
+                  where: { locale: "ru" },
                 },
-                images: {
-                  where: { status: 'active' },
+                product_images: {
+                  where: { status: "active" },
                   take: 1,
                 },
               },
             },
-            branch: {
+            branches: {
               select: {
                 id: true,
                 name: true,
@@ -217,21 +216,22 @@ export async function GET(request: NextRequest) {
             },
           },
           orderBy: {
-            quantity: 'asc',
+            quantity: "asc",
           },
         });
 
         const inventoryData = inventory.map((item) => ({
-          branchId: item.branchId,
-          branchName: item.branch.name,
-          city: item.branch.city,
-          productId: item.productId,
-          productName: item.product.translations[0]?.name || 'Неизвестно',
-          sku: item.product.sku,
-          image: item.product.images[0]?.imageUrl || null,
+          branchId: item.branch_id,
+          branchName: item.branches.name,
+          city: item.branches.city,
+          productId: item.product_id,
+          productName:
+            item.products.product_translations[0]?.name || "Неизвестно",
+          sku: item.products.sku,
+          image: item.products.product_images[0]?.image_url || null,
           quantity: item.quantity,
-          price: item.product.price,
-          totalValue: Number(item.product.price) * item.quantity,
+          price: item.products.price,
+          totalValue: Number(item.products.price) * item.quantity,
         }));
 
         return NextResponse.json({ inventory: inventoryData });
@@ -239,15 +239,15 @@ export async function GET(request: NextRequest) {
 
       default:
         return NextResponse.json(
-          { error: 'Invalid report type' },
-          { status: 400 }
+          { error: "Invalid report type" },
+          { status: 400 },
         );
     }
   } catch (error) {
-    console.error('Error generating report:', error);
+    console.error("Error generating report:", error);
     return NextResponse.json(
-      { error: 'Failed to generate report' },
-      { status: 500 }
+      { error: "Failed to generate report" },
+      { status: 500 },
     );
   }
 }

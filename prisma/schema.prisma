@@ -1,6 +1,3 @@
-// Prisma Schema для сети магазинов книг и канцелярии
-// PostgreSQL Database
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,20 +7,292 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// ENUMS
-// ============================================
+model admin_verifications {
+  id         String   @id @db.Uuid
+  user_id    String   @db.Uuid
+  code       String   @db.VarChar(6)
+  expires_at DateTime @db.Timestamp(6)
+  verified   Boolean  @default(false)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-enum UserRole {
-  admin
-  user
-  manager
+  @@index([user_id, code])
 }
 
-enum UserStatus {
+model ai_chats {
+  id          String        @id @db.Uuid
+  name        String        @db.VarChar(255)
+  user_id     String?       @db.Uuid
+  created_at  DateTime      @default(now()) @db.Timestamp(6)
+  users       users?        @relation(fields: [user_id], references: [id])
+  ai_messages ai_messages[]
+}
+
+model ai_messages {
+  id         String        @id @db.Uuid
+  chat_id    String        @db.Uuid
+  sender     MessageSender
+  message    String
+  created_at DateTime      @default(now()) @db.Timestamp(6)
+  ai_chats   ai_chats      @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+}
+
+model BannerTranslation {
+  id        String  @id @default(uuid()) @db.Uuid
+  bannerId  String  @map("banner_id") @db.Uuid
+  locale    Locale
+  title     String  @db.VarChar(255)
+  
+  // Relations
+  banner    Banner  @relation(fields: [bannerId], references: [id], onDelete: Cascade)
+
+  @@unique([bannerId, locale])
+  @@map("banner_translations")
+}
+
+model Banner {
+  id                  String                @id @default(uuid()) @db.Uuid
+  url                 String?               @db.Text
+  status              BannerStatus          @default(active)
+  desktopImage        String                @map("desktop_image") @db.Text
+  mobileImage         String                @map("mobile_image") @db.Text
+  
+  // Relations
+  translations        BannerTranslation[]
+
+  @@map("banners")
+}
+
+model branch_inventory {
+  id         String   @id @db.Uuid
+  branch_id  String   @db.Uuid
+  product_id String   @db.Uuid
+  quantity   Int      @default(0)
+  updated_at DateTime @db.Timestamp(6)
+  branches   branches @relation(fields: [branch_id], references: [id], onDelete: Cascade)
+  products   products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([branch_id, product_id])
+}
+
+model branch_users {
+  id        String   @id @db.Uuid
+  branch_id String   @db.Uuid
+  user_id   String   @db.Uuid
+  branches  branches @relation(fields: [branch_id], references: [id], onDelete: Cascade)
+  users     users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([branch_id, user_id])
+}
+
+model branches {
+  id               String             @id @db.Uuid
+  name             String             @db.VarChar(255)
+  code             String             @unique @db.VarChar(50)
+  city             String             @db.VarChar(100)
+  district         String             @db.VarChar(100)
+  address          String
+  phone            String             @db.VarChar(30)
+  email            String             @db.VarChar(255)
+  latitude         Decimal?           @db.Decimal(10, 7)
+  longitude        Decimal?           @db.Decimal(10, 7)
+  open_time        DateTime?          @db.Time(6)
+  close_time       DateTime?          @db.Time(6)
+  status           BranchStatus       @default(active)
+  created_at       DateTime           @default(now()) @db.Timestamp(6)
+  updated_at       DateTime           @db.Timestamp(6)
+  work_days        String[]           @default([])
+  branch_inventory branch_inventory[]
+  branch_users     branch_users[]
+  orders           orders[]
+}
+
+model carts {
+  id         String   @id @db.Uuid
+  user_id    String   @db.Uuid
+  product_id String   @db.Uuid
+  quantity   Int      @default(1)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  products   products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, product_id])
+}
+
+model categories {
+  id                    String                  @id @db.Uuid
+  parent_id             String?                 @db.Uuid
+  image                 String?
+  status                CategoryStatus          @default(active)
+  categories            categories?             @relation("categoriesTocategories", fields: [parent_id], references: [id])
+  other_categories      categories[]            @relation("categoriesTocategories")
+  category_translations category_translations[]
+  products              products[]
+}
+
+model category_translations {
+  id          String     @id @db.Uuid
+  category_id String     @db.Uuid
+  locale      Locale
+  name        String     @db.VarChar(255)
+  categories  categories @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([category_id, locale])
+}
+
+model email_verifications {
+  id         String   @id @db.Uuid
+  user_id    String   @db.Uuid
+  email      String   @db.VarChar(255)
+  code       String   @db.VarChar(6)
+  expires_at DateTime @db.Timestamp(6)
+  verified   Boolean  @default(false)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([email, code])
+}
+
+model order_items {
+  id         String   @id @db.Uuid
+  order_id   String   @db.Uuid
+  product_id String   @db.Uuid
+  quantity   Int
+  total      Decimal  @db.Decimal(12, 2)
+  orders     orders   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  products   products @relation(fields: [product_id], references: [id])
+}
+
+model orders {
+  id             String        @id @db.Uuid
+  order_number   String        @unique @db.VarChar(50)
+  user_id        String        @db.Uuid
+  branch_id      String        @db.Uuid
+  comment        String?
+  total          Decimal       @db.Decimal(12, 2)
+  payment_status PaymentStatus
+  order_status   OrderStatus   @default(paid)
+  created_at     DateTime      @default(now()) @db.Timestamp(6)
+  order_items    order_items[]
+  branches       branches      @relation(fields: [branch_id], references: [id])
+  users          users         @relation(fields: [user_id], references: [id])
+  payments       payments[]
+}
+
+model password_resets {
+  id         String   @id @db.Uuid
+  email      String   @db.VarChar(255)
+  code       String   @db.VarChar(6)
+  expires_at DateTime @db.Timestamp(6)
+  used       Boolean  @default(false)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  @@index([email, code])
+}
+
+model payments {
+  id             String   @id @db.Uuid
+  order_id       String   @db.Uuid
+  provider       String   @db.VarChar(50)
+  transaction_id String   @db.VarChar(255)
+  amount         Decimal  @db.Decimal(12, 2)
+  currency       String   @db.VarChar(10)
+  status         String   @db.VarChar(50)
+  raw_response   Json?
+  paid_at        DateTime @db.Timestamp(6)
+  orders         orders   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+}
+
+model product_attributes {
+  id         String   @id @db.Uuid
+  product_id String   @db.Uuid
+  name       String   @db.VarChar(255)
+  value      String   @db.VarChar(255)
+  products   products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model product_images {
+  id         String      @id @db.Uuid
+  product_id String      @db.Uuid
+  image_url  String
+  status     ImageStatus @default(active)
+  products   products    @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model product_translations {
+  id          String   @id @db.Uuid
+  product_id  String   @db.Uuid
+  locale      Locale
+  name        String   @db.VarChar(255)
+  description String?
+  products    products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_id, locale])
+}
+
+model products {
+  id                   String                 @id @db.Uuid
+  sku                  String                 @unique @db.VarChar(100)
+  category_id          String                 @db.Uuid
+  brand                String?                @db.VarChar(255)
+  price                Decimal                @db.Decimal(12, 2)
+  status               ProductStatus          @default(active)
+  created_at           DateTime               @default(now()) @db.Timestamp(6)
+  updated_at           DateTime               @db.Timestamp(6)
+  branch_inventory     branch_inventory[]
+  carts                carts[]
+  order_items          order_items[]
+  product_attributes   product_attributes[]
+  product_images       product_images[]
+  product_translations product_translations[]
+  categories           categories             @relation(fields: [category_id], references: [id])
+  reviews              reviews[]
+}
+
+model reviews {
+  id         String   @id @db.Uuid
+  user_id    String   @db.Uuid
+  product_id String   @db.Uuid
+  rating     Int      @db.SmallInt
+  comment    String?
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  products   products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, product_id])
+}
+
+model settings {
+  id    String @id @db.Uuid
+  key   String @unique @db.VarChar(255)
+  value String
+}
+
+model users {
+  id                  String                @id @db.Uuid
+  full_name           String                @db.VarChar(255)
+  email               String                @unique @db.VarChar(255)
+  role                UserRole              @default(user)
+  phone               String?               @unique @db.VarChar(30)
+  password_hash       String
+  google_id           String?               @db.VarChar(255)
+  avatar              String?
+  status              UserStatus            @default(active)
+  created_at          DateTime              @default(now()) @db.Timestamp(6)
+  updated_at          DateTime              @db.Timestamp(6)
+  email_verified      Boolean               @default(false)
+  admin_verifications admin_verifications[]
+  ai_chats            ai_chats[]
+  branch_users        branch_users[]
+  carts               carts[]
+  email_verifications email_verifications[]
+  orders              orders[]
+  reviews             reviews[]
+}
+
+enum BannerStatus {
   active
   inactive
-  blocked
 }
 
 enum BranchStatus {
@@ -33,12 +302,6 @@ enum BranchStatus {
 }
 
 enum CategoryStatus {
-  active
-  inactive
-  deleted
-}
-
-enum ProductStatus {
   active
   inactive
   deleted
@@ -55,9 +318,9 @@ enum Locale {
   kg
 }
 
-enum PaymentStatus {
-  success
-  failed
+enum MessageSender {
+  user
+  ai
 }
 
 enum OrderStatus {
@@ -66,377 +329,25 @@ enum OrderStatus {
   cancelled
 }
 
-enum MessageSender {
-  user
-  ai
+enum PaymentStatus {
+  success
+  failed
 }
 
-enum BannerStatus {
+enum ProductStatus {
   active
   inactive
+  deleted
 }
 
-// ============================================
-// MODELS
-// ============================================
-
-// 1. Пользователи
-model User {
-  id            String      @id @default(uuid()) @db.Uuid
-  fullName      String      @map("full_name") @db.VarChar(255)
-  email         String      @unique @db.VarChar(255)
-  emailVerified Boolean     @default(false) @map("email_verified")
-  role          UserRole    @default(user)
-  phone         String?     @unique @db.VarChar(30)
-  passwordHash  String      @map("password_hash") @db.Text
-  googleId      String?     @map("google_id") @db.VarChar(255)
-  avatar        String?     @db.Text
-  status        UserStatus  @default(active)
-  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamp(6)
-
-  // Relations
-  branchUsers   BranchUser[]
-  carts         Cart[]
-  orders        Order[]
-  aiChats       AiChat[]
-  reviews       Review[]
-  verificationCodes EmailVerification[]
-  adminVerifications AdminVerification[]
-
-  @@map("users")
+enum UserRole {
+  admin
+  user
+  manager
 }
 
-// Коды верификации email
-model EmailVerification {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  email     String   @db.VarChar(255)
-  code      String   @db.VarChar(6)
-  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
-  verified  Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([email, code])
-  @@map("email_verifications")
-}
-
-// Коды верификации для админов через Telegram
-model AdminVerification {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  code      String   @db.VarChar(6)
-  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
-  verified  Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, code])
-  @@map("admin_verifications")
-}
-
-// Коды для сброса пароля
-model PasswordReset {
-  id        String   @id @default(uuid()) @db.Uuid
-  email     String   @db.VarChar(255)
-  code      String   @db.VarChar(6)
-  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
-  used      Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-
-  @@index([email, code])
-  @@map("password_resets")
-}
-
-// 2. Филиалы
-model Branch {
-  id          String        @id @default(uuid()) @db.Uuid
-  name        String        @db.VarChar(255)
-  code        String        @unique @db.VarChar(50)
-  city        String        @db.VarChar(100)
-  district    String        @db.VarChar(100)
-  address     String        @db.Text
-  phone       String        @db.VarChar(30)
-  email       String        @db.VarChar(255)
-  latitude    Decimal?      @db.Decimal(10, 7)
-  longitude   Decimal?      @db.Decimal(10, 7)
-  openTime    DateTime?     @map("open_time") @db.Time(6)
-  closeTime   DateTime?     @map("close_time") @db.Time(6)
-  workDays    String[]      @default([]) @map("work_days")
-  status      BranchStatus  @default(active)
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamp(6)
-
-  // Relations
-  branchUsers   BranchUser[]
-  inventory     BranchInventory[]
-  orders        Order[]
-
-  @@map("branches")
-}
-
-// 3. Связь сотрудников с филиалами
-model BranchUser {
-  id        String   @id @default(uuid()) @db.Uuid
-  branchId  String   @map("branch_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-
-  // Relations
-  branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([branchId, userId])
-  @@map("branch_users")
-}
-
-// 4. Категории товаров
-model Category {
-  id          String          @id @default(uuid()) @db.Uuid
-  parentId    String?         @map("parent_id") @db.Uuid
-  image       String?         @db.Text
-  status      CategoryStatus  @default(active)
-
-  // Relations
-  parent      Category?               @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children    Category[]              @relation("CategoryHierarchy")
-  translations CategoryTranslation[]
-  products    Product[]
-
-  @@map("categories")
-}
-
-// 5. Переводы категорий
-model CategoryTranslation {
-  id          String    @id @default(uuid()) @db.Uuid
-  categoryId  String    @map("category_id") @db.Uuid
-  locale      Locale
-  name        String    @db.VarChar(255)
-
-  // Relations
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@unique([categoryId, locale])
-  @@map("category_translations")
-}
-
-// 6. Товары
-model Product {
-  id          String        @id @default(uuid()) @db.Uuid
-  sku         String        @unique @db.VarChar(100)
-  categoryId  String        @map("category_id") @db.Uuid
-  brand       String?       @db.VarChar(255)
-  price       Decimal       @db.Decimal(12, 2)
-  status      ProductStatus @default(active)
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamp(6)
-
-  // Relations
-  category      Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  translations  ProductTranslation[]
-  images        ProductImage[]
-  attributes    ProductAttribute[]
-  inventory     BranchInventory[]
-  carts         Cart[]
-  orderItems    OrderItem[]
-  reviews       Review[]
-
-  @@map("products")
-}
-
-// 7. Переводы товаров
-model ProductTranslation {
-  id          String   @id @default(uuid()) @db.Uuid
-  productId   String   @map("product_id") @db.Uuid
-  locale      Locale
-  name        String   @db.VarChar(255)
-  description String?  @db.Text
-
-  // Relations
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([productId, locale])
-  @@map("product_translations")
-}
-
-// 8. Изображения товаров
-model ProductImage {
-  id        String       @id @default(uuid()) @db.Uuid
-  productId String       @map("product_id") @db.Uuid
-  imageUrl  String       @map("image_url") @db.Text
-  status    ImageStatus  @default(active)
-
-  // Relations
-  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@map("product_images")
-}
-
-// 9. Характеристики товаров
-model ProductAttribute {
-  id        String   @id @default(uuid()) @db.Uuid
-  productId String   @map("product_id") @db.Uuid
-  name      String   @db.VarChar(255)
-  value     String   @db.VarChar(255)
-
-  // Relations
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@map("product_attributes")
-}
-
-// 10. Остатки товаров по филиалам
-model BranchInventory {
-  id        String   @id @default(uuid()) @db.Uuid
-  branchId  String   @map("branch_id") @db.Uuid
-  productId String   @map("product_id") @db.Uuid
-  quantity  Int      @default(0)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
-
-  // Relations
-  branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([branchId, productId])
-  @@map("branch_inventory")
-}
-
-// 11. Корзина пользователя
-model Cart {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  productId String   @map("product_id") @db.Uuid
-  quantity  Int      @default(1)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId])
-  @@map("carts")
-}
-
-// 12. Заказы
-model Order {
-  id            String        @id @default(uuid()) @db.Uuid
-  orderNumber   String        @unique @map("order_number") @db.VarChar(50)
-  userId        String        @map("user_id") @db.Uuid
-  branchId      String        @map("branch_id") @db.Uuid
-  comment       String?       @db.Text
-  total         Decimal       @db.Decimal(12, 2)
-  paymentStatus PaymentStatus @map("payment_status")
-  orderStatus   OrderStatus   @map("order_status") @default(paid)
-  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
-
-  // Relations
-  user          User          @relation(fields: [userId], references: [id], onDelete: Restrict)
-  branch        Branch        @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  items         OrderItem[]
-  payments      Payment[]
-
-  @@map("orders")
-}
-
-// 13. Товары в заказе
-model OrderItem {
-  id        String   @id @default(uuid()) @db.Uuid
-  orderId   String   @map("order_id") @db.Uuid
-  productId String   @map("product_id") @db.Uuid
-  quantity  Int
-  total     Decimal  @db.Decimal(12, 2)
-
-  // Relations
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
-
-  @@map("order_items")
-}
-
-// 14. Платежи (Finik Pay)
-model Payment {
-  id            String   @id @default(uuid()) @db.Uuid
-  orderId       String   @map("order_id") @db.Uuid
-  provider      String   @db.VarChar(50)
-  transactionId String   @map("transaction_id") @db.VarChar(255)
-  amount        Decimal  @db.Decimal(12, 2)
-  currency      String   @db.VarChar(10)
-  status        String   @db.VarChar(50)
-  rawResponse   Json?    @map("raw_response") @db.JsonB
-  paidAt        DateTime @map("paid_at") @db.Timestamp(6)
-
-  // Relations
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@map("payments")
-}
-
-// 15. AI Чаты
-model AiChat {
-  id        String      @id @default(uuid()) @db.Uuid
-  name      String      @db.VarChar(255)
-  userId    String?     @map("user_id") @db.Uuid
-  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
-
-  // Relations
-  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  messages  AiMessage[]
-
-  @@map("ai_chats")
-}
-
-// 16. Сообщения AI
-model AiMessage {
-  id        String        @id @default(uuid()) @db.Uuid
-  chatId    String        @map("chat_id") @db.Uuid
-  sender    MessageSender
-  message   String        @db.Text
-  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
-
-  // Relations
-  chat      AiChat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
-
-  @@map("ai_messages")
-}
-
-// 17. Отзывы о товарах
-model Review {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  productId String   @map("product_id") @db.Uuid
-  rating    Int      @db.SmallInt
-  comment   String?  @db.Text
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId])
-  @@map("reviews")
-}
-
-// 18. Баннеры
-model Banner {
-  id           String       @id @default(uuid()) @db.Uuid
-  title        String       @db.VarChar(255)
-  desktopImage String       @map("desktop_image") @db.Text
-  mobileImage  String       @map("mobile_image") @db.Text
-  url          String?      @db.Text
-  status       BannerStatus @default(active)
-
-  @@map("banners")
-}
-
-// 19. Настройки сайта
-model Setting {
-  id    String @id @default(uuid()) @db.Uuid
-  key   String @unique @db.VarChar(255)
-  value String @db.Text
-
-  @@map("settings")
+enum UserStatus {
+  active
+  inactive
+  blocked
 }

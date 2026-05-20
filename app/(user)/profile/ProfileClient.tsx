@@ -79,20 +79,20 @@ export default function ProfileClient({ user }: { user: User }) {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-        <div className="px-8 py-4">
+        <div className="px-8 py-2.5">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-3 w-72">
               <img 
                 src="/logonur.png" 
                 alt="Nur-Kitep Logo" 
-                className="w-10 h-10 rounded-xl object-cover"
+                className="w-9 h-9 rounded-xl object-cover"
               />
               <div>
-                <h1 className="text-lg font-bold text-gray-900">
+                <h1 className="text-base font-bold text-gray-900">
                   Nur-Kitep
                 </h1>
-                <p className="text-xs text-gray-500">Книги и канцелярия</p>
+                <p className="text-[10px] text-gray-500">Книги и канцелярия</p>
               </div>
             </div>
 
@@ -145,16 +145,16 @@ export default function ProfileClient({ user }: { user: User }) {
                 )}
               </div>
 
-              <button className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
-                <Bell size={20} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-violet-500 rounded-full"></span>
+              <button className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
+                <Bell size={18} />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full"></span>
               </button>
 
               <button 
                 onClick={() => router.push('/cart')}
-                className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
+                className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
               >
-                <ShoppingCart size={20} />
+                <ShoppingCart size={18} />
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                   3
                 </span>
@@ -162,14 +162,14 @@ export default function ProfileClient({ user }: { user: User }) {
 
               <button 
                 onClick={() => router.push('/profile')}
-                className="flex items-center gap-3 pl-3 hover:bg-gray-50 rounded-xl transition-colors px-3 py-2"
+                className="flex items-center gap-2.5 hover:bg-gray-50 rounded-xl transition-colors px-2.5 py-1.5"
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
+                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
+                  <p className="text-[10px] text-gray-500">{user.email}</p>
                 </div>
               </button>
             </div>
@@ -177,9 +177,9 @@ export default function ProfileClient({ user }: { user: User }) {
         </div>
       </header>
 
-      <div className="flex pt-[73px]">
+      <div className="flex pt-[57px]">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[73px] self-start`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
           {/* Main Navigation Card */}
           <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>

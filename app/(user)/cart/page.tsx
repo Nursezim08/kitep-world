@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { checkUserAccess } from '@/lib/auth';
 import CartClient from './CartClient';
 
 export default async function CartPage() {
-  const user = await getCurrentUser();
+  const access = await checkUserAccess();
 
-  if (!user || user.role !== 'user') {
-    redirect('/login');
+  if (!access.allowed) {
+    redirect(access.redirectTo!);
   }
 
-  return <CartClient user={user} />;
+  return <CartClient user={access.user!} />;
 }

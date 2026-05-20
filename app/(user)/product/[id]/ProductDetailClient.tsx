@@ -99,6 +99,9 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
   const [cartItemId, setCartItemId] = useState<string | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [relatedCurrentPage, setRelatedCurrentPage] = useState(1);
+  const relatedItemsPerPage = 100;
 
   useEffect(() => {
     fetchProduct();
@@ -111,6 +114,11 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
       fetchRelatedProducts();
     }
   }, [product]);
+
+  // Сброс на первую страницу при изменении товара
+  useEffect(() => {
+    setRelatedCurrentPage(1);
+  }, [productId]);
 
   const fetchProduct = async () => {
     try {
@@ -169,8 +177,10 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
       
       if (sameCategoryRes.ok) {
         const sameCategoryData = await sameCategoryRes.json();
+        // Поддержка нового формата API
+        const products = sameCategoryData.products || sameCategoryData;
         // Исключаем текущий товар
-        sameCategoryProducts = sameCategoryData.filter((p: Product) => p.id !== productId);
+        sameCategoryProducts = products.filter((p: Product) => p.id !== productId);
       }
       
       // Загружаем ВСЕ товары из других категорий
@@ -179,8 +189,10 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
       
       if (allProductsRes.ok) {
         const allProductsData = await allProductsRes.json();
+        // Поддержка нового формата API
+        const products = allProductsData.products || allProductsData;
         // Исключаем текущий товар и товары из той же категории
-        otherProducts = allProductsData.filter(
+        otherProducts = products.filter(
           (p: Product) => p.id !== productId && !sameCategoryProducts.find((sp: Product) => sp.id === p.id)
         );
       }
@@ -304,13 +316,13 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
               <img 
                 src="/logonur.png" 
                 alt="Nur-Kitep Logo" 
-                className="w-10 h-10 rounded-xl object-cover"
+                className="w-9 h-9 rounded-xl object-cover"
               />
               <div>
-                <h1 className="text-lg font-bold text-gray-900">
+                <h1 className="text-base font-bold text-gray-900">
                   Nur-Kitep
                 </h1>
-                <p className="text-xs text-gray-500">Книги и канцелярия</p>
+                <p className="text-[10px] text-gray-500">Книги и канцелярия</p>
               </div>
             </div>
 
@@ -330,16 +342,16 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
 
             {/* User & Notifications */}
             <div className="flex items-center gap-3">
-              <button className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
-                <Bell size={20} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-violet-500 rounded-full"></span>
+              <button className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
+                <Bell size={18} />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full"></span>
               </button>
 
               <button 
                 onClick={() => router.push('/cart')}
-                className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
+                className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
               >
-                <ShoppingCart size={20} />
+                <ShoppingCart size={18} />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                     {cartCount}
@@ -349,14 +361,14 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
 
               <button 
                 onClick={() => router.push('/profile')}
-                className="flex items-center gap-3 pl-3 hover:bg-gray-50 rounded-xl transition-colors px-3 py-2"
+                className="flex items-center gap-2.5 hover:bg-gray-50 rounded-xl transition-colors px-2.5 py-1.5"
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
+                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
                   {user.fullName.charAt(0)}
                 </div>
                 <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
+                  <p className="text-[10px] text-gray-500">{user.email}</p>
                 </div>
               </button>
             </div>
@@ -384,7 +396,10 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
               {menuItems.map((item, index) => (
                 <button
                   key={index}
-                  onClick={() => item.href !== '#' && router.push(item.href)}
+                  onClick={() => {
+                    console.log('Navigating to:', item.href);
+                    router.push(item.href);
+                  }}
                   className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
                     item.active 
                       ? 'bg-violet-500/15 text-violet-600' 
@@ -514,8 +529,23 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                   {getProductName(product)}
                 </h1>
 
+                {/* Description (2 lines with expand button) */}
+                {getProductDescription(product) && (
+                  <div className="space-y-1">
+                    <p className={`text-sm text-gray-700 leading-relaxed ${isDescriptionExpanded ? '' : 'line-clamp-2'}`}>
+                      {getProductDescription(product)}
+                    </p>
+                    <button 
+                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                      className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+                    >
+                      {isDescriptionExpanded ? 'Свернуть' : 'Развернуть'}
+                    </button>
+                  </div>
+                )}
+
                 {/* Rating & Price */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-8">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
                       <Star size={16} className="fill-amber-400 text-amber-400" />
@@ -534,64 +564,72 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-start gap-2">
                   {!inCart ? (
-                    <>
-                      <button
-                        onClick={addToCart}
-                        disabled={addingToCart}
-                        className="w-64 flex items-center justify-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm transition-all"
-                      >
-                        {addingToCart ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>Добавление...</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingBag size={16} />
-                            <span>Добавить в корзину</span>
-                          </>
-                        )}
-                      </button>
-                      <button className="w-64 flex items-center justify-center gap-2 px-6 py-3 bg-violet-100 hover:bg-violet-200 text-violet-700 rounded-xl font-semibold text-sm transition-all">
-                        <span>Купить сейчас</span>
-                      </button>
-                    </>
+                    <button
+                      onClick={addToCart}
+                      disabled={addingToCart}
+                      className="w-64 h-12 flex items-center justify-center gap-2 px-6 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm transition-all"
+                    >
+                      {addingToCart ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Добавление...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag size={16} />
+                          <span>Добавить в корзину</span>
+                        </>
+                      )}
+                    </button>
                   ) : (
-                    <>
-                      <div className="flex items-center gap-2 w-64">
-                        {/* Счетчик в сером блоке */}
-                        <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2">
-                          <button
-                            onClick={() => updateCartQuantity(quantity - 1)}
-                            disabled={quantity <= 1}
-                            className="text-violet-600 hover:text-violet-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <Minus size={16} strokeWidth={3} />
-                          </button>
-                          <span className="text-lg font-bold text-gray-900 min-w-[24px] text-center">{quantity}</span>
-                          <button
-                            onClick={() => updateCartQuantity(quantity + 1)}
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                          >
-                            <Plus size={16} strokeWidth={3} />
-                          </button>
-                        </div>
-                        
-                        {/* Кнопка В корзине */}
+                    <div className="flex items-center gap-2 w-64 h-12">
+                      {/* Счетчик в сером блоке */}
+                      <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 h-full">
                         <button
-                          onClick={() => router.push('/cart')}
-                          className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-semibold text-sm transition-all"
+                          onClick={async () => {
+                            if (quantity === 1) {
+                              // Удаляем товар из корзины
+                              try {
+                                const response = await fetch(`/api/user/cart/${cartItemId}`, {
+                                  method: 'DELETE',
+                                });
+                                if (response.ok) {
+                                  setInCart(false);
+                                  setCartItemId(null);
+                                  setQuantity(1);
+                                  await fetchCartCount();
+                                }
+                              } catch (error) {
+                                console.error('Error removing from cart:', error);
+                              }
+                            } else {
+                              updateCartQuantity(quantity - 1);
+                            }
+                          }}
+                          className="text-violet-600 hover:text-violet-700 transition-colors"
                         >
-                          <span>В корзине</span>
-                          <ChevronRight size={16} />
+                          <Minus size={16} strokeWidth={3} />
+                        </button>
+                        <span className="text-lg font-bold text-gray-900 min-w-[24px] text-center">{quantity}</span>
+                        <button
+                          onClick={() => updateCartQuantity(quantity + 1)}
+                          className="text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          <Plus size={16} strokeWidth={3} />
                         </button>
                       </div>
-                      <button className="w-64 flex items-center justify-center gap-2 px-6 py-3 bg-violet-100 hover:bg-violet-200 text-violet-700 rounded-xl font-semibold text-sm transition-all">
-                        <span>Купить сейчас</span>
+                      
+                      {/* Кнопка В корзине */}
+                      <button
+                        onClick={() => router.push('/cart')}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-4 h-full bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-semibold text-sm transition-all"
+                      >
+                        <span>В корзине</span>
+                        <ChevronRight size={16} />
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
 
@@ -605,14 +643,14 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
 
                 {/* Product Details Table */}
                 <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Характеристики и описание</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Характеристики</h3>
                   
                   <div className="space-y-2 mb-6">
                     {/* Артикул */}
-                    <div className="group flex items-center justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="group flex items-baseline justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
+                      <div className="flex items-baseline gap-2 flex-1 min-w-0">
                         <span className="text-sm text-gray-600 whitespace-nowrap">Артикул</span>
-                        <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px]"></div>
+                        <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px] mb-1"></div>
                         <span className="text-sm text-gray-900 font-medium">{product.sku}</span>
                       </div>
                       <button
@@ -630,10 +668,10 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                     
                     {/* Бренд */}
                     {product.brand && (
-                      <div className="group flex items-center justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="group flex items-baseline justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
+                        <div className="flex items-baseline gap-2 flex-1 min-w-0">
                           <span className="text-sm text-gray-600 whitespace-nowrap">Бренд</span>
-                          <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px]"></div>
+                          <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px] mb-1"></div>
                           <span className="text-sm text-gray-900 font-medium">{product.brand}</span>
                         </div>
                         <button
@@ -651,10 +689,10 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                     )}
                     
                     {/* Категория */}
-                    <div className="group flex items-center justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="group flex items-baseline justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
+                      <div className="flex items-baseline gap-2 flex-1 min-w-0">
                         <span className="text-sm text-gray-600 whitespace-nowrap">Категория</span>
-                        <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px]"></div>
+                        <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px] mb-1"></div>
                         <span className="text-sm text-gray-900 font-medium">{getCategoryName(product.category)}</span>
                       </div>
                       <button
@@ -671,10 +709,10 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                     </div>
                     
                     {/* Статус */}
-                    <div className="group flex items-center justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="group flex items-baseline justify-between py-2 hover:bg-gray-50 px-3 rounded-lg transition-colors">
+                      <div className="flex items-baseline gap-2 flex-1 min-w-0">
                         <span className="text-sm text-gray-600 whitespace-nowrap">Статус</span>
-                        <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px]"></div>
+                        <div className="flex-1 border-b border-dotted border-gray-300 min-w-[20px] mb-1"></div>
                         <span className="text-sm text-gray-900 font-medium">В наличии</span>
                       </div>
                       <button
@@ -690,16 +728,6 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                       </button>
                     </div>
                   </div>
-
-                  {/* Description */}
-                  {getProductDescription(product) && (
-                    <div className="pt-4 border-t border-gray-200">
-                      <h4 className="text-base font-bold text-gray-900 mb-3">Описание</h4>
-                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-                        {getProductDescription(product)}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -792,73 +820,188 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
 
             {/* Related Products Section */}
             {relatedProducts.length > 0 && (
-              <div className="mt-8">
+              <div id="related-products" className="mt-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">
                   Смотрите также
                 </h2>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {relatedProducts.map((relatedProduct) => (
-                    <div
-                      key={relatedProduct.id}
-                      onClick={() => router.push(`/product/${relatedProduct.id}`)}
-                      className="bg-gray-50 rounded-3xl overflow-hidden cursor-pointer transition-all hover:shadow-lg group"
-                    >
-                      {/* Image */}
-                      <div className="relative p-4 aspect-square">
-                        {relatedProduct.images.length > 0 ? (
-                          <img
-                            src={relatedProduct.images[0].imageUrl}
-                            alt={getProductName(relatedProduct)}
-                            className="w-full h-full object-contain rounded-2xl"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-white rounded-2xl">
-                            <Package className="w-16 h-16 text-gray-300" />
-                          </div>
-                        )}
-                        
-                        {/* Favorite Button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className="absolute top-6 right-6 w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center hover:scale-110 transition-transform"
-                        >
-                          <Heart size={18} className="text-gray-700" />
-                        </button>
-                      </div>
+                {(() => {
+                  // Пагинация для похожих товаров
+                  const totalRelatedPages = Math.ceil(relatedProducts.length / relatedItemsPerPage);
+                  const relatedStartIndex = (relatedCurrentPage - 1) * relatedItemsPerPage;
+                  const relatedEndIndex = relatedStartIndex + relatedItemsPerPage;
+                  const paginatedRelatedProducts = relatedProducts.slice(relatedStartIndex, relatedEndIndex);
 
-                      {/* Info */}
-                      <div className="p-4">
-                        <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[40px]">
-                          {getProductName(relatedProduct)}
-                        </h3>
+                  return (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {paginatedRelatedProducts.map((relatedProduct) => (
+                          <div
+                            key={relatedProduct.id}
+                            onClick={() => router.push(`/product/${relatedProduct.id}`)}
+                            className="bg-gray-50 rounded-3xl overflow-hidden cursor-pointer transition-all hover:shadow-lg group"
+                          >
+                            {/* Image */}
+                            <div className="relative p-4 aspect-square">
+                              {relatedProduct.images.length > 0 ? (
+                                <img
+                                  src={relatedProduct.images[0].imageUrl}
+                                  alt={getProductName(relatedProduct)}
+                                  className="w-full h-full object-contain rounded-2xl"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-white rounded-2xl">
+                                  <Package className="w-16 h-16 text-gray-300" />
+                                </div>
+                              )}
+                              
+                              {/* Favorite Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                                className="absolute top-6 right-6 w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                              >
+                                <Heart size={18} className="text-gray-700" />
+                              </button>
+                            </div>
 
-                        {/* Rating */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="relative w-4 h-4">
-                            <Star className="absolute inset-0 text-gray-300" size={16} />
-                            <div
-                              className="absolute inset-0 overflow-hidden"
-                              style={{ width: `${(relatedProduct.averageRating / 5) * 100}%` }}
-                            >
-                              <Star className="fill-violet-600 text-violet-600" size={16} />
+                            {/* Info */}
+                            <div className="p-4">
+                              <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[40px]">
+                                {getProductName(relatedProduct)}
+                              </h3>
+
+                              {/* Rating */}
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="relative w-4 h-4">
+                                  <Star className="absolute inset-0 text-gray-300" size={16} />
+                                  <div
+                                    className="absolute inset-0 overflow-hidden"
+                                    style={{ width: `${(relatedProduct.averageRating / 5) * 100}%` }}
+                                  >
+                                    <Star className="fill-violet-600 text-violet-600" size={16} />
+                                  </div>
+                                </div>
+                                <span className="text-xs text-gray-600">
+                                  {relatedProduct.averageRating.toFixed(1)} | {relatedProduct._count.reviews} отзывов
+                                </span>
+                              </div>
+
+                              {/* Price */}
+                              <div className="text-2xl font-bold text-gray-900">
+                                {relatedProduct.price} сом
+                              </div>
                             </div>
                           </div>
-                          <span className="text-xs text-gray-600">
-                            {relatedProduct.averageRating.toFixed(1)} | {relatedProduct._count.reviews} отзывов
-                          </span>
-                        </div>
-
-                        {/* Price */}
-                        <div className="text-2xl font-bold text-gray-900">
-                          {relatedProduct.price} сом
-                        </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
-                </div>
+
+                      {/* Pagination for Related Products */}
+                      {totalRelatedPages > 1 && (
+                        <div className="mt-8 flex flex-col items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            {/* Previous Button */}
+                            <button
+                              onClick={() => {
+                                setRelatedCurrentPage((prev) => Math.max(1, prev - 1));
+                                window.scrollTo({ top: document.getElementById('related-products')?.offsetTop || 0, behavior: 'smooth' });
+                              }}
+                              disabled={relatedCurrentPage === 1}
+                              className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium text-gray-700"
+                            >
+                              Назад
+                            </button>
+
+                            {/* Page Numbers */}
+                            <div className="flex items-center gap-2">
+                              {/* First Page */}
+                              {relatedCurrentPage > 3 && (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setRelatedCurrentPage(1);
+                                      window.scrollTo({ top: document.getElementById('related-products')?.offsetTop || 0, behavior: 'smooth' });
+                                    }}
+                                    className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium text-gray-700"
+                                  >
+                                    1
+                                  </button>
+                                  {relatedCurrentPage > 4 && (
+                                    <span className="text-gray-400">...</span>
+                                  )}
+                                </>
+                              )}
+
+                              {/* Current Page Range */}
+                              {Array.from({ length: totalRelatedPages }, (_, i) => i + 1)
+                                .filter((page) => {
+                                  return (
+                                    page === relatedCurrentPage ||
+                                    page === relatedCurrentPage - 1 ||
+                                    page === relatedCurrentPage + 1 ||
+                                    (relatedCurrentPage <= 2 && page <= 3) ||
+                                    (relatedCurrentPage >= totalRelatedPages - 1 && page >= totalRelatedPages - 2)
+                                  );
+                                })
+                                .map((page) => (
+                                  <button
+                                    key={page}
+                                    onClick={() => {
+                                      setRelatedCurrentPage(page);
+                                      window.scrollTo({ top: document.getElementById('related-products')?.offsetTop || 0, behavior: 'smooth' });
+                                    }}
+                                    className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all text-sm font-medium ${
+                                      relatedCurrentPage === page
+                                        ? 'bg-violet-600 text-white'
+                                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                  >
+                                    {page}
+                                  </button>
+                                ))}
+
+                              {/* Last Page */}
+                              {relatedCurrentPage < totalRelatedPages - 2 && (
+                                <>
+                                  {relatedCurrentPage < totalRelatedPages - 3 && (
+                                    <span className="text-gray-400">...</span>
+                                  )}
+                                  <button
+                                    onClick={() => {
+                                      setRelatedCurrentPage(totalRelatedPages);
+                                      window.scrollTo({ top: document.getElementById('related-products')?.offsetTop || 0, behavior: 'smooth' });
+                                    }}
+                                    className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium text-gray-700"
+                                  >
+                                    {totalRelatedPages}
+                                  </button>
+                                </>
+                              )}
+                            </div>
+
+                            {/* Next Button */}
+                            <button
+                              onClick={() => {
+                                setRelatedCurrentPage((prev) => Math.min(totalRelatedPages, prev + 1));
+                                window.scrollTo({ top: document.getElementById('related-products')?.offsetTop || 0, behavior: 'smooth' });
+                              }}
+                              disabled={relatedCurrentPage === totalRelatedPages}
+                              className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium text-gray-700"
+                            >
+                              Вперед
+                            </button>
+                          </div>
+
+                          {/* Page Info */}
+                          <p className="text-sm text-gray-600">
+                            Страница {relatedCurrentPage} из {totalRelatedPages} · Показано {relatedStartIndex + 1}-{Math.min(relatedEndIndex, relatedProducts.length)} из {relatedProducts.length} товаров
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </main>

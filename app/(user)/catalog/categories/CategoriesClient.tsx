@@ -220,7 +220,10 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
               {menuItems.map((item, index) => (
                 <button
                   key={index}
-                  onClick={() => item.href !== '#' && router.push(item.href)}
+                  onClick={() => {
+                    console.log('Navigating to:', item.href);
+                    router.push(item.href);
+                  }}
                   className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
                     item.active 
                       ? 'bg-violet-500/15 text-violet-600' 

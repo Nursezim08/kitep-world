@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { checkUserAccess } from '@/lib/auth';
 import CheckoutClient from './CheckoutClient';
 
 export default async function CheckoutPage() {
-  const user = await getCurrentUser();
+  const access = await checkUserAccess();
 
-  if (!user || user.role !== 'user') {
-    redirect('/login');
+  if (!access.allowed) {
+    redirect(access.redirectTo!);
   }
 
-  return <CheckoutClient user={user} />;
+  return <CheckoutClient user={access.user!} />;
 }

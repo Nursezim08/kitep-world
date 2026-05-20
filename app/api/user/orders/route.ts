@@ -1,121 +1,86 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuth } from "@/lib/auth";
+import { getPrismaClient } from "@/lib/prisma";
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
+  const prisma = getPrismaClient();
+
   try {
-    // Проверка авторизации
-    const user = await verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const payload = await verifyAuth(request);
+
+    if (!payload || payload.role !== "user") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Проверка роли
-    if (user.role !== 'user') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const { branchId, comment } = body;
-
-    // Валидация
-    if (!branchId) {
-      return NextResponse.json(
-        { error: 'Branch ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Проверяем существование филиала
-    const branch = await prisma.branch.findUnique({
-      where: { id: branchId },
-    });
-
-    if (!branch || branch.status !== 'active') {
-      return NextResponse.json(
-        { error: 'Branch not found or inactive' },
-        { status: 404 }
-      );
-    }
-
-    // Получаем корзину пользователя
-    const cartItems = await prisma.cart.findMany({
+    const orders = await prisma.orders.findMany({
       where: {
-        userId: user.userId,
+        user_id: payload.userId,
       },
       include: {
-        product: {
+        branches: {
+          select: {
+            name: true,
+            city: true,
+          },
+        },
+        order_items: {
           include: {
-            translations: true,
-            images: true,
+            products: {
+              select: {
+                product_translations: {
+                  select: {
+                    locale: true,
+                    name: true,
+                  },
+                },
+                product_images: {
+                  select: {
+                    image_url: true,
+                  },
+                  take: 1,
+                },
+              },
+            },
           },
         },
       },
-    });
-
-    if (cartItems.length === 0) {
-      return NextResponse.json(
-        { error: 'Cart is empty' },
-        { status: 400 }
-      );
-    }
-
-    // Рассчитываем общую сумму
-    const totalAmount = cartItems.reduce(
-      (sum, item) => sum + Number(item.product.price) * item.quantity,
-      0
-    );
-
-    // Генерируем номер заказа
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-
-    // Создаем заказ в транзакции
-    const order = await prisma.$transaction(async (tx) => {
-      // Создаем заказ
-      const newOrder = await tx.order.create({
-        data: {
-          orderNumber,
-          userId: user.userId,
-          branchId,
-          totalAmount,
-          status: 'pending', // Ожидает оплаты
-          comment: comment || undefined,
-        },
-      });
-
-      // Создаем элементы заказа
-      await tx.orderItem.createMany({
-        data: cartItems.map((item) => ({
-          orderId: newOrder.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.product.price,
-        })),
-      });
-
-      // Очищаем корзину
-      await tx.cart.deleteMany({
-        where: {
-          userId: user.userId,
-        },
-      });
-
-      return newOrder;
-    });
-
-    return NextResponse.json({
-      success: true,
-      order: {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        totalAmount: order.totalAmount,
+      orderBy: {
+        created_at: "desc",
       },
     });
+
+    // Переименовываем поля в camelCase для клиента
+    const result = orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.order_number,
+      totalAmount: Number(order.total),
+      status: order.order_status,
+      paymentStatus: order.payment_status,
+      createdAt: order.created_at,
+      comment: order.comment,
+      branch: {
+        name: order.branches.name,
+        city: order.branches.city,
+      },
+      orderItems: order.order_items.map((item) => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: Number(item.total),
+        product: {
+          translations: item.products.product_translations,
+          images: item.products.product_images.map((img) => ({
+            imageUrl: img.image_url,
+          })),
+        },
+      })),
+    }));
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error("Error fetching orders:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

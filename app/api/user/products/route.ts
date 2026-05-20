@@ -1,38 +1,95 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { getPrismaClient } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
+  const prisma = getPrismaClient();
+
   try {
     const searchParams = request.nextUrl.searchParams;
-    const popular = searchParams.get('popular') === 'true';
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const categoryId = searchParams.get('categoryId');
+    const popular = searchParams.get("popular") === "true";
+    const categoryId = searchParams.get("categoryId");
+    const search = searchParams.get("search") || "";
+    const sortBy = searchParams.get("sortBy") || "created_at";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "100");
 
     const where: any = {
-      status: 'active',
+      status: "active",
     };
 
     if (categoryId) {
-      where.categoryId = categoryId;
+      where.category_id = categoryId;
     }
 
-    // Получаем товары
-    const products = await prisma.product.findMany({
+    // Поиск по названию, описанию, бренду, SKU
+    if (search) {
+      where.OR = [
+        {
+          product_translations: {
+            some: {
+              name: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+        {
+          product_translations: {
+            some: {
+              description: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+        {
+          brand: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          sku: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+      ];
+    }
+
+    // Подсчет общего количества товаров
+    const total = await prisma.products.count({ where });
+
+    // Определение сортировки
+    let orderBy: any = {};
+    if (sortBy === "price") {
+      orderBy = { price: sortOrder };
+    } else if (sortBy === "name") {
+      orderBy = { product_translations: { _count: sortOrder } };
+    } else {
+      orderBy = { created_at: sortOrder };
+    }
+
+    // Получаем товары с пагинацией
+    const products = await prisma.products.findMany({
       where,
       include: {
-        translations: {
+        product_translations: {
           select: {
             locale: true,
             name: true,
             description: true,
           },
         },
-        images: {
+        product_images: {
           where: {
-            status: 'active',
+            status: "active",
           },
           select: {
-            imageUrl: true,
+            image_url: true,
           },
           take: 1,
         },
@@ -41,49 +98,70 @@ export async function GET(request: NextRequest) {
             rating: true,
           },
         },
-        orderItems: {
-          select: {
-            quantity: true,
-            order: {
-              select: {
-                createdAt: true,
+        order_items: popular
+          ? {
+              include: {
+                orders: {
+                  select: {
+                    created_at: true,
+                  },
+                },
               },
-            },
-          },
-        },
+            }
+          : undefined,
         _count: {
           select: {
             reviews: true,
           },
         },
       },
-      take: popular ? undefined : limit, // Для популярных загружаем все, потом отсортируем
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
     // Рассчитываем средний рейтинг и количество проданных для каждого товара
     const productsWithRating = products.map((product) => {
-      const totalRating = product.reviews.reduce((sum, review) => sum + review.rating, 0);
-      const averageRating = product.reviews.length > 0 
-        ? Number((totalRating / product.reviews.length).toFixed(1))
-        : 0;
+      const totalRating = product.reviews.reduce(
+        (sum, review) => sum + review.rating,
+        0,
+      );
+      const averageRating =
+        product.reviews.length > 0
+          ? Number((totalRating / product.reviews.length).toFixed(1))
+          : 0;
 
-      // Подсчитываем общее количество проданных товаров за последние 30 дней
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const totalSold = product.orderItems.reduce((sum, item) => {
-        const orderDate = new Date(item.order.createdAt);
-        if (orderDate >= thirtyDaysAgo) {
-          return sum + item.quantity;
-        }
-        return sum;
-      }, 0);
+      let totalSold = 0;
 
-      // Убираем reviews и orderItems из ответа
-      const { reviews, orderItems, ...productWithoutReviews } = product;
+      if (popular && product.order_items) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        totalSold = (product.order_items as any[]).reduce(
+          (sum: number, item: any) => {
+            const orderDate = new Date(item.orders.created_at);
+            if (orderDate >= thirtyDaysAgo) {
+              return sum + item.quantity;
+            }
+            return sum;
+          },
+          0,
+        );
+      }
+
+      // Убираем reviews и order_items из ответа, переименовываем поля в camelCase
+      const {
+        reviews: _reviews,
+        order_items: _order_items,
+        product_translations,
+        product_images,
+        ...rest
+      } = product;
 
       return {
-        ...productWithoutReviews,
+        ...rest,
+        translations: product_translations,
+        images: product_images.map((img) => ({ imageUrl: img.image_url })),
         averageRating,
         totalSold,
       };
@@ -92,15 +170,22 @@ export async function GET(request: NextRequest) {
     // Если запрос популярных товаров, сортируем по количеству продаж
     if (popular) {
       productsWithRating.sort((a, b) => b.totalSold - a.totalSold);
-      return NextResponse.json(productsWithRating.slice(0, limit));
     }
 
-    return NextResponse.json(productsWithRating);
+    return NextResponse.json({
+      products: productsWithRating,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error("Error fetching products:", error);
     return NextResponse.json(
-      { error: 'Не удалось загрузить товары' },
-      { status: 500 }
+      { error: "Не удалось загрузить товары" },
+      { status: 500 },
     );
   }
 }

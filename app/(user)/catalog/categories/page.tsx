@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { checkUserAccess } from '@/lib/auth';
 import CategoriesClient from './CategoriesClient';
 
 export default async function CategoriesPage() {
-  const user = await getCurrentUser();
+  const access = await checkUserAccess();
 
-  if (!user || user.role !== 'user') {
-    redirect('/login');
+  if (!access.allowed) {
+    redirect(access.redirectTo!);
   }
 
-  return <CategoriesClient user={user} />;
+  return <CategoriesClient user={access.user!} />;
 }

@@ -22,6 +22,14 @@ export async function proxy(request: NextRequest) {
   let user = null;
   if (token) {
     user = await verifyToken(token);
+    console.log('[MIDDLEWARE] User from token:', { 
+      userId: user?.userId, 
+      role: user?.role, 
+      loginType: user?.loginType,
+      pathname 
+    });
+  } else {
+    console.log('[MIDDLEWARE] No token found for path:', pathname);
   }
 
   // ============================================
@@ -53,16 +61,40 @@ export async function proxy(request: NextRequest) {
   // ============================================
   // ЗАЩИТА ПОЛЬЗОВАТЕЛЬСКИХ МАРШРУТОВ
   // ============================================
-  if (pathname.startsWith('/profile')) {
+  const userRoutes = [
+    '/home',
+    '/catalog',
+    '/cart',
+    '/checkout',
+    '/orders',
+    '/profile',
+    '/ai-chat',
+    '/search',
+    '/product',
+  ];
+
+  if (userRoutes.some(route => pathname.startsWith(route))) {
+    console.log('[MIDDLEWARE] User route detected:', pathname, 'User:', user);
+    
     if (!user) {
+      console.log('[MIDDLEWARE] No user, redirecting to /login');
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
     // Админы не могут заходить на пользовательские страницы
     if (user.role === 'admin') {
+      console.log('[MIDDLEWARE] Admin detected, redirecting to /admin/dashboard');
       return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
+    
+    // Менеджеры могут заходить только если вошли через /manager/login
+    // ВАЖНО: если loginType отсутствует (старый токен), считаем что это user
+    if (user.role === 'manager' && user.loginType === 'manager') {
+      console.log('[MIDDLEWARE] Manager with loginType=manager, redirecting to /manager/dashboard');
+      return NextResponse.redirect(new URL('/manager/dashboard', request.url));
+    }
 
+    console.log('[MIDDLEWARE] Allowing access to user route');
     return NextResponse.next();
   }
 
@@ -80,11 +112,16 @@ export async function proxy(request: NextRequest) {
 
   if (authPages.some(page => pathname.startsWith(page))) {
     if (user) {
-      // Админы идут в админку, обычные пользователи в профиль
+      // Админы идут в админку
       if (user.role === 'admin') {
         return NextResponse.redirect(new URL('/admin/dashboard', request.url));
       }
-      return NextResponse.redirect(new URL('/profile', request.url));
+      // Менеджеры идут в панель менеджера только если вошли через /manager/login
+      if (user.role === 'manager' && user.loginType === 'manager') {
+        return NextResponse.redirect(new URL('/manager/dashboard', request.url));
+      }
+      // Все остальные идут на главную пользователя
+      return NextResponse.redirect(new URL('/home', request.url));
     }
     return NextResponse.next();
   }
@@ -93,13 +130,24 @@ export async function proxy(request: NextRequest) {
   // ЗАЩИТА ГЛАВНОЙ СТРАНИЦЫ (LANDING PAGE)
   // ============================================
   if (pathname === '/') {
+    console.log('[MIDDLEWARE] Root path detected, user:', user);
+    
     if (user) {
-      // Админы идут в админку, обычные пользователи в профиль
+      // Админы идут в админку
       if (user.role === 'admin') {
+        console.log('[MIDDLEWARE] Admin on root, redirecting to /admin/dashboard');
         return NextResponse.redirect(new URL('/admin/dashboard', request.url));
       }
-      return NextResponse.redirect(new URL('/profile', request.url));
+      // Менеджеры идут в панель менеджера только если вошли через /manager/login
+      if (user.role === 'manager' && user.loginType === 'manager') {
+        console.log('[MIDDLEWARE] Manager with loginType=manager on root, redirecting to /manager/dashboard');
+        return NextResponse.redirect(new URL('/manager/dashboard', request.url));
+      }
+      // Все остальные (включая менеджеров, вошедших через /login) идут на главную пользователя
+      console.log('[MIDDLEWARE] Regular user on root, redirecting to /home');
+      return NextResponse.redirect(new URL('/home', request.url));
     }
+    console.log('[MIDDLEWARE] No user on root, showing landing page');
     return NextResponse.next();
   }
 

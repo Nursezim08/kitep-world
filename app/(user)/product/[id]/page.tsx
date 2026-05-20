@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { checkUserAccess } from '@/lib/auth';
 import ProductDetailClient from './ProductDetailClient';
 
 export default async function ProductDetailPage({
@@ -7,13 +7,13 @@ export default async function ProductDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const user = await getCurrentUser();
+  const access = await checkUserAccess();
 
-  if (!user || user.role !== 'user') {
-    redirect('/login');
+  if (!access.allowed) {
+    redirect(access.redirectTo!);
   }
 
   const { id } = await params;
 
-  return <ProductDetailClient user={user} productId={id} />;
+  return <ProductDetailClient user={access.user!} productId={id} />;
 }

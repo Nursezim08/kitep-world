@@ -1,25 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { NextRequest, NextResponse } from "next/server";
+import { getPrismaClient } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
+  const prisma = getPrismaClient();
+
   try {
     const user = await getCurrentUser();
 
-    if (!user || user.role !== 'manager') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (!user || user.role !== "manager") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Получаем первый филиал менеджера
-    const branchUser = await prisma.branchUser.findFirst({
+    const branchUser = await prisma.branch_users.findFirst({
       where: {
-        userId: user.id,
+        user_id: user.id,
       },
       include: {
-        branch: {
+        branches: {
           select: {
             id: true,
             name: true,
@@ -31,20 +30,20 @@ export async function GET(request: NextRequest) {
 
     if (!branchUser) {
       return NextResponse.json(
-        { error: 'No branch assigned' },
-        { status: 404 }
+        { error: "No branch assigned" },
+        { status: 404 },
       );
     }
 
     return NextResponse.json({
-      branchId: branchUser.branchId,
-      branch: branchUser.branch,
+      branchId: branchUser.branch_id,
+      branch: branchUser.branches,
     });
   } catch (error) {
-    console.error('[Manager My Branch] Error:', error);
+    console.error("[Manager My Branch] Error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

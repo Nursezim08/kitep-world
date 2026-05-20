@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { verifyPassword } from '@/lib/password';
-import { validateEmail } from '@/lib/validation';
-import { createToken, setAuthCookie } from '@/lib/auth';
+import { NextRequest, NextResponse } from "next/server";
+import { getPrismaClient } from "@/lib/prisma";
+import { verifyPassword } from "@/lib/password";
+import { validateEmail } from "@/lib/validation";
+import { createToken, setAuthCookie } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  const prisma = getPrismaClient();
+
   try {
     const body = await request.json();
     const { email, password } = body;
@@ -12,62 +14,62 @@ export async function POST(request: NextRequest) {
     // Валидация
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email и пароль обязательны' },
-        { status: 400 }
+        { error: "Email и пароль обязательны" },
+        { status: 400 },
       );
     }
 
     if (!validateEmail(email)) {
       return NextResponse.json(
-        { error: 'Некорректный email адрес' },
-        { status: 400 }
+        { error: "Некорректный email адрес" },
+        { status: 400 },
       );
     }
 
     // Поиск пользователя
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { email },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Неверный email или пароль' },
-        { status: 401 }
+        { error: "Неверный email или пароль" },
+        { status: 401 },
       );
     }
 
     // Проверка: если пользователь зарегистрирован через Google
-    if (user.googleId) {
+    if (user.google_id) {
       return NextResponse.json(
-        { 
-          error: 'Этот аккаунт зарегистрирован через Google',
-          useGoogleAuth: true 
+        {
+          error: "Этот аккаунт зарегистрирован через Google",
+          useGoogleAuth: true,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Проверка статуса
-    if (user.status === 'blocked') {
+    if (user.status === "blocked") {
       return NextResponse.json(
-        { error: 'Ваш аккаунт заблокирован' },
-        { status: 403 }
+        { error: "Ваш аккаунт заблокирован" },
+        { status: 403 },
       );
     }
 
-    if (user.status === 'inactive') {
+    if (user.status === "inactive") {
       return NextResponse.json(
-        { error: 'Ваш аккаунт неактивен' },
-        { status: 403 }
+        { error: "Ваш аккаунт неактивен" },
+        { status: 403 },
       );
     }
 
     // Проверка пароля
-    const isPasswordValid = await verifyPassword(password, user.passwordHash);
+    const isPasswordValid = await verifyPassword(password, user.password_hash);
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: 'Неверный email или пароль' },
-        { status: 401 }
+        { error: "Неверный email или пароль" },
+        { status: 401 },
       );
     }
 
@@ -76,15 +78,16 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       email: user.email,
       role: user.role,
+      loginType: "user", // Вход через пользовательскую форму
     });
 
     await setAuthCookie(token);
 
     return NextResponse.json({
-      message: 'Вход выполнен успешно',
+      message: "Вход выполнен успешно",
       user: {
         id: user.id,
-        fullName: user.fullName,
+        fullName: user.full_name,
         email: user.email,
         role: user.role,
         phone: user.phone,
@@ -93,10 +96,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'Ошибка при входе' },
-      { status: 500 }
-    );
+    console.error("Login error:", error);
+    return NextResponse.json({ error: "Ошибка при входе" }, { status: 500 });
   }
 }

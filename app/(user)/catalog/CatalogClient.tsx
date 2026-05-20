@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import {
   Search,
   Home,
@@ -22,7 +23,19 @@ import {
   ChevronDown,
   Check,
 } from 'lucide-react';
-import RangeSliderWithCharts from '@/app/components/RangeSliderWithCharts';
+
+// Динамический импорт RangeSliderWithCharts для оптимизации загрузки
+const RangeSliderWithCharts = dynamic(
+  () => import('@/app/components/RangeSliderWithCharts'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-[200px] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div>
+      </div>
+    )
+  }
+);
 
 interface User {
   id: string;
@@ -98,6 +111,8 @@ export default function CatalogClient({ user }: CatalogClientProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [addingToCart, setAddingToCart] = useState<Set<string>>(new Set());
   const [cartCount, setCartCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 100;
 
   // Очистка overflow при размонтировании компонента
   useEffect(() => {
@@ -188,7 +203,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
       const res = await fetch(`/api/user/products?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setProducts(data);
+        setProducts(data.products || data); // Поддержка нового формата API
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -293,6 +308,17 @@ export default function CatalogClient({ user }: CatalogClientProps) {
       }
     });
 
+  // Пагинация
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // Сброс на первую страницу при изменении фильтров
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, sortBy, priceRange, selectedRating, searchQuery]);
+
   const menuItems = [
     { title: 'Главная', icon: Home, href: '/home', active: false },
     { title: 'Каталог', icon: Grid, href: '/catalog', active: true },
@@ -340,13 +366,13 @@ export default function CatalogClient({ user }: CatalogClientProps) {
               <img 
                 src="/logonur.png" 
                 alt="Nur-Kitep Logo" 
-                className="w-10 h-10 rounded-xl object-cover"
+                className="w-9 h-9 rounded-xl object-cover"
               />
               <div>
-                <h1 className="text-lg font-bold text-gray-900">
+                <h1 className="text-base font-bold text-gray-900">
                   Nur-Kitep
                 </h1>
-                <p className="text-xs text-gray-500">Книги и канцелярия</p>
+                <p className="text-[10px] text-gray-500">Книги и канцелярия</p>
               </div>
             </div>
 
@@ -366,16 +392,16 @@ export default function CatalogClient({ user }: CatalogClientProps) {
 
             {/* User & Notifications */}
             <div className="flex items-center gap-3">
-              <button className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
-                <Bell size={20} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-violet-500 rounded-full"></span>
+              <button className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
+                <Bell size={18} />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full"></span>
               </button>
 
               <button 
                 onClick={() => router.push('/cart')}
-                className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
+                className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
               >
-                <ShoppingCart size={20} />
+                <ShoppingCart size={18} />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                     {cartCount}
@@ -385,14 +411,14 @@ export default function CatalogClient({ user }: CatalogClientProps) {
 
               <button 
                 onClick={() => router.push('/profile')}
-                className="flex items-center gap-3 hover:bg-gray-50 rounded-xl transition-colors px-3 py-2"
+                className="flex items-center gap-2.5 hover:bg-gray-50 rounded-xl transition-colors px-2.5 py-1.5"
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
+                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
                   {user.fullName.charAt(0)}
                 </div>
                 <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
+                  <p className="text-[10px] text-gray-500">{user.email}</p>
                 </div>
               </button>
             </div>
@@ -420,7 +446,10 @@ export default function CatalogClient({ user }: CatalogClientProps) {
               {menuItems.map((item, index) => (
                 <button
                   key={index}
-                  onClick={() => item.href !== '#' && router.push(item.href)}
+                  onClick={() => {
+                    console.log('Navigating to:', item.href);
+                    router.push(item.href);
+                  }}
                   className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
                     item.active 
                       ? 'bg-violet-500/15 text-violet-600' 
@@ -519,11 +548,19 @@ export default function CatalogClient({ user }: CatalogClientProps) {
           <main className="p-8">
             {/* Page Header with Search and Filters */}
             <div className="mb-8">
-              <div className="flex items-end gap-4 mb-1">
-                {/* Title */}
-                <h1 className="text-3xl font-extrabold text-gray-900 flex-shrink-0">
-                  Каталог
-                </h1>
+              <div className="flex items-center gap-4 mb-1">
+                {/* Title and Subtitle */}
+                <div className="flex-shrink-0">
+                  <h1 className="text-3xl font-extrabold text-gray-900">
+                    Каталог
+                  </h1>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedCategory === 'all' 
+                      ? `Найдено ${filteredProducts.length} товаров`
+                      : `${getCategoryName(categories.find(c => c.id === selectedCategory))} — ${filteredProducts.length} товаров`
+                    }
+                  </p>
+                </div>
 
                 {/* Spacer */}
                 <div className="w-32 flex-shrink-0"></div>
@@ -549,14 +586,6 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                   <span>Фильтры</span>
                 </button>
               </div>
-
-              {/* Subtitle */}
-              <p className="text-sm text-gray-600">
-                {selectedCategory === 'all' 
-                  ? `Найдено ${filteredProducts.length} товаров`
-                  : `${getCategoryName(categories.find(c => c.id === selectedCategory))} — ${filteredProducts.length} товаров`
-                }
-              </p>
             </div>
 
             {/* Filter Modal */}
@@ -729,8 +758,9 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => {
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {paginatedProducts.map((product) => {
                   const mainImage = product.images[0];
                   return (
                     <div
@@ -800,6 +830,110 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                   );
                 })}
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex flex-col items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    {/* Previous Button */}
+                    <button
+                      onClick={() => {
+                        setCurrentPage((prev) => Math.max(1, prev - 1));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium text-gray-700"
+                    >
+                      Назад
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-2">
+                      {/* First Page */}
+                      {currentPage > 3 && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setCurrentPage(1);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium text-gray-700"
+                          >
+                            1
+                          </button>
+                          {currentPage > 4 && (
+                            <span className="text-gray-400">...</span>
+                          )}
+                        </>
+                      )}
+
+                      {/* Current Page Range */}
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter((page) => {
+                          return (
+                            page === currentPage ||
+                            page === currentPage - 1 ||
+                            page === currentPage + 1 ||
+                            (currentPage <= 2 && page <= 3) ||
+                            (currentPage >= totalPages - 1 && page >= totalPages - 2)
+                          );
+                        })
+                        .map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => {
+                              setCurrentPage(page);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all text-sm font-medium ${
+                              currentPage === page
+                                ? 'bg-violet-600 text-white'
+                                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+
+                      {/* Last Page */}
+                      {currentPage < totalPages - 2 && (
+                        <>
+                          {currentPage < totalPages - 3 && (
+                            <span className="text-gray-400">...</span>
+                          )}
+                          <button
+                            onClick={() => {
+                              setCurrentPage(totalPages);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium text-gray-700"
+                          >
+                            {totalPages}
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={() => {
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium text-gray-700"
+                    >
+                      Вперед
+                    </button>
+                  </div>
+
+                  {/* Page Info */}
+                  <p className="text-sm text-gray-600">
+                    Страница {currentPage} из {totalPages} · Показано {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} из {filteredProducts.length} товаров
+                  </p>
+                </div>
+              )}
+            </>
             )}
           </main>
         </div>

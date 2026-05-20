@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { hashPassword } from '@/lib/password';
-import { validateEmail, validatePassword } from '@/lib/validation';
-import { generateVerificationCode, sendVerificationEmail } from '@/lib/email';
+import { NextRequest, NextResponse } from "next/server";
+import { getPrismaClient } from "@/lib/prisma";
+import { hashPassword } from "@/lib/password";
+import { validateEmail, validatePassword } from "@/lib/validation";
+import { generateVerificationCode, sendVerificationEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
+  const prisma = getPrismaClient();
+
   try {
     const body = await request.json();
     const { fullName, email, password, phone } = body;
@@ -12,84 +14,86 @@ export async function POST(request: NextRequest) {
     // Валидация
     if (!fullName || !email || !password) {
       return NextResponse.json(
-        { error: 'Все обязательные поля должны быть заполнены' },
-        { status: 400 }
+        { error: "Все обязательные поля должны быть заполнены" },
+        { status: 400 },
       );
     }
 
     if (!validateEmail(email)) {
       return NextResponse.json(
-        { error: 'Некорректный email адрес' },
-        { status: 400 }
+        { error: "Некорректный email адрес" },
+        { status: 400 },
       );
     }
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
       return NextResponse.json(
-        { error: passwordValidation.errors.join(', ') },
-        { status: 400 }
+        { error: passwordValidation.errors.join(", ") },
+        { status: 400 },
       );
     }
 
     // Проверка существования пользователя
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { email },
     });
 
     if (existingUser) {
       // Если пользователь зарегистрирован через Google
-      if (existingUser.googleId) {
+      if (existingUser.google_id) {
         return NextResponse.json(
-          { 
-            error: 'Пользователь с таким email уже существует',
-            useGoogleAuth: true 
+          {
+            error: "Пользователь с таким email уже существует",
+            useGoogleAuth: true,
           },
-          { status: 409 }
+          { status: 409 },
         );
       }
-      
+
       return NextResponse.json(
-        { error: 'Пользователь с таким email уже существует' },
-        { status: 409 }
+        { error: "Пользователь с таким email уже существует" },
+        { status: 409 },
       );
     }
 
     // Проверка телефона если указан
     if (phone) {
-      const existingPhone = await prisma.user.findUnique({
+      const existingPhone = await prisma.users.findUnique({
         where: { phone },
       });
 
       if (existingPhone) {
         return NextResponse.json(
-          { error: 'Пользователь с таким телефоном уже существует' },
-          { status: 409 }
+          { error: "Пользователь с таким телефоном уже существует" },
+          { status: 409 },
         );
       }
     }
 
     // Создание пользователя (НЕ верифицированного)
     const passwordHash = await hashPassword(password);
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
-        fullName,
+        id: crypto.randomUUID(),
+        full_name: fullName,
         email,
-        passwordHash,
+        password_hash: passwordHash,
         phone: phone || null,
-        role: 'user',
-        status: 'active',
-        emailVerified: false,
+        role: "user",
+        status: "active",
+        email_verified: false,
+        updated_at: new Date(),
       },
       select: {
         id: true,
-        fullName: true,
+        full_name: true,
         email: true,
         role: true,
         phone: true,
         avatar: true,
         status: true,
-        emailVerified: true,
+        email_verified: true,
       },
     });
 
@@ -97,12 +101,13 @@ export async function POST(request: NextRequest) {
     const verificationCode = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 минут
 
-    await prisma.emailVerification.create({
+    await prisma.email_verifications.create({
       data: {
-        userId: user.id,
+        id: crypto.randomUUID(),
+        user_id: user.id,
         email: user.email,
         code: verificationCode,
-        expiresAt,
+        expires_at: expiresAt,
       },
     });
 
@@ -111,18 +116,18 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: 'Регистрация успешна. Проверьте email для верификации.',
+        message: "Регистрация успешна. Проверьте email для верификации.",
         userId: user.id,
         email: user.email,
         requiresVerification: true,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error("[REGISTER] Registration error:", error);
     return NextResponse.json(
-      { error: 'Ошибка при регистрации' },
-      { status: 500 }
+      { error: "Ошибка при регистрации" },
+      { status: 500 },
     );
   }
 }

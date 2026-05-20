@@ -86,10 +86,10 @@ export default function ProductsClient({ user }: ProductsClientProps) {
   const categoryIdParam = searchParams.get('categoryId');
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -98,13 +98,13 @@ export default function ProductsClient({ user }: ProductsClientProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>(categoryIdParam || 'all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
-  const [priceMin, setPriceMin] = useState<string>('');
-  const [priceMax, setPriceMax] = useState<string>('');
   const [brandFilter, setBrandFilter] = useState<string>('all');
   const [brands, setBrands] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<string>('name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const itemsPerPage = 100;
 
@@ -135,13 +135,21 @@ export default function ProductsClient({ user }: ProductsClientProps) {
 
   useEffect(() => {
     fetchCategories();
-    fetchProducts();
-  }, [categoryFilter]);
+  }, []);
+
+  // Debounce для поиска
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
-    filterProducts();
-    setCurrentPage(1); // Сброс на первую страницу при изменении фильтров
-  }, [searchQuery, products, categoryFilter, statusFilter, priceMin, priceMax, brandFilter, sortBy, sortOrder]);
+    fetchProducts();
+  }, [categoryFilter, statusFilter, brandFilter, sortBy, sortOrder, searchQuery, currentPage]);
 
   const fetchCategories = async () => {
     try {
@@ -160,17 +168,36 @@ export default function ProductsClient({ user }: ProductsClientProps) {
       setLoading(true);
       const params = new URLSearchParams();
       
+      params.append('page', currentPage.toString());
+      params.append('limit', itemsPerPage.toString());
+      params.append('sortBy', sortBy);
+      params.append('sortOrder', sortOrder);
+      
       if (categoryFilter !== 'all') {
         params.append('categoryId', categoryFilter);
+      }
+      
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
+      
+      if (brandFilter !== 'all') {
+        params.append('brand', brandFilter);
+      }
+      
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
       }
 
       const response = await fetch(`/api/admin/products?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setProducts(data);
+        setProducts(data.products);
+        setTotalPages(data.pagination.pages);
+        setTotalProducts(data.pagination.total);
         
-        // Извлекаем уникальные бренды
-        const uniqueBrands = [...new Set(data.map((p: Product) => p.brand).filter(Boolean))];
+        // Извлекаем уникальные бренды из текущих товаров
+        const uniqueBrands = [...new Set(data.products.map((p: Product) => p.brand).filter(Boolean))];
         setBrands(uniqueBrands as string[]);
       } else if (response.status === 401) {
         router.push('/admin/login');
@@ -180,85 +207,6 @@ export default function ProductsClient({ user }: ProductsClientProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const filterProducts = () => {
-    let filtered = products;
-
-    // Фильтр по поиску
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((product) => {
-        const ruName = product.translations.find((t) => t.locale === 'ru')?.name || '';
-        const kgName = product.translations.find((t) => t.locale === 'kg')?.name || '';
-        const sku = product.sku.toLowerCase();
-        const brand = (product.brand || '').toLowerCase();
-        return ruName.toLowerCase().includes(query) || 
-               kgName.toLowerCase().includes(query) ||
-               sku.includes(query) ||
-               brand.includes(query);
-      });
-    }
-
-    // Фильтр по статусу
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((product) => product.status === statusFilter);
-    }
-
-    // Фильтр по цене
-    if (priceMin) {
-      const min = parseFloat(priceMin);
-      if (!isNaN(min)) {
-        filtered = filtered.filter((product) => product.price >= min);
-      }
-    }
-    if (priceMax) {
-      const max = parseFloat(priceMax);
-      if (!isNaN(max)) {
-        filtered = filtered.filter((product) => product.price <= max);
-      }
-    }
-
-    // Фильтр по бренду
-    if (brandFilter !== 'all') {
-      filtered = filtered.filter((product) => product.brand === brandFilter);
-    }
-
-    // Сортировка
-    filtered = [...filtered].sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortBy) {
-        case 'name':
-          const aName = getProductName(a, 'ru');
-          const bName = getProductName(b, 'ru');
-          comparison = aName.localeCompare(bName);
-          break;
-        
-        case 'price':
-          comparison = a.price - b.price;
-          break;
-        
-        case 'createdAt':
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          break;
-        
-        case 'updatedAt':
-          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-          break;
-        
-        case 'reviewsCount':
-          comparison = a._count.reviews - b._count.reviews;
-          break;
-        
-        default:
-          comparison = 0;
-      }
-
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-
-    setFilteredProducts(filtered);
   };
 
   const handleEdit = (product: Product, e: React.MouseEvent) => {
@@ -314,32 +262,25 @@ export default function ProductsClient({ user }: ProductsClientProps) {
     setCategoryFilter('all');
     setStatusFilter('all');
     setSearchQuery('');
-    setPriceMin('');
-    setPriceMax('');
+    setSearchInput('');
     setBrandFilter('all');
-    setSortBy('name');
-    setSortOrder('asc');
+    setSortBy('createdAt');
+    setSortOrder('desc');
+    setCurrentPage(1);
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
     if (categoryFilter !== 'all') count++;
     if (statusFilter !== 'all') count++;
-    if (priceMin || priceMax) count++;
     if (brandFilter !== 'all') count++;
-    if (sortBy !== 'name') count++;
+    if (sortBy !== 'createdAt') count++;
     return count;
   };
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
   };
-
-  // Пагинация
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentProducts = filteredProducts.slice(startIndex, endIndex);
 
   const goToPage = (page: number) => {
     setCurrentPage(page);
@@ -541,8 +482,8 @@ export default function ProductsClient({ user }: ProductsClientProps) {
                   <input
                     type="text"
                     placeholder="Поиск товаров..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-[#252d3d] border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all"
                   />
                 </div>
@@ -596,7 +537,10 @@ export default function ProductsClient({ user }: ProductsClientProps) {
                         </label>
                         <CustomSelect
                           value={categoryFilter}
-                          onChange={(value) => setCategoryFilter(value)}
+                          onChange={(value) => {
+                            setCategoryFilter(value);
+                            setCurrentPage(1);
+                          }}
                           options={[
                             { value: 'all', label: 'Все категории' },
                             ...categories.map(cat => ({
@@ -614,7 +558,10 @@ export default function ProductsClient({ user }: ProductsClientProps) {
                         </label>
                         <CustomSelect
                           value={statusFilter}
-                          onChange={(value) => setStatusFilter(value)}
+                          onChange={(value) => {
+                            setStatusFilter(value);
+                            setCurrentPage(1);
+                          }}
                           options={[
                             { value: 'all', label: 'Все статусы' },
                             { value: 'active', label: 'Активные' },
@@ -630,7 +577,10 @@ export default function ProductsClient({ user }: ProductsClientProps) {
                         </label>
                         <CustomSelect
                           value={brandFilter}
-                          onChange={(value) => setBrandFilter(value)}
+                          onChange={(value) => {
+                            setBrandFilter(value);
+                            setCurrentPage(1);
+                          }}
                           options={[
                             { value: 'all', label: 'Все бренды' },
                             ...brands.map(brand => ({
@@ -642,34 +592,8 @@ export default function ProductsClient({ user }: ProductsClientProps) {
                       </div>
                     </div>
 
-                    {/* Second Row: Price Range and Sort */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Price Range */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">
-                          Цена (сом)
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder="От"
-                            value={priceMin}
-                            onChange={(e) => setPriceMin(e.target.value)}
-                            className="w-full px-3 py-2 bg-[#2a3347] border-2 border-violet-500 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-                          />
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder="До"
-                            value={priceMax}
-                            onChange={(e) => setPriceMax(e.target.value)}
-                            className="w-full px-3 py-2 bg-[#2a3347] border-2 border-violet-500 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Sort By */}
+                    {/* Sort By */}
+                    <div className="grid grid-cols-1 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-400 mb-2">
                           Сортировка
@@ -716,7 +640,7 @@ export default function ProductsClient({ user }: ProductsClientProps) {
                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500"></div>
                 <p className="mt-4 text-gray-400">Загрузка товаров...</p>
               </div>
-            ) : filteredProducts.length === 0 ? (
+            ) : products.length === 0 ? (
               <div className="text-center py-12 bg-gray-800 rounded-lg border border-gray-700">
                 <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                 <p className="text-gray-400 text-lg mb-2">
@@ -740,7 +664,7 @@ export default function ProductsClient({ user }: ProductsClientProps) {
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {currentProducts.map((product) => {
+                  {products.map((product) => {
                   const mainImage = product.images.find(img => img.status === 'active');
                   return (
                     <div
@@ -875,7 +799,7 @@ export default function ProductsClient({ user }: ProductsClientProps) {
               {/* Информация о пагинации */}
               <div className="mt-4 flex items-center justify-between text-sm text-gray-400">
                 <p>
-                  Показано {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} из {filteredProducts.length} товаров
+                  Показано {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalProducts)} из {totalProducts} товаров
                 </p>
                 <p>
                   Страница {currentPage} из {totalPages}
