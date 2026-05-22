@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
+import crypto from 'crypto';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = getPrismaClient();
   try {
     const user = await getCurrentUser();
 
@@ -18,16 +20,16 @@ export async function PATCH(
     }
 
     // Получаем филиал менеджера
-    const branchUser = await prisma.branchUser.findFirst({
-      where: { userId: user.id },
-      include: { branch: true },
+    const branchUser = await prisma.branch_users.findFirst({
+      where: { user_id: user.id },
+      select: { branch_id: true },
     });
 
     if (!branchUser) {
       return NextResponse.json({ error: 'Филиал не найден' }, { status: 404 });
     }
 
-    const branchId = branchUser.branchId;
+    const branchId = branchUser.branch_id;
     const { id: productId } = await params;
     const body = await request.json();
     const { quantity } = body;
@@ -41,7 +43,7 @@ export async function PATCH(
     }
 
     // Проверяем существование товара
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id: productId },
     });
 
@@ -50,29 +52,34 @@ export async function PATCH(
     }
 
     // Обновляем или создаем запись в inventory
-    const inventory = await prisma.branchInventory.upsert({
-      where: {
-        branchId_productId: {
-          branchId,
-          productId,
-        },
-      },
-      update: {
-        quantity,
-      },
-      create: {
-        branchId,
-        productId,
-        quantity,
-      },
+    const existing = await prisma.branch_inventory.findFirst({
+      where: { branch_id: branchId, product_id: productId },
     });
+
+    let inventory;
+    if (existing) {
+      inventory = await prisma.branch_inventory.update({
+        where: { id: existing.id },
+        data: { quantity, updated_at: new Date() },
+      });
+    } else {
+      inventory = await prisma.branch_inventory.create({
+        data: {
+          id: crypto.randomUUID(),
+          branch_id: branchId,
+          product_id: productId,
+          quantity,
+          updated_at: new Date(),
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
       inventory: {
         id: inventory.id,
         quantity: inventory.quantity,
-        updatedAt: inventory.updatedAt.toISOString(),
+        updatedAt: inventory.updated_at.toISOString(),
       },
     });
   } catch (error) {

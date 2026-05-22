@@ -88,6 +88,7 @@ export default function ManagersClient({ user }: ManagersClientProps) {
   const [selectedManager, setSelectedManager] = useState<Manager | null>(null);
   const [managerToDelete, setManagerToDelete] = useState<Manager | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -230,12 +231,12 @@ export default function ManagersClient({ user }: ManagersClientProps) {
   const openEditModal = (manager: Manager) => {
     setSelectedManager(manager);
     setEditFormData({
-      fullName: manager.fullName,
-      email: manager.email,
+      fullName: manager.fullName ?? '',
+      email: manager.email ?? '',
       phone: manager.phone || '',
       password: '',
       status: manager.status,
-      branchId: manager.branchUsers[0]?.branch.id || '',
+      branchId: manager.branchUsers?.[0]?.branch.id || '',
     });
     setShowEditModal(true);
   };
@@ -243,8 +244,8 @@ export default function ManagersClient({ user }: ManagersClientProps) {
   const filteredManagers = managers.filter(manager => {
     // Поиск по тексту
     const matchesSearch = 
-      manager.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      manager.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (manager.fullName ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (manager.email ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       manager.phone?.includes(searchQuery);
     
     // Фильтр по статусу
@@ -342,9 +343,9 @@ export default function ManagersClient({ user }: ManagersClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#151b26] overflow-x-hidden">
+    <div className="h-screen flex flex-col bg-[#151b26] overflow-hidden">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#252d3d] border-b border-gray-800/50">
+      <header className="flex-shrink-0 bg-[#252d3d] border-b border-gray-800/50">
         <div className="px-4 md:px-8 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -394,9 +395,10 @@ export default function ManagersClient({ user }: ManagersClientProps) {
       </header>
 
       {/* Main Content */}
-      <div className="flex pt-[73px] overflow-x-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-80'} px-4 pt-4 flex flex-col flex-shrink-0 transition-all duration-300 sticky top-[73px] self-start`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-80'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 transition-all duration-300`}>
+          <div className="p-4 flex flex-col min-h-full">
           {/* Main Navigation Card */}
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
@@ -493,7 +495,7 @@ export default function ManagersClient({ user }: ManagersClientProps) {
           </div>
 
           {/* Logout Button Card */}
-          <div className="mt-4">
+          <div className="mt-auto mb-2">
             <div className="bg-[#252d3d] rounded-2xl p-4">
               <button
                 onClick={handleLogout}
@@ -505,10 +507,11 @@ export default function ManagersClient({ user }: ManagersClientProps) {
               </button>
             </div>
           </div>
+          </div>
         </aside>
 
         {/* Main Content Area */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-y-auto">
           <main className="p-4 md:p-8">
           {/* Header Section */}
           <div className="mb-8">
@@ -751,7 +754,7 @@ export default function ManagersClient({ user }: ManagersClientProps) {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
-                              {manager.fullName.charAt(0)}
+                              {manager.fullName?.charAt(0) ?? '?'}
                             </div>
                             <div>
                               <p className="text-sm font-semibold text-white">{manager.fullName}</p>
@@ -766,7 +769,7 @@ export default function ManagersClient({ user }: ManagersClientProps) {
                           <p className="text-sm text-gray-300">{manager.phone || '—'}</p>
                         </td>
                         <td className="px-6 py-4">
-                          {manager.branchUsers.length > 0 ? (
+                          {(manager.branchUsers?.length ?? 0) > 0 ? (
                             <div className="flex items-center gap-2">
                               <MapPin size={14} className="text-violet-400" />
                               <span className="text-sm text-gray-300">
@@ -1081,18 +1084,19 @@ export default function ManagersClient({ user }: ManagersClientProps) {
                 </label>
                 <div className="relative">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showEditPassword ? 'text' : 'password'}
                     value={editFormData.password}
                     onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                    autoComplete="new-password"
                     className="w-full px-3 py-2 bg-[#1e2533] border border-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/50 text-white pr-10 text-sm"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setShowEditPassword(!showEditPassword)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showEditPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>

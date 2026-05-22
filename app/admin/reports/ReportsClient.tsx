@@ -266,8 +266,9 @@ export default function ReportsClient({ user }: ReportsClientProps) {
         <aside
           className={`${
             sidebarCollapsed ? 'w-20' : 'w-72'
-          } flex-shrink-0 overflow-y-auto px-4 pt-4 flex flex-col transition-all duration-300`}
+          } flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 transition-all duration-300`}
         >
+          <div className="p-4 flex flex-col min-h-full">
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
             <div
               className={`flex items-center ${
@@ -307,32 +308,7 @@ export default function ReportsClient({ user }: ReportsClientProps) {
             </nav>
           </div>
 
-          {!sidebarCollapsed && (
-            <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
-              <div className="flex items-center gap-2 mb-4 px-2">
-                <span className="text-sm font-semibold text-gray-400">Быстрые действия</span>
-              </div>
-
-              <div className="space-y-1">
-                <button
-                  onClick={() => router.push('/admin/branches')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all"
-                >
-                  <MapPin size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">Филиалы</span>
-                </button>
-                <button
-                  onClick={() => router.push('/admin/orders')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all"
-                >
-                  <ShoppingCart size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">Заказы</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-4">
+          <div className="mt-auto mb-2">
             <div className="bg-[#252d3d] rounded-2xl p-4">
               <button
                 onClick={handleLogout}
@@ -345,6 +321,7 @@ export default function ReportsClient({ user }: ReportsClientProps) {
                 {!sidebarCollapsed && <span>Выйти</span>}
               </button>
             </div>
+          </div>
           </div>
         </aside>
 

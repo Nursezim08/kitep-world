@@ -70,7 +70,21 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ users });
+    return NextResponse.json({
+      users: users.map((u) => ({
+        id: u.id,
+        fullName: u.full_name,
+        email: u.email,
+        emailVerified: u.email_verified,
+        role: u.role,
+        phone: u.phone,
+        avatar: u.avatar,
+        status: u.status,
+        createdAt: u.created_at,
+        updatedAt: u.updated_at,
+        _count: u._count,
+      })),
+    });
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
@@ -158,7 +172,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ user: newUser }, { status: 201 });
+    return NextResponse.json({
+      user: {
+        id: newUser.id,
+        fullName: newUser.full_name,
+        email: newUser.email,
+        emailVerified: newUser.email_verified,
+        role: newUser.role,
+        phone: newUser.phone,
+        avatar: newUser.avatar,
+        status: newUser.status,
+        createdAt: newUser.created_at,
+        updatedAt: newUser.updated_at,
+      },
+    }, { status: 201 });
   } catch (error) {
     console.error("Error creating user:", error);
     return NextResponse.json(

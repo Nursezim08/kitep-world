@@ -1,0 +1,133 @@
+{
+  "nav": {
+    "home": "Главная",
+    "catalog": "Каталог",
+    "orders": "Заказы",
+    "cart": "Корзина",
+    "aiChat": "AI Чат",
+    "profile": "Профиль"
+  },
+  "header": {
+    "searchPlaceholder": "Поиск товаров...",
+    "settings": "Настройки",
+    "logout": "Выйти"
+  },
+  "sidebar": {
+    "navigation": "Навигация",
+    "quickActions": "Быстрые действия",
+    "myOrders": "Мои заказы",
+    "collapse": "Свернуть",
+    "expand": "Развернуть",
+    "logout": "Выйти"
+  },
+  "home": {
+    "newSeason": "Новинки сезона",
+    "welcomeTitle": "Добро пожаловать в Nur-Kitep!",
+    "welcomeSub": "Книги, канцелярия и товары для творчества с доставкой по всему Кыргызстану",
+    "toCatalog": "Перейти в каталог",
+    "categoriesTitle": "Категории",
+    "categoriesSub": "Выберите категорию для просмотра товаров",
+    "allCategories": "Все категории",
+    "items": "товаров",
+    "popularTitle": "Популярные товары",
+    "popularSub": "Самые продаваемые товары за последний месяц",
+    "allProducts": "Все товары",
+    "moreInfo": "Подробнее"
+  },
+  "catalog": {
+    "title": "Каталог товаров",
+    "subtitle": "Найдите нужный товар",
+    "allCategories": "Все категории",
+    "filters": "Фильтры",
+    "applyFilters": "Применить",
+    "resetFilters": "Сбросить",
+    "sortBy": "Сортировка",
+    "priceRange": "Диапазон цен",
+    "rating": "Рейтинг",
+    "noProducts": "Товары не найдены",
+    "noProductsSub": "Попробуйте изменить фильтры или поисковый запрос",
+    "resetAll": "Сбросить всё",
+    "addToCart": "В корзину",
+    "adding": "Добавляем...",
+    "currency": "с",
+    "sort": {
+      "popular": "Популярные",
+      "newest": "Сначала новые",
+      "priceDesc": "Сначала дорогие",
+      "priceAsc": "Сначала дешевые"
+    }
+  },
+  "cart": {
+    "title": "Корзина",
+    "empty": "Корзина пуста",
+    "emptySub": "Добавьте товары для оформления заказа",
+    "toCatalog": "Перейти в каталог",
+    "total": "Итого",
+    "checkout": "Оформить заказ",
+    "remove": "Удалить",
+    "quantity": "Количество",
+    "currency": "с"
+  },
+  "orders": {
+    "title": "Мои заказы",
+    "empty": "У вас пока нет заказов",
+    "emptySub": "Оформите первый заказ в каталоге",
+    "order": "Заказ",
+    "branch": "Филиал",
+    "total": "Итого",
+    "status": {
+      "paid": "Оплачен",
+      "completed": "Выполнен",
+      "cancelled": "Отменён"
+    },
+    "currency": "с"
+  },
+  "profile": {
+    "title": "Профиль",
+    "personalInfo": "Личные данные",
+    "name": "Имя",
+    "email": "Email",
+    "phone": "Телефон",
+    "notSpecified": "Не указан",
+    "role": "Роль",
+    "status": "Статус",
+    "active": "Активен",
+    "changePassword": "Изменить пароль",
+    "logout": "Выйти"
+  },
+  "aiChat": {
+    "title": "AI Помощник",
+    "placeholder": "Напишите сообщение...",
+    "send": "Отправить",
+    "thinking": "Думаю...",
+    "greeting": "Здравствуйте! Я AI-помощник Nur-Kitep. Чем могу помочь вам сегодня?"
+  },
+  "search": {
+    "title": "Поиск",
+    "placeholder": "Поиск товаров...",
+    "results": "Результаты поиска",
+    "noResults": "Ничего не найдено",
+    "noResultsSub": "Попробуйте изменить запрос",
+    "found": "Найдено",
+    "currency": "с"
+  },
+  "checkout": {
+    "title": "Оформление заказа",
+    "selectBranch": "Выберите филиал",
+    "comment": "Комментарий к заказу",
+    "commentPlaceholder": "Необязательно",
+    "total": "Итого",
+    "placeOrder": "Оформить заказ",
+    "processing": "Оформляем...",
+    "currency": "с"
+  },
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "back": "Назад",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "close": "Закрыть",
+    "noName": "Без названия"
+  }
+}

@@ -96,9 +96,25 @@ export async function GET(request: NextRequest) {
       status: product.status,
       createdAt: product.created_at.toISOString(),
       updatedAt: product.updated_at.toISOString(),
-      translations: product.product_translations,
-      images: product.product_images,
-      category: product.categories,
+      translations: product.product_translations.map((t) => ({
+        id: t.id,
+        locale: t.locale,
+        name: t.name,
+        description: t.description,
+      })),
+      images: product.product_images.map((img) => ({
+        id: img.id,
+        imageUrl: img.image_url,
+        status: img.status,
+      })),
+      category: product.categories ? {
+        id: product.categories.id,
+        translations: product.categories.category_translations.map((t) => ({
+          id: t.id,
+          locale: t.locale,
+          name: t.name,
+        })),
+      } : null,
       inventory: product.branch_inventory[0] || { quantity: 0 },
       _count: product._count,
     }));

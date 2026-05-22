@@ -201,9 +201,9 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
   const totalRevenue = branch.orders.reduce((sum, order) => sum + Number(order.total), 0);
 
   return (
-    <div className="min-h-screen bg-[#151b26] overflow-x-hidden">
+    <div className="h-screen flex flex-col bg-[#151b26] overflow-hidden">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#252d3d] border-b border-gray-800/50">
+      <header className="flex-shrink-0 bg-[#252d3d] border-b border-gray-800/50">
         <div className="px-4 md:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -248,9 +248,10 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
         </div>
       </header>
 
-      <div className="flex pt-[73px] overflow-x-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-80'} px-4 pt-4 flex flex-col flex-shrink-0 transition-all duration-300 sticky top-[73px] self-start`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-80'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 transition-all duration-300`}>
+          <div className="p-4 flex flex-col min-h-full">
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
               {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-400">Навигация</span>}
@@ -347,7 +348,7 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
             </nav>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-auto mb-2">
             <div className="bg-[#252d3d] rounded-2xl p-4">
               <button
                 onClick={handleLogout}
@@ -359,10 +360,11 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
               </button>
             </div>
           </div>
+          </div>
         </aside>
 
         {/* Main Content Area */}
-        <div className="flex-1 p-4 md:p-8 min-w-0">
+        <div className="flex-1 p-4 md:p-8 min-w-0 overflow-y-auto">
         <div className="max-w-7xl mx-auto">
           {/* Page Title */}
           <div className="mb-6">

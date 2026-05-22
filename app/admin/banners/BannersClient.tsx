@@ -107,9 +107,9 @@ export default function BannersClient({ user }: { user: User }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#151b26]">
+    <div className="h-screen flex flex-col bg-[#151b26] overflow-hidden">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#252d3d] border-b border-gray-800/50">
+      <header className="flex-shrink-0 bg-[#252d3d] border-b border-gray-800/50">
         <div className="px-8 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -163,9 +163,10 @@ export default function BannersClient({ user }: { user: User }) {
         </div>
       </header>
 
-      <div className="flex pt-[73px]">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[73px] self-start`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 transition-all duration-300`}>
+          <div className="p-4 flex flex-col min-h-full">
           {/* Main Navigation Card */}
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
@@ -263,34 +264,8 @@ export default function BannersClient({ user }: { user: User }) {
             </nav>
           </div>
 
-          {/* Quick Actions Card */}
-          {!sidebarCollapsed && (
-            <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
-              <div className="flex items-center gap-2 mb-4 px-2">
-                <span className="text-sm font-semibold text-gray-400">Быстрые действия</span>
-              </div>
-              
-              <div className="space-y-1">
-                <button
-                  onClick={() => router.push('/admin/branches')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all"
-                >
-                  <MapPin size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">Филиалы</span>
-                </button>
-                <button
-                  onClick={() => router.push('/admin/reports')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-[#2a3347] hover:text-white transition-all"
-                >
-                  <FileText size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">Отчеты</span>
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Logout Button Card */}
-          <div className="mt-4">
+          <div className="mt-auto mb-2">
             <div className="bg-[#252d3d] rounded-2xl p-4">
               <button
                 onClick={handleLogout}
@@ -302,10 +277,11 @@ export default function BannersClient({ user }: { user: User }) {
               </button>
             </div>
           </div>
+          </div>
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1">
+        <div className="flex-1 overflow-y-auto">
           <main className="p-8">
             {/* Заголовок и поиск */}
             <div className="mb-6">

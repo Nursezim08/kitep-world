@@ -4,6 +4,37 @@ import { getPrismaClient } from "@/lib/prisma";
 import { uploadImageToS3, isBase64Image } from "@/lib/s3";
 import crypto from "crypto";
 
+const mapProduct = (p: any) => ({
+  id: p.id,
+  sku: p.sku,
+  categoryId: p.category_id,
+  brand: p.brand,
+  price: p.price,
+  status: p.status,
+  createdAt: p.created_at,
+  updatedAt: p.updated_at,
+  translations: (p.product_translations || []).map((t: any) => ({
+    id: t.id,
+    locale: t.locale,
+    name: t.name,
+    description: t.description,
+  })),
+  images: (p.product_images || []).map((img: any) => ({
+    id: img.id,
+    imageUrl: img.image_url,
+    status: img.status,
+  })),
+  category: p.categories ? {
+    id: p.categories.id,
+    translations: (p.categories.category_translations || []).map((t: any) => ({
+      id: t.id,
+      locale: t.locale,
+      name: t.name,
+    })),
+  } : null,
+  _count: p._count,
+});
+
 // GET /api/admin/products - Получить все товары с пагинацией
 export async function GET(request: NextRequest) {
   const prisma = getPrismaClient();
@@ -109,7 +140,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      products,
+      products: products.map(mapProduct),
       pagination: {
         page,
         limit,
@@ -243,7 +274,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(product, { status: 201 });
+    return NextResponse.json(mapProduct(product), { status: 201 });
   } catch (error) {
     console.error("Error creating product:", error);
     return NextResponse.json(

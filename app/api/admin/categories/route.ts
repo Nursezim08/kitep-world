@@ -4,6 +4,26 @@ import { getPrismaClient } from "@/lib/prisma";
 import { uploadImageToS3, isBase64Image } from "@/lib/s3";
 import crypto from "crypto";
 
+const mapCategory = (cat: any): any => ({
+  id: cat.id,
+  parentId: cat.parent_id,
+  image: cat.image,
+  status: cat.status,
+  createdAt: cat.created_at ?? '',
+  updatedAt: cat.updated_at ?? '',
+  translations: (cat.category_translations || []).map((t: any) => ({
+    id: t.id,
+    locale: t.locale,
+    name: t.name,
+  })),
+  children: (cat.other_categories || []).map((child: any) => mapCategory(child)),
+  _count: {
+    children: cat._count?.other_categories ?? 0,
+    products: cat._count?.products ?? 0,
+  },
+  ...(cat.level !== undefined ? { level: cat.level } : {}),
+});
+
 // GET /api/admin/categories - Получить все категории
 export async function GET(request: NextRequest) {
   const prisma = getPrismaClient();
@@ -74,7 +94,7 @@ export async function GET(request: NextRequest) {
         level: getCategoryLevel(cat.id, allCategories),
       }));
 
-      return NextResponse.json(categoriesWithLevel);
+      return NextResponse.json(categoriesWithLevel.map(mapCategory));
     }
 
     // Стандартная логика с parentId
@@ -125,7 +145,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(categories);
+    return NextResponse.json(categories.map(mapCategory));
   } catch (error) {
     console.error("Error fetching categories:", error);
     return NextResponse.json(
@@ -204,7 +224,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(category, { status: 201 });
+    return NextResponse.json(mapCategory(category), { status: 201 });
   } catch (error) {
     console.error("Error creating category:", error);
     return NextResponse.json(

@@ -1,20 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifyAuth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 import { getPrismaClient } from "@/lib/prisma";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const prisma = getPrismaClient();
 
   try {
-    const payload = await verifyAuth(request);
+    const user = await getCurrentUser();
 
-    if (!payload || payload.role !== "user") {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (user.role === "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    if (user.role === "manager" && user.loginType === "manager") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const orders = await prisma.orders.findMany({
       where: {
-        user_id: payload.userId,
+        user_id: user.id,
       },
       include: {
         branches: {

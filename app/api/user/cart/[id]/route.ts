@@ -1,16 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
+
+function isUserAccess(user: { role: string; loginType?: string } | null): boolean {
+  if (!user) return false;
+  if (user.role === 'admin') return false;
+  if (user.role === 'manager' && user.loginType === 'manager') return false;
+  return true;
+}
 
 // PATCH /api/user/cart/[id] - Обновление количества товара в корзине
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = getPrismaClient();
   try {
     const user = await getCurrentUser();
 
-    if (!user || user.role !== 'user') {
+    if (!user || !isUserAccess(user)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -28,11 +36,11 @@ export async function PATCH(
     }
 
     // Проверяем, что товар принадлежит пользователю
-    const cartItem = await prisma.cart.findUnique({
+    const cartItem = await prisma.carts.findUnique({
       where: { id },
     });
 
-    if (!cartItem || cartItem.userId !== user.id) {
+    if (!cartItem || cartItem.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Cart item not found' },
         { status: 404 }
@@ -40,20 +48,9 @@ export async function PATCH(
     }
 
     // Обновляем количество
-    const updatedCartItem = await prisma.cart.update({
+    const updatedCartItem = await prisma.carts.update({
       where: { id },
       data: { quantity },
-      include: {
-        product: {
-          include: {
-            translations: true,
-            images: {
-              where: { status: 'active' },
-              take: 1,
-            },
-          },
-        },
-      },
     });
 
     return NextResponse.json({ cartItem: updatedCartItem });
@@ -71,10 +68,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = getPrismaClient();
   try {
     const user = await getCurrentUser();
 
-    if (!user || user.role !== 'user') {
+    if (!user || !isUserAccess(user)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -84,11 +82,11 @@ export async function DELETE(
     const { id } = await params;
 
     // Проверяем, что товар принадлежит пользователю
-    const cartItem = await prisma.cart.findUnique({
+    const cartItem = await prisma.carts.findUnique({
       where: { id },
     });
 
-    if (!cartItem || cartItem.userId !== user.id) {
+    if (!cartItem || cartItem.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Cart item not found' },
         { status: 404 }
@@ -96,7 +94,7 @@ export async function DELETE(
     }
 
     // Удаляем товар из корзины
-    await prisma.cart.delete({
+    await prisma.carts.delete({
       where: { id },
     });
 

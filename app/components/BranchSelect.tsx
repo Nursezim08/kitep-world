@@ -90,7 +90,7 @@ export default function BranchSelect({ branches, value, onChange }: BranchSelect
 
       {/* Выпадающий список */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-white border-2 border-violet-500/50 rounded-xl shadow-2xl max-h-[400px] overflow-y-auto">
+        <div className="absolute z-50 w-full mt-2 bg-white border-2 border-violet-500/50 rounded-xl shadow-2xl max-h-[400px] overflow-y-auto overscroll-y-contain">
           {branches.map((branch) => (
             <button
               key={branch.id}

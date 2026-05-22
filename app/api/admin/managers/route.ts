@@ -102,7 +102,21 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      managers,
+      managers: managers.map((m) => ({
+        id: m.id,
+        fullName: m.full_name,
+        email: m.email,
+        phone: m.phone,
+        status: m.status,
+        createdAt: m.created_at,
+        branchUsers: m.branch_users.map((bu) => ({
+          branch: {
+            id: bu.branches.id,
+            name: bu.branches.name,
+            city: bu.branches.city,
+          },
+        })),
+      })),
       pagination: {
         page,
         limit,

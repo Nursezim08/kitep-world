@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPrismaClient } from "@/lib/prisma";
-import { cookies } from "next/headers";
-import {
-  cookieName,
-  fallbackLng,
-  type Language,
-  languages,
-} from "@/app/i18n/settings";
 
 export async function GET(
   request: NextRequest,
@@ -17,28 +10,16 @@ export async function GET(
   try {
     const { id } = await context.params;
 
-    // Получаем язык из cookie
-    const cookieStore = await cookies();
-    const lang = cookieStore.get(cookieName)?.value;
-    const locale =
-      lang && languages.includes(lang as Language)
-        ? (lang as Language)
-        : fallbackLng;
-
     const product = await prisma.products.findUnique({
       where: { id },
       include: {
-        product_translations: {
-          where: { locale: locale },
-        },
+        product_translations: true,
         product_images: {
           where: { status: "active" },
         },
         categories: {
           include: {
-            category_translations: {
-              where: { locale: locale },
-            },
+            category_translations: true,
           },
         },
         reviews: {
@@ -80,8 +61,11 @@ export async function GET(
       status: product.status,
       created_at: product.created_at,
       updated_at: product.updated_at,
-      name: product.product_translations[0]?.name || "",
-      description: product.product_translations[0]?.description || "",
+      translations: product.product_translations.map((t) => ({
+        locale: t.locale,
+        name: t.name,
+        description: t.description,
+      })),
       images: product.product_images.map((img) => ({
         id: img.id,
         imageUrl: img.image_url,
@@ -89,7 +73,10 @@ export async function GET(
       })),
       category: {
         id: product.categories.id,
-        name: product.categories.category_translations[0]?.name || "",
+        translations: product.categories.category_translations.map((t) => ({
+          locale: t.locale,
+          name: t.name,
+        })),
       },
       reviews: product.reviews.map((review) => ({
         id: review.id,

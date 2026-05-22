@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth';
 
 export async function GET(
@@ -22,35 +22,35 @@ export async function GET(
     const { id } = await params;
     console.log('[Manager Product Detail] Product ID:', id);
 
+    const prisma = getPrismaClient();
+
     // Получаем филиал менеджера
-    const branchUser = await prisma.branchUser.findFirst({
-      where: { userId: payload.userId },
-      select: { branchId: true },
+    const branchUser = await prisma.branch_users.findFirst({
+      where: { user_id: payload.userId },
+      select: { branch_id: true },
     });
-    console.log('[Manager Product Detail] Branch:', branchUser?.branchId);
+    console.log('[Manager Product Detail] Branch:', branchUser?.branch_id);
 
     if (!branchUser) {
       console.log('[Manager Product Detail] Branch not found');
       return NextResponse.json({ error: 'Филиал не найден' }, { status: 404 });
     }
 
-    // Получаем товар (упрощённый запрос)
+    // Получаем товар
     console.log('[Manager Product Detail] Fetching product...');
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id },
       include: {
-        translations: true,
-        images: true,
-        category: {
-          include: {
-            translations: true,
-          },
+        product_translations: true,
+        product_images: true,
+        categories: {
+          include: { category_translations: true },
         },
       },
     });
-    
+
     console.log('[Manager Product Detail] Product found:', !!product);
-    
+
     if (!product) {
       console.log('[Manager Product Detail] Product not found');
       return NextResponse.json({ error: 'Товар не найден' }, { status: 404 });
@@ -63,26 +63,43 @@ export async function GET(
 
     // Получаем остаток товара для филиала менеджера
     console.log('[Manager Product Detail] Fetching inventory...');
-    const inventory = await prisma.branchInventory.findUnique({
-      where: {
-        branchId_productId: {
-          branchId: branchUser.branchId,
-          productId: product.id,
-        },
-      },
+    const inventory = await prisma.branch_inventory.findFirst({
+      where: { branch_id: branchUser.branch_id, product_id: product.id },
       select: { quantity: true },
     });
     console.log('[Manager Product Detail] Inventory:', inventory?.quantity || 0);
 
-    // Формируем ответ
+    // Формируем ответ с camelCase полями
     const productWithInventory = {
-      ...product,
-      inventory: {
-        quantity: inventory?.quantity || 0,
-      },
-      _count: {
-        reviews: 0, // Временно захардкодим
-      },
+      id: product.id,
+      sku: product.sku,
+      categoryId: product.category_id,
+      brand: product.brand,
+      price: Number(product.price),
+      status: product.status,
+      createdAt: product.created_at,
+      updatedAt: product.updated_at,
+      translations: product.product_translations.map((t) => ({
+        id: t.id,
+        locale: t.locale,
+        name: t.name,
+        description: t.description,
+      })),
+      images: product.product_images.map((img) => ({
+        id: img.id,
+        imageUrl: img.image_url,
+        status: img.status,
+      })),
+      category: product.categories ? {
+        id: product.categories.id,
+        translations: product.categories.category_translations.map((t) => ({
+          id: t.id,
+          locale: t.locale,
+          name: t.name,
+        })),
+      } : null,
+      inventory: { quantity: inventory?.quantity || 0 },
+      _count: { reviews: 0 },
     };
 
     console.log('[Manager Product Detail] Success, returning data');

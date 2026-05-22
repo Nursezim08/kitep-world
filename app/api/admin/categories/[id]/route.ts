@@ -1,13 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
 import { uploadImageToS3, deleteImageFromS3, isBase64Image, isS3Image } from '@/lib/s3';
+import crypto from 'crypto';
+
+const mapCategory = (cat: any): any => ({
+  id: cat.id,
+  parentId: cat.parent_id,
+  image: cat.image,
+  status: cat.status,
+  createdAt: cat.created_at ?? '',
+  updatedAt: cat.updated_at ?? '',
+  translations: (cat.category_translations || []).map((t: any) => ({
+    id: t.id,
+    locale: t.locale,
+    name: t.name,
+  })),
+  children: (cat.other_categories || []).map((child: any) => mapCategory(child)),
+  _count: {
+    children: cat._count?.other_categories ?? 0,
+    products: cat._count?.products ?? 0,
+  },
+});
 
 // GET /api/admin/categories/[id] - Получить категорию по ID
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = getPrismaClient();
   try {
     const user = await getCurrentUser();
     if (!user || user.role !== 'admin') {
@@ -16,22 +37,22 @@ export async function GET(
 
     const { id } = await params;
 
-    const category = await prisma.category.findUnique({
-      where: { id: id },
+    const category = await prisma.categories.findUnique({
+      where: { id },
       include: {
-        translations: true,
-        parent: {
+        category_translations: true,
+        categories: {
           include: {
-            translations: true,
+            category_translations: true,
           },
         },
-        children: {
+        other_categories: {
           where: { status: { not: 'deleted' } },
           include: {
-            translations: true,
+            category_translations: true,
             _count: {
               select: {
-                children: true,
+                other_categories: true,
                 products: true,
               },
             },
@@ -39,7 +60,7 @@ export async function GET(
         },
         _count: {
           select: {
-            children: {
+            other_categories: {
               where: { status: { not: 'deleted' } },
             },
             products: true,
@@ -55,7 +76,7 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(category);
+    return NextResponse.json(mapCategory(category));
   } catch (error) {
     console.error('Error fetching category:', error);
     return NextResponse.json(
@@ -70,6 +91,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = getPrismaClient();
   try {
     const user = await getCurrentUser();
     if (!user || user.role !== 'admin') {
@@ -82,8 +104,8 @@ export async function PATCH(
     const { parentId, image, translations, status } = body;
 
     // Проверка существования категории
-    const existingCategory = await prisma.category.findUnique({
-      where: { id: id },
+    const existingCategory = await prisma.categories.findUnique({
+      where: { id },
     });
 
     if (!existingCategory) {
@@ -103,11 +125,11 @@ export async function PATCH(
             { status: 400 }
           );
         }
-        const parent = await prisma.category.findUnique({
+        const parent = await prisma.categories.findUnique({
           where: { id: currentParentId },
-          select: { parentId: true },
+          select: { parent_id: true },
         });
-        currentParentId = parent?.parentId || null;
+        currentParentId = parent?.parent_id || null;
       }
     }
 
@@ -115,27 +137,21 @@ export async function PATCH(
     const updateData: any = {};
     
     if (parentId !== undefined) {
-      updateData.parentId = parentId === 'null' ? null : parentId;
+      updateData.parent_id = parentId === 'null' ? null : parentId;
     }
     
     if (image !== undefined) {
-      // Если новое изображение - base64, загружаем в S3
       if (isBase64Image(image)) {
         const newImageUrl = await uploadImageToS3(image, 'categories');
-        
-        // Удаляем старое изображение из S3, если оно там было
         if (existingCategory.image && isS3Image(existingCategory.image)) {
           try {
             await deleteImageFromS3(existingCategory.image);
           } catch (error) {
             console.error('Error deleting old image from S3:', error);
-            // Продолжаем выполнение, даже если не удалось удалить старое изображение
           }
         }
-        
         updateData.image = newImageUrl;
       } else {
-        // Если это уже URL из S3, просто сохраняем его
         updateData.image = image;
       }
     }
@@ -144,76 +160,60 @@ export async function PATCH(
       updateData.status = status;
     }
 
-    const category = await prisma.category.update({
-      where: { id: id },
+    await prisma.categories.update({
+      where: { id },
       data: updateData,
-      include: {
-        translations: true,
-        _count: {
-          select: {
-            children: true,
-            products: true,
-          },
-        },
-      },
     });
 
     // Обновление переводов
     if (translations) {
       if (translations.ru) {
-        await prisma.categoryTranslation.upsert({
-          where: {
-            categoryId_locale: {
-              categoryId: id,
-              locale: 'ru',
-            },
-          },
-          update: {
-            name: translations.ru.name,
-          },
-          create: {
-            categoryId: id,
-            locale: 'ru',
-            name: translations.ru.name,
-          },
+        const existingRu = await prisma.category_translations.findFirst({
+          where: { category_id: id, locale: 'ru' },
         });
+        if (existingRu) {
+          await prisma.category_translations.update({
+            where: { id: existingRu.id },
+            data: { name: translations.ru.name },
+          });
+        } else {
+          await prisma.category_translations.create({
+            data: { id: crypto.randomUUID(), category_id: id, locale: 'ru', name: translations.ru.name },
+          });
+        }
       }
-
       if (translations.kg) {
-        await prisma.categoryTranslation.upsert({
-          where: {
-            categoryId_locale: {
-              categoryId: id,
-              locale: 'kg',
-            },
-          },
-          update: {
-            name: translations.kg.name,
-          },
-          create: {
-            categoryId: id,
-            locale: 'kg',
-            name: translations.kg.name,
-          },
+        const existingKg = await prisma.category_translations.findFirst({
+          where: { category_id: id, locale: 'kg' },
         });
+        if (existingKg) {
+          await prisma.category_translations.update({
+            where: { id: existingKg.id },
+            data: { name: translations.kg.name },
+          });
+        } else {
+          await prisma.category_translations.create({
+            data: { id: crypto.randomUUID(), category_id: id, locale: 'kg', name: translations.kg.name },
+          });
+        }
       }
     }
 
     // Получаем обновленную категорию с переводами
-    const updatedCategory = await prisma.category.findUnique({
-      where: { id: id },
+    const updatedCategory = await prisma.categories.findUnique({
+      where: { id },
       include: {
-        translations: true,
+        category_translations: true,
         _count: {
           select: {
-            children: true,
+            other_categories: true,
             products: true,
           },
         },
       },
     });
 
-    return NextResponse.json(updatedCategory);
+    return NextResponse.json(mapCategory(updatedCategory));
   } catch (error) {
     console.error('Error updating category:', error);
     return NextResponse.json(
@@ -228,6 +228,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const prisma = getPrismaClient();
   try {
     const user = await getCurrentUser();
     if (!user || user.role !== 'admin') {
@@ -237,9 +238,9 @@ export async function DELETE(
     const { id } = await params;
 
     // Проверка наличия подкатегорий
-    const childrenCount = await prisma.category.count({
+    const childrenCount = await prisma.categories.count({
       where: {
-        parentId: id,
+        parent_id: id,
         status: { not: 'deleted' },
       },
     });
@@ -252,9 +253,9 @@ export async function DELETE(
     }
 
     // Проверка наличия товаров
-    const productsCount = await prisma.product.count({
+    const productsCount = await prisma.products.count({
       where: {
-        categoryId: id,
+        category_id: id,
         status: { not: 'deleted' },
       },
     });
@@ -267,14 +268,14 @@ export async function DELETE(
     }
 
     // Получаем категорию для удаления изображения
-    const category = await prisma.category.findUnique({
-      where: { id: id },
+    const category = await prisma.categories.findUnique({
+      where: { id },
       select: { image: true },
     });
 
     // Мягкое удаление
-    await prisma.category.update({
-      where: { id: id },
+    await prisma.categories.update({
+      where: { id },
       data: { status: 'deleted' },
     });
 
@@ -284,7 +285,6 @@ export async function DELETE(
         await deleteImageFromS3(category.image);
       } catch (error) {
         console.error('Error deleting image from S3:', error);
-        // Продолжаем выполнение, категория уже помечена как удалённая
       }
     }
 

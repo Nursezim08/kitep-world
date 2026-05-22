@@ -1,0 +1,133 @@
+{
+  "nav": {
+    "home": "Башкы бет",
+    "catalog": "Каталог",
+    "orders": "Буюртмалар",
+    "cart": "Себет",
+    "aiChat": "AI Чат",
+    "profile": "Профиль"
+  },
+  "header": {
+    "searchPlaceholder": "Товарларды издөө...",
+    "settings": "Жөндөөлөр",
+    "logout": "Чыгуу"
+  },
+  "sidebar": {
+    "navigation": "Навигация",
+    "quickActions": "Тез аракеттер",
+    "myOrders": "Менин буюртмаларым",
+    "collapse": "Жыйыштыруу",
+    "expand": "Жайып коюу",
+    "logout": "Чыгуу"
+  },
+  "home": {
+    "newSeason": "Сезондун жаңылыктары",
+    "welcomeTitle": "Nur-Kitepке кош келиңиз!",
+    "welcomeSub": "Бүткүл Кыргызстанга жеткирүү менен китептер, кеңсе буюмдары жана чыгармачылык товарлары",
+    "toCatalog": "Каталогго өтүү",
+    "categoriesTitle": "Категориялар",
+    "categoriesSub": "Товарларды көрүү үчүн категорияны тандаңыз",
+    "allCategories": "Бардык категориялар",
+    "items": "товар",
+    "popularTitle": "Популярдуу товарлар",
+    "popularSub": "Өткөн айдагы эң көп сатылган товарлар",
+    "allProducts": "Бардык товарлар",
+    "moreInfo": "Кененирээк"
+  },
+  "catalog": {
+    "title": "Товарлар каталогу",
+    "subtitle": "Керектүү товарды табыңыз",
+    "allCategories": "Бардык категориялар",
+    "filters": "Чыпкалар",
+    "applyFilters": "Колдонуу",
+    "resetFilters": "Тазалоо",
+    "sortBy": "Иреттөө",
+    "priceRange": "Баа диапазону",
+    "rating": "Рейтинг",
+    "noProducts": "Товарлар табылган жок",
+    "noProductsSub": "Чыпкаларды же издөө сурамын өзгөртүп көрүңүз",
+    "resetAll": "Баарын тазалоо",
+    "addToCart": "Себетке",
+    "adding": "Кошулууда...",
+    "currency": "с",
+    "sort": {
+      "popular": "Популярдуу",
+      "newest": "Алгач жаңылары",
+      "priceDesc": "Алгач кымбаттары",
+      "priceAsc": "Алгач арзандары"
+    }
+  },
+  "cart": {
+    "title": "Себет",
+    "empty": "Себет бош",
+    "emptySub": "Буюртма берүү үчүн товарларды кошуңуз",
+    "toCatalog": "Каталогго өтүү",
+    "total": "Жыйынтык",
+    "checkout": "Буюртма берүү",
+    "remove": "Өчүрүү",
+    "quantity": "Саны",
+    "currency": "с"
+  },
+  "orders": {
+    "title": "Менин буюртмаларым",
+    "empty": "Азырынча буюртмаңыз жок",
+    "emptySub": "Каталогдон биринчи буюртманы тариздеңиз",
+    "order": "Буюртма",
+    "branch": "Филиал",
+    "total": "Жыйынтык",
+    "status": {
+      "paid": "Төлөндү",
+      "completed": "Аткарылды",
+      "cancelled": "Жокко чыгарылды"
+    },
+    "currency": "с"
+  },
+  "profile": {
+    "title": "Профиль",
+    "personalInfo": "Жеке маалымат",
+    "name": "Аты",
+    "email": "Email",
+    "phone": "Телефон",
+    "notSpecified": "Көрсөтүлгөн эмес",
+    "role": "Ролу",
+    "status": "Статус",
+    "active": "Активдүү",
+    "changePassword": "Сырсөздү өзгөртүү",
+    "logout": "Чыгуу"
+  },
+  "aiChat": {
+    "title": "AI Жардамчы",
+    "placeholder": "Билдирүү жазыңыз...",
+    "send": "Жөнөтүү",
+    "thinking": "Ойлонууда...",
+    "greeting": "Салам! Мен Nur-Kiteptин AI-жардамчысымын. Бүгүн сизге кантип жардам бере алам?"
+  },
+  "search": {
+    "title": "Издөө",
+    "placeholder": "Товарларды издөө...",
+    "results": "Издөө натыйжалары",
+    "noResults": "Эч нерсе табылган жок",
+    "noResultsSub": "Сурамды өзгөртүп көрүңүз",
+    "found": "Табылды",
+    "currency": "с"
+  },
+  "checkout": {
+    "title": "Буюртма тариздөө",
+    "selectBranch": "Филиалды тандаңыз",
+    "comment": "Буюртмага комментарий",
+    "commentPlaceholder": "Милдеттүү эмес",
+    "total": "Жыйынтык",
+    "placeOrder": "Буюртма берүү",
+    "processing": "Тариздөөдө...",
+    "currency": "с"
+  },
+  "common": {
+    "loading": "Жүктөлүүдө...",
+    "error": "Ката",
+    "back": "Артка",
+    "save": "Сактоо",
+    "cancel": "Жокко чыгаруу",
+    "close": "Жабуу",
+    "noName": "Аты жок"
+  }
+}

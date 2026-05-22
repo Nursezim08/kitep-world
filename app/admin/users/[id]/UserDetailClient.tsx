@@ -285,7 +285,7 @@ export default function UserDetailClient({ user, userId }: UserDetailClientProps
       {/* Content Area - Flex container */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Fixed width, scrollable */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 overflow-y-auto transition-all duration-300`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 transition-all duration-300`}>
           <div className="p-4 flex flex-col min-h-full">
             <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
               <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
@@ -318,7 +318,7 @@ export default function UserDetailClient({ user, userId }: UserDetailClientProps
               </nav>
             </div>
 
-            <div className="mt-auto">
+            <div className="mt-auto mb-2">
               <div className="bg-[#252d3d] rounded-2xl p-4">
                 <button
                   onClick={handleLogout}

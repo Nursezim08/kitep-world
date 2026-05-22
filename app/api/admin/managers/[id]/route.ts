@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
 import { hashPassword } from '@/lib/password';
+import crypto from 'crypto';
 
 // PATCH - обновить менеджера
 export async function PATCH(
@@ -21,9 +22,10 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const { fullName, email, phone, password, status, branchId } = body;
+    const prisma = getPrismaClient();
 
     // Проверяем существование менеджера
-    const existingManager = await prisma.user.findUnique({
+    const existingManager = await prisma.users.findUnique({
       where: { id },
     });
 
@@ -36,7 +38,7 @@ export async function PATCH(
 
     // Проверка email на уникальность (если изменился)
     if (email && email !== existingManager.email) {
-      const emailExists = await prisma.user.findUnique({
+      const emailExists = await prisma.users.findUnique({
         where: { email },
       });
 
@@ -50,7 +52,7 @@ export async function PATCH(
 
     // Проверка телефона на уникальность (если изменился)
     if (phone && phone !== existingManager.phone) {
-      const phoneExists = await prisma.user.findUnique({
+      const phoneExists = await prisma.users.findUnique({
         where: { phone },
       });
 
@@ -63,17 +65,17 @@ export async function PATCH(
     }
 
     // Подготовка данных для обновления
-    const updateData: any = {};
-    if (fullName) updateData.fullName = fullName;
+    const updateData: any = { updated_at: new Date() };
+    if (fullName) updateData.full_name = fullName;
     if (email) updateData.email = email;
     if (phone !== undefined) updateData.phone = phone || null;
     if (status) updateData.status = status;
     if (password) {
-      updateData.passwordHash = await hashPassword(password);
+      updateData.password_hash = await hashPassword(password);
     }
 
     // Обновляем менеджера
-    const updatedManager = await prisma.user.update({
+    const updatedManager = await prisma.users.update({
       where: { id },
       data: updateData,
     });
@@ -81,16 +83,17 @@ export async function PATCH(
     // Обновляем привязку к филиалу (если указан)
     if (branchId !== undefined) {
       // Удаляем старые привязки
-      await prisma.branchUser.deleteMany({
-        where: { userId: id },
+      await prisma.branch_users.deleteMany({
+        where: { user_id: id },
       });
 
-      // Создаем новую привязку (если branchId не null)
+      // Создаем новую привязку (если branchId не пустой)
       if (branchId) {
-        await prisma.branchUser.create({
+        await prisma.branch_users.create({
           data: {
-            userId: id,
-            branchId,
+            id: crypto.randomUUID(),
+            user_id: id,
+            branch_id: branchId,
           },
         });
       }
@@ -100,7 +103,7 @@ export async function PATCH(
       message: 'Manager updated successfully',
       manager: {
         id: updatedManager.id,
-        fullName: updatedManager.fullName,
+        fullName: updatedManager.full_name,
         email: updatedManager.email,
         phone: updatedManager.phone,
         status: updatedManager.status,
@@ -131,9 +134,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const prisma = getPrismaClient();
 
     // Проверяем существование менеджера
-    const existingManager = await prisma.user.findUnique({
+    const existingManager = await prisma.users.findUnique({
       where: { id },
     });
 
@@ -145,7 +149,7 @@ export async function DELETE(
     }
 
     // Удаляем менеджера (каскадно удалятся связи с филиалами)
-    await prisma.user.delete({
+    await prisma.users.delete({
       where: { id },
     });
 

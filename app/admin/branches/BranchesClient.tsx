@@ -258,7 +258,7 @@ export default function BranchesClient({ user }: BranchesClientProps) {
     console.log('Opening edit modal for branch:', branch.id);
     console.log('Branch users:', branch.branchUsers);
     
-    const managerIds = branch.branchUsers.map(bu => bu.user.id);
+    const managerIds = (branch.branchUsers ?? []).map(bu => bu.user.id);
     console.log('Extracted manager IDs:', managerIds);
     
     setSelectedBranch(branch);
@@ -413,9 +413,9 @@ export default function BranchesClient({ user }: BranchesClientProps) {
   const uniqueCities = Array.from(new Set(branches.map(b => b.city))).sort();
 
   return (
-    <div className="min-h-screen bg-[#151b26] overflow-x-hidden">
+    <div className="h-screen flex flex-col bg-[#151b26] overflow-hidden">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#252d3d] border-b border-gray-800/50">
+      <header className="flex-shrink-0 bg-[#252d3d] border-b border-gray-800/50">
         <div className="px-4 md:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -463,9 +463,10 @@ export default function BranchesClient({ user }: BranchesClientProps) {
       </header>
 
       {/* Main Content */}
-      <div className="flex pt-[73px]">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-80'} px-4 pt-4 flex flex-col flex-shrink-0 transition-all duration-300 sticky top-[73px] self-start`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-80'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 transition-all duration-300`}>
+          <div className="p-4 flex flex-col min-h-full">
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
               {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-400">Навигация</span>}
@@ -559,7 +560,7 @@ export default function BranchesClient({ user }: BranchesClientProps) {
             </nav>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-auto mb-2">
             <div className="bg-[#252d3d] rounded-2xl p-4">
               <button
                 onClick={handleLogout}
@@ -571,10 +572,11 @@ export default function BranchesClient({ user }: BranchesClientProps) {
               </button>
             </div>
           </div>
+          </div>
         </aside>
 
         {/* Main Content Area */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-y-auto">
           <main className="p-4 md:p-8">
           {/* Header Section */}
           <div className="mb-8">
@@ -855,9 +857,9 @@ export default function BranchesClient({ user }: BranchesClientProps) {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            {branch.branchUsers.length > 0 ? (
+                            {(branch.branchUsers ?? []).length > 0 ? (
                               <div className="flex flex-wrap gap-1">
-                                {branch.branchUsers.slice(0, 3).map((bu) => (
+                                {(branch.branchUsers ?? []).slice(0, 3).map((bu) => (
                                   <div
                                     key={bu.user.id}
                                     className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
@@ -866,9 +868,9 @@ export default function BranchesClient({ user }: BranchesClientProps) {
                                     {bu.user.fullName.charAt(0)}
                                   </div>
                                 ))}
-                                {branch.branchUsers.length > 3 && (
+                                {(branch.branchUsers ?? []).length > 3 && (
                                   <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                                    +{branch.branchUsers.length - 3}
+                                    +{(branch.branchUsers ?? []).length - 3}
                                   </div>
                                 )}
                               </div>

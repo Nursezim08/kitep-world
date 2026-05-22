@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
 import ManagerDetailClient from './ManagerDetailClient';
 
 export default async function ManagerDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,13 +18,15 @@ export default async function ManagerDetailPage({ params }: { params: Promise<{ 
 
   const { id } = await params;
 
+  const prisma = getPrismaClient();
+
   // Получаем полную информацию о менеджере
-  const managerData = await prisma.user.findUnique({
+  const managerData = await prisma.users.findUnique({
     where: { id },
     include: {
-      branchUsers: {
+      branch_users: {
         include: {
-          branch: {
+          branches: {
             select: {
               id: true,
               name: true,
@@ -42,14 +44,14 @@ export default async function ManagerDetailPage({ params }: { params: Promise<{ 
       orders: {
         select: {
           id: true,
-          orderNumber: true,
+          order_number: true,
           total: true,
-          orderStatus: true,
-          paymentStatus: true,
-          createdAt: true,
+          order_status: true,
+          payment_status: true,
+          created_at: true,
         },
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
         take: 10,
       },
@@ -60,15 +62,35 @@ export default async function ManagerDetailPage({ params }: { params: Promise<{ 
     redirect('/admin/managers');
   }
 
-  // Преобразуем даты в строки для клиентского компонента
+  // Преобразуем в camelCase для клиентского компонента
   const manager = {
-    ...managerData,
-    createdAt: managerData.createdAt.toISOString(),
-    updatedAt: managerData.updatedAt.toISOString(),
-    orders: managerData.orders.map(order => ({
-      ...order,
-      createdAt: order.createdAt.toISOString(),
+    id: managerData.id,
+    fullName: managerData.full_name,
+    email: managerData.email,
+    phone: managerData.phone,
+    status: managerData.status,
+    createdAt: managerData.created_at.toISOString(),
+    updatedAt: managerData.updated_at.toISOString(),
+    branchUsers: managerData.branch_users.map((bu) => ({
+      branch: {
+        id: bu.branches.id,
+        name: bu.branches.name,
+        code: bu.branches.code,
+        city: bu.branches.city,
+        district: bu.branches.district,
+        address: bu.branches.address,
+        phone: bu.branches.phone,
+        email: bu.branches.email,
+        status: bu.branches.status,
+      },
+    })),
+    orders: managerData.orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.order_number,
       total: order.total.toString(),
+      orderStatus: order.order_status,
+      paymentStatus: order.payment_status,
+      createdAt: order.created_at.toISOString(),
     })),
   };
 

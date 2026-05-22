@@ -108,6 +108,7 @@ export async function getCurrentUser() {
       fullName: user.full_name,
       email: user.email,
       role: user.role,
+      loginType: payload.loginType,
       phone: user.phone,
       avatar: user.avatar,
       status: user.status,

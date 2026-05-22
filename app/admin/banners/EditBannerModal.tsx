@@ -78,7 +78,7 @@ export default function EditBannerModal({ isOpen, banner, onClose, onSuccess }: 
 
     // Проверка размеров
     const expectedWidth = type === 'desktop' ? 1920 : 768;
-    const expectedHeight = type === 'desktop' ? 600 : 1024;
+    const expectedHeight = type === 'desktop' ? 450 : 800;
 
     const isValid = await validateImageDimensions(file, expectedWidth, expectedHeight, type);
     if (!isValid) return;
@@ -222,7 +222,7 @@ export default function EditBannerModal({ isOpen, banner, onClose, onSuccess }: 
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
                     <Upload size={32} className="mb-2" />
                     <p className="text-sm font-medium">Перетащите или кликните</p>
-                    <p className="text-xs text-gray-500 mt-1">1920x600px, макс 10MB</p>
+                    <p className="text-xs text-gray-500 mt-1">1920x450px, макс 10MB</p>
                   </div>
                 )}
                 <input
@@ -264,7 +264,7 @@ export default function EditBannerModal({ isOpen, banner, onClose, onSuccess }: 
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
                     <Upload size={32} className="mb-2" />
                     <p className="text-sm font-medium">Перетащите или кликните</p>
-                    <p className="text-xs text-gray-500 mt-1">768x1024px, макс 10MB</p>
+                    <p className="text-xs text-gray-500 mt-1">768x800px, макс 10MB</p>
                   </div>
                 )}
                 <input
@@ -281,7 +281,7 @@ export default function EditBannerModal({ isOpen, banner, onClose, onSuccess }: 
           {/* Информационный блок */}
           <div className="p-4 bg-blue-500/10 border border-blue-500/50 rounded-xl">
             <p className="text-sm text-blue-400">
-              <strong>Важно:</strong> Изображения должны быть точно указанных размеров. Десктоп: 1920x600px, Мобильные: 768x1024px. Максимальный размер файла: 10MB
+              <strong>Важно:</strong> Изображения должны быть точно указанных размеров. Десктоп: 1920x450px, Мобильные: 768x800px. Максимальный размер файла: 10MB
             </p>
           </div>
 

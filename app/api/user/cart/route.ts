@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getPrismaClient } from "@/lib/prisma";
-import { cookies } from "next/headers";
-import {
-  cookieName,
-  fallbackLng,
-  type Language,
-  languages,
-} from "@/app/i18n/settings";
 import crypto from "crypto";
+
+// Вспомогательная функция: проверяет доступ к пользовательскому разделу
+function isUserAccess(user: { role: string; loginType?: string; id?: string } | null): boolean {
+  if (!user) return false;
+  if (user.role === "admin") return false;
+  if (user.role === "manager" && user.loginType === "manager") return false;
+  return true;
+}
 
 // GET /api/user/cart - Получение корзины пользователя
 export async function GET() {
@@ -16,17 +17,9 @@ export async function GET() {
   try {
     const user = await getCurrentUser();
 
-    if (!user || user.role !== "user") {
+    if (!user || !isUserAccess(user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    // Получаем язык из cookie
-    const cookieStore = await cookies();
-    const lang = cookieStore.get(cookieName)?.value;
-    const locale =
-      lang && languages.includes(lang as Language)
-        ? (lang as Language)
-        : fallbackLng;
 
     const cartItems = await prisma.carts.findMany({
       where: {
@@ -35,22 +28,14 @@ export async function GET() {
       include: {
         products: {
           include: {
-            product_translations: {
-              where: {
-                locale: locale,
-              },
-            },
+            product_translations: true,
             product_images: {
               where: { status: "active" },
               take: 1,
             },
             categories: {
               include: {
-                category_translations: {
-                  where: {
-                    locale: locale,
-                  },
-                },
+                category_translations: true,
               },
             },
           },
@@ -79,11 +64,17 @@ export async function GET() {
           created_at: item.created_at,
           product: {
             ...productData,
-            name: product_translations[0]?.name || "",
-            description: product_translations[0]?.description || "",
+            translations: product_translations.map((t) => ({
+              locale: t.locale,
+              name: t.name,
+              description: t.description,
+            })),
             images: product_images.map((img) => ({ imageUrl: img.image_url })),
             category: {
-              name: categories.category_translations[0]?.name || "",
+              translations: categories.category_translations.map((t) => ({
+                locale: t.locale,
+                name: t.name,
+              })),
             },
           },
         };
@@ -106,7 +97,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
 
-    if (!user || user.role !== "user") {
+    if (!user || !isUserAccess(user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -210,7 +201,7 @@ export async function DELETE() {
   try {
     const user = await getCurrentUser();
 
-    if (!user || user.role !== "user") {
+    if (!user || !isUserAccess(user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

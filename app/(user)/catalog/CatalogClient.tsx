@@ -15,7 +15,6 @@ import {
   Star,
   Filter,
   X,
-  Bell,
   Heart,
   ChevronLeft,
   LogOut,
@@ -23,6 +22,9 @@ import {
   ChevronDown,
   Check,
 } from 'lucide-react';
+import UserHeader from '@/app/components/UserHeader';
+import { useTranslation } from '@/app/i18n/client';
+import { useChat } from '@/app/(user)/ChatContext';
 
 // Динамический импорт RangeSliderWithCharts для оптимизации загрузки
 const RangeSliderWithCharts = dynamic(
@@ -91,6 +93,8 @@ interface CatalogClientProps {
 
 export default function CatalogClient({ user }: CatalogClientProps) {
   const router = useRouter();
+  const { t } = useTranslation('user');
+  const { openChat, setSidebarCollapsed: syncSidebarToContext } = useChat();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
 
@@ -104,11 +108,13 @@ export default function CatalogClient({ user }: CatalogClientProps) {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 15000]);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [tempCategory, setTempCategory] = useState<string>(categoryParam || 'all');
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [tempSortBy, setTempSortBy] = useState<string>('newest');
   const [tempPriceRange, setTempPriceRange] = useState<[number, number]>([0, 15000]);
   const [tempRating, setTempRating] = useState<number | null>(null);
   const [maxPrice] = useState<number>(15000); // Фиксированная максимальная цена
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  useEffect(() => { syncSidebarToContext(sidebarCollapsed); }, [sidebarCollapsed, syncSidebarToContext]);
   const [addingToCart, setAddingToCart] = useState<Set<string>>(new Set());
   const [cartCount, setCartCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -157,6 +163,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
     setTempSortBy(sortBy);
     setTempPriceRange(priceRange);
     setTempRating(selectedRating);
+    setCategoryDropdownOpen(false);
     setShowFilters(true);
   };
 
@@ -320,12 +327,12 @@ export default function CatalogClient({ user }: CatalogClientProps) {
   }, [selectedCategory, sortBy, priceRange, selectedRating, searchQuery]);
 
   const menuItems = [
-    { title: 'Главная', icon: Home, href: '/home', active: false },
-    { title: 'Каталог', icon: Grid, href: '/catalog', active: true },
-    { title: 'Заказы', icon: Package, href: '/orders', active: false },
-    { title: 'Корзина', icon: ShoppingCart, href: '/cart', active: false },
-    { title: 'AI Чат', icon: MessageCircle, href: '/ai-chat', active: false },
-    { title: 'Профиль', icon: User, href: '/profile', active: false },
+    { title: t('nav.home'), icon: Home, href: '/home', active: false },
+    { title: t('nav.catalog'), icon: Grid, href: '/catalog', active: true },
+    { title: t('nav.orders'), icon: Package, href: '/orders', active: false },
+    { title: t('nav.cart'), icon: ShoppingCart, href: '/cart', active: false },
+    { title: t('nav.aiChat'), icon: MessageCircle, href: '/ai-chat', active: false, onClick: openChat },
+    { title: t('nav.profile'), icon: User, href: '/profile', active: false },
   ];
 
   const handleLogout = async () => {
@@ -357,74 +364,12 @@ export default function CatalogClient({ user }: CatalogClientProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-        <div className="px-8 py-2.5">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center gap-3 w-72">
-              <img 
-                src="/logonur.png" 
-                alt="Nur-Kitep Logo" 
-                className="w-9 h-9 rounded-xl object-cover"
-              />
-              <div>
-                <h1 className="text-base font-bold text-gray-900">
-                  Nur-Kitep
-                </h1>
-                <p className="text-[10px] text-gray-500">Книги и канцелярия</p>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div className="flex items-center gap-4 flex-1 max-w-xl mx-8">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Поиск товаров..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-sm text-gray-900 placeholder-gray-400"
-                />
-              </div>
-            </div>
-
-            {/* User & Notifications */}
-            <div className="flex items-center gap-3">
-              <button className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
-                <Bell size={18} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full"></span>
-              </button>
-
-              <button 
-                onClick={() => router.push('/cart')}
-                className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
-              >
-                <ShoppingCart size={18} />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-
-              <button 
-                onClick={() => router.push('/profile')}
-                className="flex items-center gap-2.5 hover:bg-gray-50 rounded-xl transition-colors px-2.5 py-1.5"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
-                  {user.fullName.charAt(0)}
-                </div>
-                <div className="hidden lg:block text-left">
-                  <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
-                  <p className="text-[10px] text-gray-500">{user.email}</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <UserHeader
+        user={user}
+        cartCount={cartCount}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
 
       <div className="flex pt-[57px]">
         {/* Sidebar */}
@@ -432,7 +377,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
           {/* Main Navigation Card */}
           <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
-              {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-500">Навигация</span>}
+              {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-500">{t('sidebar.navigation')}</span>}
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                 className="p-2 hover:bg-gray-50 rounded-lg transition-all text-gray-500 hover:text-gray-900"
@@ -446,10 +391,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
               {menuItems.map((item, index) => (
                 <button
                   key={index}
-                  onClick={() => {
-                    console.log('Navigating to:', item.href);
-                    router.push(item.href);
-                  }}
+                  onClick={() => item.onClick ? item.onClick() : router.push(item.href)}
                   className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
                     item.active 
                       ? 'bg-violet-500/15 text-violet-600' 
@@ -468,7 +410,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
           {!sidebarCollapsed && (
             <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
               <div className="flex items-center gap-2 mb-4 px-2">
-                <span className="text-sm font-semibold text-gray-500">Быстрые действия</span>
+                <span className="text-sm font-semibold text-gray-500">{t('sidebar.quickActions')}</span>
               </div>
               
               <div className="space-y-1">
@@ -484,7 +426,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
                 >
                   <Package size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">Мои заказы</span>
+                  <span className="text-sm font-medium">{t('sidebar.myOrders')}</span>
                 </button>
               </div>
             </div>
@@ -534,10 +476,10 @@ export default function CatalogClient({ user }: CatalogClientProps) {
               <button
                 onClick={handleLogout}
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl font-medium text-sm transition-all`}
-                title={sidebarCollapsed ? 'Выйти' : ''}
+                title={sidebarCollapsed ? t('sidebar.logout') : ''}
               >
                 <LogOut size={16} />
-                {!sidebarCollapsed && <span>Выйти</span>}
+                {!sidebarCollapsed && <span>{t('sidebar.logout')}</span>}
               </button>
             </div>
           </div>
@@ -598,7 +540,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                 />
                 
                 {/* Modal */}
-                <div className="relative bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-slide-up">
+                <div className="relative bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl animate-slide-up">
                   {/* Handle (mobile) */}
                   <div className="sm:hidden flex justify-center pt-3 pb-2 sticky top-0 bg-white z-10">
                     <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
@@ -621,30 +563,62 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                     {/* Categories */}
                     <div className="mb-3">
                       <h3 className="text-xs font-bold text-gray-900 mb-1.5">Категории</h3>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="relative">
                         <button
-                          onClick={() => setTempCategory('all')}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                            tempCategory === 'all'
-                              ? 'bg-violet-600 text-white'
-                              : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-violet-300'
+                          type="button"
+                          onClick={() => setCategoryDropdownOpen((v) => !v)}
+                          className={`w-full flex items-center justify-between px-3 py-2.5 bg-white border-2 rounded-xl text-xs font-medium transition-all ${
+                            categoryDropdownOpen
+                              ? 'border-violet-500 text-violet-700'
+                              : 'border-gray-200 text-gray-700 hover:border-violet-300'
                           }`}
                         >
-                          Все
-                        </button>
-                        {categories.map((category) => (
-                          <button
-                            key={category.id}
-                            onClick={() => setTempCategory(category.id)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                              tempCategory === category.id
-                                ? 'bg-violet-600 text-white'
-                                : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-violet-300'
+                          <span>
+                            {tempCategory === 'all'
+                              ? 'Все'
+                              : getCategoryName(categories.find((c) => c.id === tempCategory))}
+                          </span>
+                          <ChevronDown
+                            size={15}
+                            className={`text-gray-400 transition-transform duration-200 ${
+                              categoryDropdownOpen ? 'rotate-180' : ''
                             }`}
-                          >
-                            {getCategoryName(category)}
-                          </button>
-                        ))}
+                          />
+                        </button>
+
+                        {categoryDropdownOpen && (
+                          <div className="absolute z-10 mt-1 w-full bg-white border-2 border-violet-100 rounded-xl shadow-lg overflow-hidden">
+                            <div className="max-h-48 overflow-y-auto py-1">
+                              <button
+                                type="button"
+                                onClick={() => { setTempCategory('all'); setCategoryDropdownOpen(false); }}
+                                className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-all ${
+                                  tempCategory === 'all'
+                                    ? 'bg-violet-50 text-violet-700'
+                                    : 'text-gray-700 hover:bg-gray-50'
+                                }`}
+                              >
+                                <span>Все</span>
+                                {tempCategory === 'all' && <Check size={13} className="text-violet-600" />}
+                              </button>
+                              {categories.map((category) => (
+                                <button
+                                  key={category.id}
+                                  type="button"
+                                  onClick={() => { setTempCategory(category.id); setCategoryDropdownOpen(false); }}
+                                  className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-all ${
+                                    tempCategory === category.id
+                                      ? 'bg-violet-50 text-violet-700'
+                                      : 'text-gray-700 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  <span>{getCategoryName(category)}</span>
+                                  {tempCategory === category.id && <Check size={13} className="text-violet-600" />}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -667,10 +641,10 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                           <button
                             key={option.value}
                             onClick={() => setTempSortBy(option.value)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2 ${
                               tempSortBy === option.value
-                                ? 'bg-violet-600 text-white'
-                                : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-violet-300'
+                                ? 'bg-violet-600 text-white border-transparent'
+                                : 'bg-white border-gray-200 text-gray-700 hover:border-violet-300'
                             }`}
                           >
                             {option.label}
@@ -687,10 +661,10 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                           <button
                             key={option.value || 'all'}
                             onClick={() => setTempRating(option.value)}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2 ${
                               tempRating === option.value
-                                ? 'bg-violet-600 text-white'
-                                : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-violet-300'
+                                ? 'bg-violet-600 text-white border-transparent'
+                                : 'bg-white border-gray-200 text-gray-700 hover:border-violet-300'
                             }`}
                           >
                             {option.value && <Star size={12} className="fill-current" />}

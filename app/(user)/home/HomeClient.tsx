@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Search,
   Home,
   Grid,
   ShoppingCart,
@@ -12,7 +11,6 @@ import {
   User,
   ChevronRight,
   Star,
-  Bell,
   Heart,
   TrendingUp,
   ChevronLeft,
@@ -23,7 +21,11 @@ import {
   Briefcase,
   GraduationCap,
   Scissors,
+  Loader2,
 } from "lucide-react";
+import UserHeader from "@/app/components/UserHeader";
+import { useTranslation } from "@/app/i18n/client";
+import { useChat } from "@/app/(user)/ChatContext";
 
 interface User {
   id: string;
@@ -83,16 +85,18 @@ interface HomeClientProps {
 
 export default function HomeClient({ user }: HomeClientProps) {
   const router = useRouter();
+  const { t } = useTranslation('user');
+  const { openChat, setSidebarCollapsed: syncSidebarToContext } = useChat();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  useEffect(() => { syncSidebarToContext(sidebarCollapsed); }, [sidebarCollapsed, syncSidebarToContext]);
   const [currentBanner, setCurrentBanner] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
     // Определяем тип устройства
     const checkMobile = () => {
@@ -199,12 +203,12 @@ export default function HomeClient({ user }: HomeClientProps) {
   };
 
   const menuItems = [
-    { title: "Главная", icon: Home, href: "/home", active: true },
-    { title: "Каталог", icon: Grid, href: "/catalog", active: false },
-    { title: "Заказы", icon: Package, href: "/orders", active: false },
-    { title: "Корзина", icon: ShoppingCart, href: "/cart", active: false },
-    { title: "AI Чат", icon: MessageCircle, href: "/ai-chat", active: false },
-    { title: "Профиль", icon: User, href: "/profile", active: false },
+    { title: t('nav.home'), icon: Home, href: "/home", active: true },
+    { title: t('nav.catalog'), icon: Grid, href: "/catalog", active: false },
+    { title: t('nav.orders'), icon: Package, href: "/orders", active: false },
+    { title: t('nav.cart'), icon: ShoppingCart, href: "/cart", active: false },
+    { title: t('nav.aiChat'), icon: MessageCircle, href: "/ai-chat", active: false, onClick: openChat },
+    { title: t('nav.profile'), icon: User, href: "/profile", active: false },
   ];
 
   const handleLogout = async () => {
@@ -221,77 +225,13 @@ export default function HomeClient({ user }: HomeClientProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-        <div className="px-8 py-2.5">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center gap-3 w-72">
-              <img
-                src="/logonur.png"
-                alt="Nur-Kitep Logo"
-                className="w-9 h-9 rounded-xl object-cover"
-              />
-              <div>
-                <h1 className="text-base font-bold text-gray-900">Nur-Kitep</h1>
-                <p className="text-[10px] text-gray-500">Книги и канцелярия</p>
-              </div>
-            </div>
-
-            {/* Search */}
-            <form
-              onSubmit={handleSearch}
-              className="flex items-center gap-4 flex-1 max-w-xl mx-8"
-            >
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Поиск товаров..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-sm text-gray-900 placeholder-gray-400"
-                />
-              </div>
-            </form>
-
-            {/* Right Side */}
-            <div className="flex items-center gap-3">
-              <button className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
-                <Bell size={18} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full"></span>
-              </button>
-
-              <a
-                href="/cart"
-                className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900 inline-flex items-center justify-center"
-              >
-                <ShoppingCart size={18} />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </a>
-
-              <a
-                href="/profile"
-                className="flex items-center gap-2.5 hover:bg-gray-50 rounded-xl transition-colors px-2.5 py-1.5"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
-                  {user.fullName.charAt(0)}
-                </div>
-                <div className="hidden lg:block text-left">
-                  <p className="text-sm font-semibold text-gray-900">
-                    {user.fullName}
-                  </p>
-                  <p className="text-[10px] text-gray-500">{user.email}</p>
-                </div>
-              </a>
-            </div>
-          </div>
-        </div>
-      </header>
+      <UserHeader
+        user={user}
+        cartCount={cartCount}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSearchSubmit={handleSearch}
+      />
 
       <div className="flex pt-[57px]">
         {/* Sidebar */}
@@ -305,13 +245,13 @@ export default function HomeClient({ user }: HomeClientProps) {
             >
               {!sidebarCollapsed && (
                 <span className="text-sm font-semibold text-gray-500">
-                  Навигация
+                  {t('sidebar.navigation')}
                 </span>
               )}
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                 className="p-2 hover:bg-gray-50 rounded-lg transition-all text-gray-500 hover:text-gray-900"
-                title={sidebarCollapsed ? "Развернуть" : "Свернуть"}
+                title={sidebarCollapsed ? t('sidebar.expand') : t('sidebar.collapse')}
               >
                 {sidebarCollapsed ? (
                   <ChevronRight size={18} />
@@ -323,9 +263,9 @@ export default function HomeClient({ user }: HomeClientProps) {
 
             <nav className="space-y-1">
               {menuItems.map((item, index) => (
-                <a
+                <button
                   key={index}
-                  href={item.href}
+                  onClick={() => item.onClick ? item.onClick() : router.push(item.href)}
                   className={`w-full flex items-center justify-center ${sidebarCollapsed ? "" : "justify-start gap-3 px-3"} py-2.5 rounded-xl transition-all ${
                     item.active
                       ? "bg-violet-500/15 text-violet-600"
@@ -337,7 +277,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                   {!sidebarCollapsed && (
                     <span className="text-sm font-medium">{item.title}</span>
                   )}
-                </a>
+                </button>
               ))}
             </nav>
           </div>
@@ -347,7 +287,7 @@ export default function HomeClient({ user }: HomeClientProps) {
             <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
               <div className="flex items-center gap-2 mb-4 px-2">
                 <span className="text-sm font-semibold text-gray-500">
-                  Быстрые действия
+                  {t('sidebar.quickActions')}
                 </span>
               </div>
 
@@ -357,14 +297,14 @@ export default function HomeClient({ user }: HomeClientProps) {
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
                 >
                   <Grid size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">Каталог</span>
+                  <span className="text-sm font-medium">{t('nav.catalog')}</span>
                 </a>
                 <a
                   href="/orders"
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
                 >
                   <Package size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">Мои заказы</span>
+                  <span className="text-sm font-medium">{t('sidebar.myOrders')}</span>
                 </a>
               </div>
             </div>
@@ -376,10 +316,10 @@ export default function HomeClient({ user }: HomeClientProps) {
               <button
                 onClick={handleLogout}
                 className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "justify-center gap-2"} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl font-medium text-sm transition-all`}
-                title={sidebarCollapsed ? "Выйти" : ""}
+                title={sidebarCollapsed ? t('sidebar.logout') : ""}
               >
                 <LogOut size={16} />
-                {!sidebarCollapsed && <span>Выйти</span>}
+                {!sidebarCollapsed && <span>{t('sidebar.logout')}</span>}
               </button>
             </div>
           </div>
@@ -389,9 +329,16 @@ export default function HomeClient({ user }: HomeClientProps) {
         <div className="flex-1">
           <main className="p-8">
             {/* Banner */}
-            {banners.length > 0 ? (
+            {loading ? (
               <div className="mb-8 relative rounded-2xl overflow-hidden shadow-xl">
-                <div className="relative h-64 sm:h-80 lg:h-96">
+                <div className="relative h-48 sm:h-60 lg:h-72 bg-gray-100 flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="w-10 h-10 text-violet-500 animate-spin" />
+                  <span className="text-gray-500 text-sm font-medium">Загрузка баннера...</span>
+                </div>
+              </div>
+            ) : banners.length > 0 ? (
+              <div className="mb-8 relative rounded-2xl overflow-hidden shadow-xl">
+                <div className="relative h-48 sm:h-60 lg:h-72">
                   {banners.map((banner, index) => (
                     <div
                       key={banner.id}
@@ -446,30 +393,28 @@ export default function HomeClient({ user }: HomeClientProps) {
                 )}
               </div>
             ) : (
-              // Fallback banner если нет баннеров в БД
+              // Fallback banner если нет баннеров в БД (после загрузки)
               <div className="mb-8 relative rounded-2xl overflow-hidden shadow-xl">
-                <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-violet-600 via-violet-500 to-indigo-600">
+                <div className="relative h-48 sm:h-60 lg:h-72 bg-gradient-to-br from-violet-600 via-violet-500 to-indigo-600">
                   <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
 
                   <div className="relative h-full flex items-center">
                     <div className="container mx-auto px-6 sm:px-8">
                       <div className="max-w-2xl">
                         <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-bold mb-4">
-                          🎉 Новинки сезона
+                          🎉 {t('home.newSeason')}
                         </div>
                         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight">
-                          Добро пожаловать в<br />
-                          Nur-Kitep!
+                          {t('home.welcomeTitle')}
                         </h1>
                         <p className="text-lg sm:text-xl text-white/90 mb-6 font-medium">
-                          Книги, канцелярия и товары для творчества с доставкой
-                          по всему Кыргызстану
+                          {t('home.welcomeSub')}
                         </p>
                         <button
                           onClick={() => router.push("/catalog")}
                           className="inline-flex items-center gap-2 px-8 py-4 bg-white text-violet-600 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all"
                         >
-                          Перейти в каталог
+                          {t('home.toCatalog')}
                           <ChevronRight className="w-5 h-5" />
                         </button>
                       </div>
@@ -487,18 +432,15 @@ export default function HomeClient({ user }: HomeClientProps) {
             <section className="mb-12">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
-                    Категории
+                  <h2 className="text-2xl font-extrabold text-gray-900">
+                    {t('home.categoriesTitle')}
                   </h2>
-                  <p className="text-gray-600">
-                    Выберите категорию для просмотра товаров
-                  </p>
                 </div>
                 <button
                   onClick={() => router.push("/catalog/categories")}
                   className="flex items-center gap-2 text-violet-600 hover:text-violet-700 font-semibold"
                 >
-                  Все категории
+                  {t('home.allCategories')}
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
@@ -544,7 +486,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                           {categoryName}
                         </h3>
                         <p className="text-xs text-gray-500 text-center">
-                          {category._count.products} товаров
+                          {category._count.products} {t('home.items')}
                         </p>
                       </button>
                     );
@@ -560,18 +502,18 @@ export default function HomeClient({ user }: HomeClientProps) {
                   <div className="flex items-center gap-2 mb-1">
                     <TrendingUp className="w-6 h-6 text-violet-600" />
                     <h2 className="text-2xl font-extrabold text-gray-900">
-                      Популярные товары
+                      {t('home.popularTitle')}
                     </h2>
                   </div>
                   <p className="text-gray-600">
-                    Самые продаваемые товары за последний месяц
+                    {t('home.popularSub')}
                   </p>
                 </div>
                 <button
                   onClick={() => router.push("/catalog")}
                   className="flex items-center gap-2 text-violet-600 hover:text-violet-700 font-semibold"
                 >
-                  Все товары
+                  {t('home.allProducts')}
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </div>

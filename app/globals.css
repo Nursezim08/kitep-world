@@ -48,6 +48,16 @@
   scrollbar-color: #d1d5db #f3f4f6;
 }
 
+/* Hide scrollbar but keep scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Dark Scrollbar for Admin Pages */
 .dark-scrollbar::-webkit-scrollbar-track {
   background: #1e2533;
@@ -164,8 +174,8 @@ body {
   width: 20px !important;
   height: 20px !important;
   right: -10px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
+  top: -5px !important;
+  transform: none !important;
 }
 
 /* Убираем стандартные стили ручек */
@@ -178,7 +188,7 @@ body {
 }
 
 .noUi-handle:active {
-  transform: translateY(-50%) scale(1.1) !important;
+  transform: scale(1.1) !important;
 }
 
 /* Filter Modal Animations */
