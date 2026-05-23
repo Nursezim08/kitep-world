@@ -324,7 +324,7 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
       ))}
 
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-700 sticky top-0 bg-gray-800 z-10">
             <h2 className="text-2xl font-bold text-white">Добавить товар</h2>

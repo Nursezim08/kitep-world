@@ -181,7 +181,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                 <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-white">{user.fullName}</p>
                   <p className="text-xs text-gray-400">{user.email}</p>
                 </div>
@@ -193,7 +193,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 transition-all duration-300`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0 bg-[#151b26] overflow-y-auto no-scrollbar transition-all duration-300`}>
           <div className="p-4 flex flex-col min-h-full">
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>

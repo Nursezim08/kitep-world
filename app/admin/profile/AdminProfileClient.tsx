@@ -115,7 +115,7 @@ export default function AdminProfileClient({ user }: AdminProfileClientProps) {
                 <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-white">{user.fullName}</p>
                   <p className="text-xs text-gray-400">{user.email}</p>
                 </div>
@@ -127,7 +127,7 @@ export default function AdminProfileClient({ user }: AdminProfileClientProps) {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 transition-all duration-300`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0 bg-[#151b26] overflow-y-auto no-scrollbar transition-all duration-300`}>
           <div className="p-4 flex flex-col min-h-full">
           {/* Main Navigation Card */}
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
@@ -184,7 +184,7 @@ export default function AdminProfileClient({ user }: AdminProfileClientProps) {
                 <div className="w-24 h-24 bg-gradient-to-br from-violet-500 to-violet-600 rounded-2xl flex items-center justify-center text-white font-bold text-4xl flex-shrink-0">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 overflow-y-auto">
                   <h3 className="text-2xl font-bold text-white mb-2">{user.fullName}</h3>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="px-3 py-1 bg-violet-500/15 text-violet-400 rounded-lg text-sm font-semibold flex items-center gap-2">

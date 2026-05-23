@@ -16,7 +16,6 @@ import {
   ChevronRight,
   ChevronLeft,
   Clock,
-  TrendingUp,
   LayoutDashboard,
   FolderTree,
   Image as ImageIcon
@@ -83,7 +82,7 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
     },
     { 
       title: 'Доход', 
-      value: '₸2.4M', 
+      value: '2.4M с', 
       change: '+18%',
       icon: DollarSign
     },
@@ -99,11 +98,11 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
   ];
 
   const recentOrders = [
-    { id: '#12345', customer: 'Айгерим Т.', amount: '₸4,500', status: 'Завершен', time: '5 мин назад' },
-    { id: '#12344', customer: 'Бекжан И.', amount: '₸2,300', status: 'В обработке', time: '12 мин назад' },
-    { id: '#12343', customer: 'Нурайым А.', amount: '₸6,700', status: 'Ожидает', time: '25 мин назад' },
-    { id: '#12342', customer: 'Азамат К.', amount: '₸1,200', status: 'Завершен', time: '1 час назад' },
-    { id: '#12341', customer: 'Гульнара С.', amount: '₸3,800', status: 'В обработке', time: '2 часа назад' },
+    { id: '#12345', customer: 'Айгерим Т.', amount: '4,500 с', status: 'Завершен', time: '5 мин назад' },
+    { id: '#12344', customer: 'Бекжан И.', amount: '2,300 с', status: 'В обработке', time: '12 мин назад' },
+    { id: '#12343', customer: 'Нурайым А.', amount: '6,700 с', status: 'Ожидает', time: '25 мин назад' },
+    { id: '#12342', customer: 'Азамат К.', amount: '1,200 с', status: 'Завершен', time: '1 час назад' },
+    { id: '#12341', customer: 'Гульнара С.', amount: '3,800 с', status: 'В обработке', time: '2 часа назад' },
   ];
 
   const recentActivity = [
@@ -161,7 +160,7 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
                 <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-white">{user.fullName}</p>
                   <p className="text-xs text-gray-400">{user.email}</p>
                 </div>
@@ -173,7 +172,7 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 transition-all duration-300`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} flex-shrink-0 bg-[#151b26] overflow-y-auto no-scrollbar transition-all duration-300`}>
           <div className="p-4 flex flex-col min-h-full">
           {/* Main Navigation Card */}
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
@@ -243,17 +242,15 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
                   key={index}
                   className="bg-[#252d3d] rounded-2xl p-6 border border-gray-800/50 hover:border-violet-500/30 hover:shadow-xl hover:shadow-violet-500/5 transition-all group"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 bg-violet-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-violet-500/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                       <stat.icon className="text-violet-400" size={24} strokeWidth={2.5} />
                     </div>
-                    <div className="flex items-center gap-1 text-emerald-400">
-                      <TrendingUp size={14} />
-                      <span className="text-xs font-bold">{stat.change}</span>
+                    <div>
+                      <h3 className="text-gray-400 text-sm font-semibold mb-1">{stat.title}</h3>
+                      <p className="text-3xl font-bold text-white">{stat.value}</p>
                     </div>
                   </div>
-                  <h3 className="text-gray-400 text-sm font-semibold mb-1">{stat.title}</h3>
-                  <p className="text-3xl font-bold text-white">{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -272,7 +269,7 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
                       <div className="w-12 h-12 bg-violet-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                         <action.icon className="text-violet-400" size={24} strokeWidth={2.5} />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 overflow-y-auto">
                         <h4 className="text-white font-semibold mb-1">{action.title}</h4>
                         <p className="text-gray-400 text-sm">{action.desc}</p>
                       </div>

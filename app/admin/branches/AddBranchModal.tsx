@@ -326,7 +326,7 @@ export default function AddBranchModal({
   return (
     <div 
       ref={modalContainerRef}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto no-scrollbar"
     >
         <div 
           ref={modalRef}
@@ -409,7 +409,7 @@ export default function AddBranchModal({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto no-scrollbar">
             <div className="p-4">
               {/* Шаг 1: Основная информация */}
               {currentStep === 1 && (

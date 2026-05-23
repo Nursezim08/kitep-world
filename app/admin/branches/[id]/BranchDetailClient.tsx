@@ -231,7 +231,7 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
                 <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                   {currentUser.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-semibold text-white">{currentUser.fullName}</p>
                   <p className="text-xs text-gray-400">{currentUser.email}</p>
                 </div>
@@ -250,7 +250,7 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-80'} flex-shrink-0 bg-[#151b26] border-r border-gray-800/50 transition-all duration-300`}>
+        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-80'} flex-shrink-0 bg-[#151b26] overflow-y-auto no-scrollbar transition-all duration-300`}>
           <div className="p-4 flex flex-col min-h-full">
           <div className="bg-[#252d3d] rounded-2xl p-4 mb-4">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
@@ -380,7 +380,7 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
               </div>
 
               {/* Info */}
-              <div className="flex-1">
+              <div className="flex-1 overflow-y-auto">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h2 className="text-2xl font-bold text-white mb-2">{branch.name}</h2>
@@ -495,7 +495,7 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Выручка</p>
-                  <p className="text-2xl font-bold text-white">₸{totalRevenue.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-white">{totalRevenue.toLocaleString()} с</p>
                 </div>
               </div>
             </div>
@@ -565,7 +565,7 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
                         <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                           {bu.user.fullName.charAt(0)}
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 overflow-y-auto">
                           <p className="text-sm font-semibold text-white">{bu.user.fullName}</p>
                           <p className="text-xs text-gray-400">{bu.user.email}</p>
                         </div>
@@ -606,7 +606,7 @@ export default function BranchDetailClient({ branch, currentUser }: BranchDetail
                         <Clock size={12} />
                         {formatDate(order.createdAt)}
                       </div>
-                      <p className="text-white font-semibold">₸{Number(order.total).toLocaleString()}</p>
+                      <p className="text-white font-semibold">{Number(order.total).toLocaleString()} с</p>
                     </div>
                   </div>
                 ))}
