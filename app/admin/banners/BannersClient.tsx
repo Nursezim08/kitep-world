@@ -339,7 +339,7 @@ export default function BannersClient({ user }: { user: User }) {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-6">
                 {filteredBanners.map((banner) => (
                   <div
                     key={banner.id}
@@ -359,30 +359,30 @@ export default function BannersClient({ user }: { user: User }) {
                     </div>
 
                     {/* Изображения баннера */}
-                    <div className="space-y-3 p-4 bg-[#1e2533]">
-                      {/* Десктоп */}
-                      <div>
-                        <p className="text-xs text-gray-400 mb-2 flex items-center gap-1.5 font-medium">
-                          <span>🖥️</span> Десктоп (1920×600)
+                    <div className="flex gap-3 p-4 bg-[#1e2533] items-stretch h-[220px]">
+                      {/* Мобильный */}
+                      <div className="flex-shrink-0 w-[100px] flex flex-col">
+                        <p className="text-xs text-gray-400 mb-2 flex items-center gap-1 font-medium">
+                          <Smartphone size={12} /> Мобильный
                         </p>
-                        <div className="relative aspect-[16/5] bg-gray-900 rounded-xl overflow-hidden border border-gray-700/50">
+                        <div className="relative flex-1 bg-gray-900 rounded-xl overflow-hidden border border-gray-700/50">
                           <img
-                            src={banner.desktopImage}
-                            alt={`${banner.title} - Desktop`}
+                            src={banner.mobileImage}
+                            alt={`${banner.title} - Mobile`}
                             className="w-full h-full object-cover"
                           />
                         </div>
                       </div>
-                      
-                      {/* Мобильные */}
-                      <div>
-                        <p className="text-xs text-gray-400 mb-2 flex items-center gap-1.5 font-medium">
-                          <span>📱</span> Мобильные (768×1024)
+
+                      {/* Десктоп */}
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        <p className="text-xs text-gray-400 mb-2 flex items-center gap-1 font-medium">
+                          <Monitor size={12} /> Десктоп
                         </p>
-                        <div className="relative aspect-[3/4] bg-gray-900 rounded-xl overflow-hidden border border-gray-700/50 max-w-[200px]">
+                        <div className="relative flex-1 bg-gray-900 rounded-xl overflow-hidden border border-gray-700/50">
                           <img
-                            src={banner.mobileImage}
-                            alt={`${banner.title} - Mobile`}
+                            src={banner.desktopImage}
+                            alt={`${banner.title} - Desktop`}
                             className="w-full h-full object-cover"
                           />
                         </div>

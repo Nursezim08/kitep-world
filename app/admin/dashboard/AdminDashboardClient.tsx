@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Package, 
@@ -15,7 +15,6 @@ import {
   Search,
   ChevronRight,
   ChevronLeft,
-  Clock,
   LayoutDashboard,
   FolderTree,
   Image as ImageIcon
@@ -35,6 +34,56 @@ interface AdminDashboardClientProps {
 export default function AdminDashboardClient({ user }: AdminDashboardClientProps) {
   const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [banners, setBanners] = useState<{id: string; desktopImage: string; url: string | null; title: string}[]>([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
+  const [dashboardStats, setDashboardStats] = useState<{
+    users: string;
+    products: string;
+    orders: string;
+    revenue: string;
+  } | null>(null);
+  const [recentOrders, setRecentOrders] = useState<{
+    id: string;
+    customer: string;
+    amount: string;
+    status: string;
+    time: string;
+  }[]>([]);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBanners();
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const response = await fetch('/api/admin/dashboard');
+      if (response.ok) {
+        const data = await response.json();
+        setDashboardStats(data.stats);
+        setRecentOrders(data.recentOrders || []);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard:', error);
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
+
+  const fetchBanners = async () => {
+    try {
+      const response = await fetch('/api/admin/banners');
+      if (response.ok) {
+        const data = await response.json();
+        setBanners(Array.isArray(data.banners) ? data.banners : []);
+      }
+    } catch (error) {
+      console.error('Error fetching banners:', error);
+    } finally {
+      setBannersLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -62,30 +111,10 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
   ];
 
   const stats = [
-    { 
-      title: 'Пользователи', 
-      value: '1,234', 
-      change: '+12%',
-      icon: Users
-    },
-    { 
-      title: 'Товары', 
-      value: '10,567', 
-      change: '+8%',
-      icon: Package
-    },
-    { 
-      title: 'Заказы', 
-      value: '3,456', 
-      change: '+23%',
-      icon: ShoppingCart
-    },
-    { 
-      title: 'Доход', 
-      value: '2.4M с', 
-      change: '+18%',
-      icon: DollarSign
-    },
+    { title: 'Пользователи', value: dashboardStats?.users ?? '—', icon: Users },
+    { title: 'Товары', value: dashboardStats?.products ?? '—', icon: Package },
+    { title: 'Заказы', value: dashboardStats?.orders ?? '—', icon: ShoppingCart },
+    { title: 'Доход', value: dashboardStats?.revenue ?? '—', icon: DollarSign },
   ];
 
   const quickActions = [
@@ -97,21 +126,6 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
     { title: 'Настройки системы', desc: 'Конфигурация и параметры', icon: Settings, href: '/admin/settings' },
   ];
 
-  const recentOrders = [
-    { id: '#12345', customer: 'Айгерим Т.', amount: '4,500 с', status: 'Завершен', time: '5 мин назад' },
-    { id: '#12344', customer: 'Бекжан И.', amount: '2,300 с', status: 'В обработке', time: '12 мин назад' },
-    { id: '#12343', customer: 'Нурайым А.', amount: '6,700 с', status: 'Ожидает', time: '25 мин назад' },
-    { id: '#12342', customer: 'Азамат К.', amount: '1,200 с', status: 'Завершен', time: '1 час назад' },
-    { id: '#12341', customer: 'Гульнара С.', amount: '3,800 с', status: 'В обработке', time: '2 часа назад' },
-  ];
-
-  const recentActivity = [
-    { text: 'Новый заказ #12345', time: '5 минут назад' },
-    { text: 'Новый пользователь зарегистрирован', time: '12 минут назад' },
-    { text: 'Низкий остаток товара "Блокнот А5"', time: '25 минут назад' },
-    { text: 'Товар "Манас - эпос" добавлен', time: '1 час назад' },
-    { text: 'Заказ #12340 отменен', time: '2 часа назад' },
-  ];
 
   return (
     <div className="h-screen flex flex-col bg-[#151b26] overflow-hidden">
@@ -248,7 +262,11 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
                     </div>
                     <div>
                       <h3 className="text-gray-400 text-sm font-semibold mb-1">{stat.title}</h3>
-                      <p className="text-3xl font-bold text-white">{stat.value}</p>
+                      {dashboardLoading ? (
+                        <div className="w-16 h-8 bg-gray-700/50 rounded animate-pulse" />
+                      ) : (
+                        <p className="text-3xl font-bold text-white">{stat.value}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -280,10 +298,52 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
               </div>
             </div>
 
+            {/* Banners */}
+            <div className="bg-[#252d3d] rounded-2xl p-6 border border-gray-800/50 mb-8">
+              <div className="flex items-center gap-2 mb-6">
+                <ImageIcon className="text-violet-400" size={20} />
+                <h3 className="text-xl font-bold text-white">Баннеры</h3>
+                {!bannersLoading && (
+                  <span className="ml-auto text-xs text-gray-400 font-medium">{banners.length} активных</span>
+                )}
+              </div>
+              {bannersLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : banners.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <ImageIcon size={40} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Нет активных баннеров</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {banners.map((banner) => (
+                    <div key={banner.id} className="rounded-xl overflow-hidden border border-gray-800/50 group">
+                      <div className="relative aspect-[16/6] bg-[#1e2533]">
+                        <img
+                          src={banner.desktopImage}
+                          alt={banner.title || 'Баннер'}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <span className="absolute top-2 right-2 bg-green-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          Активен
+                        </span>
+                      </div>
+                      <div className="px-3 py-2 bg-[#1e2533] border-t border-gray-800/50">
+                        <p className="text-sm font-medium text-white truncate">{banner.title || '—'}</p>
+                        {banner.url && <p className="text-xs text-gray-500 truncate mt-0.5">{banner.url}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Recent Orders & Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Recent Orders */}
-              <div className="lg:col-span-2 bg-[#252d3d] rounded-2xl p-6 border border-gray-800/50">
+              <div className="lg:col-span-3 bg-[#252d3d] rounded-2xl p-6 border border-gray-800/50">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-white">Последние заказы</h3>
                   <button
@@ -294,52 +354,46 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
                     <ChevronRight size={16} />
                   </button>
                 </div>
-                <div className="space-y-3">
-                  {recentOrders.map((order, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-4 bg-[#1e2533] rounded-xl hover:bg-[#2a3347] transition-all group border border-gray-800/30"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
-                          {order.customer.charAt(0)}
+                {dashboardLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="h-16 bg-gray-700/30 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : recentOrders.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <ShoppingCart size={40} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">Нет заказов</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recentOrders.map((order, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-4 bg-[#1e2533] rounded-xl hover:bg-[#2a3347] transition-all group border border-gray-800/30"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
+                            {order.customer.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-white font-semibold text-sm">{order.customer}</p>
+                            <p className="text-gray-500 text-xs">{order.id}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-white font-semibold text-sm">{order.customer}</p>
-                          <p className="text-gray-500 text-xs">{order.id}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="px-3 py-1 bg-violet-500/10 text-violet-400 rounded-lg text-xs font-semibold">
-                          {order.status}
-                        </span>
-                        <div className="text-right">
-                          <p className="text-white font-semibold text-sm">{order.amount}</p>
-                          <p className="text-gray-500 text-xs">{order.time}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Activity Feed */}
-              <div className="bg-[#252d3d] rounded-2xl p-6 border border-gray-800/50">
-                <h3 className="text-xl font-bold text-white mb-6">Активность</h3>
-                <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex gap-3">
-                      <div className="w-2 h-2 bg-violet-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <div>
-                        <p className="text-white text-sm font-medium">{activity.text}</p>
-                        <div className="flex items-center gap-1 text-gray-500 text-xs mt-1">
-                          <Clock size={12} />
-                          {activity.time}
+                        <div className="flex items-center gap-4">
+                          <span className="px-3 py-1 bg-violet-500/10 text-violet-400 rounded-lg text-xs font-semibold">
+                            {order.status}
+                          </span>
+                          <div className="text-right">
+                            <p className="text-white font-semibold text-sm">{order.amount}</p>
+                            <p className="text-gray-500 text-xs">{order.time}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </main>

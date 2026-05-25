@@ -177,32 +177,6 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
             </nav>
           </div>
 
-          {/* Quick Actions Card */}
-          {!sidebarCollapsed && (
-            <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
-              <div className="flex items-center gap-2 mb-4 px-2">
-                <span className="text-sm font-semibold text-gray-500">{t('sidebar.quickActions')}</span>
-              </div>
-              
-              <div className="space-y-1">
-                <button
-                  onClick={() => router.push('/catalog')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
-                >
-                  <Grid size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">Каталог</span>
-                </button>
-                <button
-                  onClick={() => router.push('/orders')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
-                >
-                  <Package size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">{t('sidebar.myOrders')}</span>
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Logout Button Card */}
           <div className="mt-4">
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">

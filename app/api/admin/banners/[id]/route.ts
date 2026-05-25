@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
 
 // GET /api/admin/banners/[id] - Получение баннера по ID
 export async function GET(
@@ -15,6 +15,7 @@ export async function GET(
 
     const { id } = await params;
 
+    const prisma = getPrismaClient();
     const banner = await prisma.banner.findUnique({
       where: { id },
     });
@@ -44,6 +45,8 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const { title, desktopImage, mobileImage, url, status } = body;
+
+    const prisma = getPrismaClient();
 
     // Проверка существования баннера
     const existingBanner = await prisma.banner.findUnique({
@@ -75,12 +78,21 @@ export async function PATCH(
     const banner = await prisma.banner.update({
       where: { id },
       data: {
-        title: title.trim(),
         desktopImage,
         mobileImage,
         url: url?.trim() || null,
         status,
+        translations: {
+          upsert: [
+            {
+              where: { bannerId_locale: { bannerId: id, locale: 'ru' } },
+              create: { locale: 'ru', title: title.trim() },
+              update: { title: title.trim() },
+            },
+          ],
+        },
       },
+      include: { translations: true },
     });
 
     return NextResponse.json({ banner });
@@ -102,6 +114,8 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    const prisma = getPrismaClient();
 
     // Проверка существования баннера
     const existingBanner = await prisma.banner.findUnique({

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Upload, Monitor, Smartphone } from 'lucide-react';
 
 interface Banner {
@@ -21,11 +21,11 @@ interface EditBannerModalProps {
 
 export default function EditBannerModal({ isOpen, banner, onClose, onSuccess }: EditBannerModalProps) {
   const [formData, setFormData] = useState({
-    title: banner.title,
-    desktopImage: banner.desktopImage,
-    mobileImage: banner.mobileImage,
-    url: banner.url || '',
-    status: banner.status,
+    title: banner.title ?? '',
+    desktopImage: banner.desktopImage ?? '',
+    mobileImage: banner.mobileImage ?? '',
+    url: banner.url ?? '',
+    status: banner.status ?? 'active',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,6 +33,18 @@ export default function EditBannerModal({ isOpen, banner, onClose, onSuccess }: 
   const [isDraggingMobile, setIsDraggingMobile] = useState(false);
   const desktopFileInputRef = useRef<HTMLInputElement>(null);
   const mobileFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (banner) {
+      setFormData({
+        title: banner.title ?? '',
+        desktopImage: banner.desktopImage ?? '',
+        mobileImage: banner.mobileImage ?? '',
+        url: banner.url ?? '',
+        status: banner.status ?? 'active',
+      });
+    }
+  }, [banner.id]);
 
   if (!isOpen) return null;
 

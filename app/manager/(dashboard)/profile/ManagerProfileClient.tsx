@@ -58,10 +58,6 @@ export default function ManagerProfileClient() {
 
   return (
     <div>
-      <div className="mb-6 sm:mb-8 text-center">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">Профиль</h2>
-        <p className="text-sm sm:text-base text-gray-600 font-medium">Управление личными данными</p>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Profile Card */}

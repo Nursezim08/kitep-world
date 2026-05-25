@@ -71,6 +71,7 @@ export async function proxy(request: NextRequest) {
     '/ai-chat',
     '/search',
     '/product',
+    '/payment',
   ];
 
   if (userRoutes.some(route => pathname.startsWith(route))) {

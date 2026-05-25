@@ -5,13 +5,9 @@ import {
   Package,
   ShoppingCart,
   DollarSign,
-  TrendingUp,
-  Clock,
   ChevronRight,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
   Loader,
+  ImageIcon,
 } from 'lucide-react';
 
 interface BranchInfo {
@@ -25,13 +21,58 @@ interface BranchInfo {
   email: string;
 }
 
+interface Banner {
+  id: string;
+  url: string | null;
+  status: string;
+  desktopImage: string;
+  mobileImage: string;
+}
+
+interface DashboardStats {
+  todayOrders: string;
+  totalStock: string;
+  todayRevenue: string;
+}
+
+interface RecentOrder {
+  id: string;
+  customer: string;
+  amount: string;
+  status: string;
+  statusText: string;
+  time: string;
+}
+
 export default function ManagerDashboardClient() {
   const [branch, setBranch] = useState<BranchInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
 
   useEffect(() => {
     fetchBranchInfo();
+    fetchBanners();
+    fetchDashboard();
   }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const response = await fetch('/api/manager/dashboard');
+      if (response.ok) {
+        const data = await response.json();
+        setDashboardStats(data.stats);
+        setRecentOrders(data.recentOrders || []);
+      }
+    } catch (error) {
+      console.error('Error fetching manager dashboard:', error);
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
 
   const fetchBranchInfo = async () => {
     try {
@@ -47,85 +88,39 @@ export default function ManagerDashboardClient() {
     }
   };
 
+  const fetchBanners = async () => {
+    try {
+      const response = await fetch('/api/user/banners');
+      if (response.ok) {
+        const data = await response.json();
+        setBanners(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error('Error fetching banners:', error);
+    } finally {
+      setBannersLoading(false);
+    }
+  };
+
   const stats = [
     {
       title: 'Заказы сегодня',
-      value: '24',
-      change: '+12%',
+      value: dashboardStats?.todayOrders ?? '—',
       icon: ShoppingCart,
       color: 'blue',
     },
     {
       title: 'Товары на складе',
-      value: '1,234',
-      change: '-3%',
+      value: dashboardStats?.totalStock ?? '—',
       icon: Package,
       color: 'indigo',
     },
     {
       title: 'Выручка за день',
-      value: '45,600 с',
-      change: '+18%',
+      value: dashboardStats?.todayRevenue ?? '—',
       icon: DollarSign,
       color: 'green',
     },
-    {
-      title: 'Низкий остаток',
-      value: '8',
-      change: '+2',
-      icon: AlertCircle,
-      color: 'orange',
-    },
-  ];
-
-  const recentOrders = [
-    {
-      id: '#12345',
-      customer: 'Айгерим Т.',
-      amount: '4,500 с',
-      status: 'completed',
-      statusText: 'Завершен',
-      time: '5 мин назад',
-    },
-    {
-      id: '#12344',
-      customer: 'Бекжан И.',
-      amount: '2,300 с',
-      status: 'processing',
-      statusText: 'В обработке',
-      time: '12 мин назад',
-    },
-    {
-      id: '#12343',
-      customer: 'Нурайым А.',
-      amount: '6,700 с',
-      status: 'pending',
-      statusText: 'Ожидает',
-      time: '25 мин назад',
-    },
-    {
-      id: '#12342',
-      customer: 'Азамат К.',
-      amount: '1,200 с',
-      status: 'completed',
-      statusText: 'Завершен',
-      time: '1 час назад',
-    },
-  ];
-
-  const lowStockItems = [
-    { name: 'Блокнот А5', current: 5, min: 20, category: 'Канцелярия' },
-    { name: 'Ручка синяя', current: 12, min: 50, category: 'Канцелярия' },
-    { name: 'Манас - эпос', current: 3, min: 10, category: 'Книги' },
-    { name: 'Карандаш HB', current: 8, min: 30, category: 'Канцелярия' },
-  ];
-
-  const recentActivity = [
-    { text: 'Новый заказ #12345 от Айгерим Т.', time: '5 минут назад', type: 'order' },
-    { text: 'Товар "Блокнот А5" - низкий остаток', time: '15 минут назад', type: 'alert' },
-    { text: 'Заказ #12340 завершен', time: '25 минут назад', type: 'success' },
-    { text: 'Новое поступление товаров', time: '1 час назад', type: 'info' },
-    { text: 'Заказ #12338 отменен', time: '2 часа назад', type: 'error' },
   ];
 
   const getStatusColor = (status: string) => {
@@ -143,20 +138,6 @@ export default function ManagerDashboardClient() {
     }
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'order':
-        return <ShoppingCart size={14} className="text-blue-500" />;
-      case 'alert':
-        return <AlertCircle size={14} className="text-orange-500" />;
-      case 'success':
-        return <CheckCircle size={14} className="text-green-500" />;
-      case 'error':
-        return <XCircle size={14} className="text-red-500" />;
-      default:
-        return <Clock size={14} className="text-gray-500" />;
-    }
-  };
 
   if (loading) {
     return (
@@ -168,60 +149,53 @@ export default function ManagerDashboardClient() {
 
   return (
     <div>
-      {/* Welcome Section */}
-      <div className="mb-6 sm:mb-8 text-center">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
-          Дашборд
-        </h2>
-        <p className="text-sm sm:text-base text-gray-600 font-medium">
-          {branch ? `${branch.name} - ${branch.city}` : 'Обзор статистики филиала'}
-        </p>
-      </div>
-
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group"
+            className="bg-white rounded-2xl p-6 sm:p-7 border border-gray-200 hover:border-blue-200 hover:shadow-lg transition-all group"
           >
-            <div className="flex items-start justify-between mb-3 sm:mb-4">
-              <div
-                className={`w-10 h-10 sm:w-12 sm:h-12 bg-${stat.color}-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}
-              >
-                <stat.icon className={`text-${stat.color}-600`} size={20} strokeWidth={2.5} />
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                <stat.icon className="text-blue-500" size={20} strokeWidth={2} />
               </div>
-              <div
-                className={`flex items-center gap-1 ${
-                  stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                <TrendingUp size={12} />
-                <span className="text-xs font-bold">{stat.change}</span>
+              <div className="min-w-0">
+                <p className="text-gray-400 text-xs font-medium truncate">{stat.title}</p>
+                {dashboardLoading ? (
+                  <div className="w-16 h-7 bg-gray-200 rounded animate-pulse mt-1" />
+                ) : (
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{stat.value}</p>
+                )}
               </div>
             </div>
-            <h3 className="text-gray-600 text-xs sm:text-sm font-semibold mb-1">{stat.title}</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stat.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Recent Orders & Low Stock */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        {/* Recent Orders */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900">Последние заказы</h3>
-            <button className="text-blue-600 hover:text-blue-700 font-semibold text-xs sm:text-sm flex items-center gap-1 hover:gap-2 transition-all">
-              <span className="hidden sm:inline">Все заказы</span>
-              <ChevronRight size={16} />
-            </button>
+      {/* Recent Orders */}
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm mb-6 sm:mb-8">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900">Последние заказы</h3>
+          <ChevronRight size={16} className="text-gray-400" />
+        </div>
+        {dashboardLoading ? (
+          <div className="space-y-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-14 bg-gray-100 rounded-xl animate-pulse" />
+            ))}
           </div>
+        ) : recentOrders.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            <ShoppingCart size={36} className="mx-auto mb-2 opacity-40" />
+            <p className="text-sm">Нет заказов</p>
+          </div>
+        ) : (
           <div className="space-y-2 sm:space-y-3">
             {recentOrders.map((order, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all group border border-gray-100"
+                className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all border border-gray-100"
               >
                 <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
@@ -233,11 +207,7 @@ export default function ManagerDashboardClient() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-                  <span
-                    className={`px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-semibold border ${getStatusColor(
-                      order.status
-                    )}`}
-                  >
+                  <span className={`px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-semibold border ${getStatusColor(order.status)}`}>
                     {order.statusText}
                   </span>
                   <div className="text-right hidden sm:block">
@@ -248,51 +218,52 @@ export default function ManagerDashboardClient() {
               </div>
             ))}
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* Low Stock Items */}
-        <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Низкий остаток</h3>
-          <div className="space-y-3 sm:space-y-4">
-            {lowStockItems.map((item, index) => (
-              <div key={index} className="border-l-4 border-orange-500 pl-3 sm:pl-4 py-2">
-                <p className="text-gray-900 font-semibold text-xs sm:text-sm">{item.name}</p>
-                <p className="text-gray-500 text-[10px] sm:text-xs mb-2">{item.category}</p>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-orange-500 h-2 rounded-full"
-                      style={{ width: `${(item.current / item.min) * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-[10px] sm:text-xs font-semibold text-gray-600">
-                    {item.current}/{item.min}
+      {/* Banners */}
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
+          <ImageIcon size={20} className="text-blue-500" />
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900">Баннеры</h3>
+          {!bannersLoading && (
+            <span className="ml-auto text-xs text-gray-500 font-medium">{banners.length} активных</span>
+          )}
+        </div>
+        {bannersLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader className="animate-spin text-blue-500" size={24} />
+          </div>
+        ) : banners.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            <ImageIcon size={40} className="mx-auto mb-2 opacity-40" />
+            <p className="text-sm">Нет активных баннеров</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {banners.map((banner) => (
+              <div key={banner.id} className="rounded-xl overflow-hidden border border-gray-200 group">
+                <div className="relative aspect-[16/6] bg-gray-100">
+                  <img
+                    src={banner.desktopImage}
+                    alt="Баннер"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <span className="absolute top-2 right-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    Активен
                   </span>
                 </div>
+                {banner.url && (
+                  <div className="px-3 py-2 bg-gray-50 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 truncate">{banner.url}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Activity Feed */}
-      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
-        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Последняя активность</h3>
-        <div className="space-y-3 sm:space-y-4">
-          {recentActivity.map((activity, index) => (
-            <div key={index} className="flex gap-2 sm:gap-3 items-start">
-              <div className="mt-1">{getActivityIcon(activity.type)}</div>
-              <div className="flex-1 min-w-0">
-                <p className="text-gray-900 text-xs sm:text-sm font-medium">{activity.text}</p>
-                <div className="flex items-center gap-1 text-gray-500 text-[10px] sm:text-xs mt-1">
-                  <Clock size={10} className="sm:w-3 sm:h-3" />
-                  {activity.time}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

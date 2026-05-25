@@ -180,10 +180,6 @@ export default function ManagerProductsClient() {
 
   return (
     <div>
-      <div className="mb-6 sm:mb-8 text-center">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">Товары</h2>
-        <p className="text-sm sm:text-base text-gray-600 font-medium">Управление остатками товаров филиала</p>
-      </div>
 
       {/* Search & Filters */}
       <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm mb-4 sm:mb-6">

@@ -154,12 +154,11 @@ export default function ManagerLayout({ user, children }: ManagerLayoutProps) {
 
       <div className="flex lg:pt-[73px]">
         {/* Sidebar - только для десктопа */}
-        <aside className="hidden lg:block sticky top-[73px] h-[calc(100vh-73px)] w-72 p-4 flex-col">
+        <aside className="hidden lg:block sticky top-[73px] h-[calc(100vh-73px)] w-72 p-4 pt-8 flex-col">
           {/* Main Navigation Card */}
           <div className="bg-white rounded-2xl p-4 mb-4 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between mb-4 px-2">
               <div className="flex items-center gap-2 text-blue-600">
-                <LayoutDashboard size={18} />
                 <span className="text-sm font-semibold">Навигация</span>
               </div>
             </div>

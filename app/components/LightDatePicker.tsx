@@ -3,36 +3,33 @@
 import { useState, useRef, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
-interface DatePickerProps {
+interface LightDatePickerProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
 }
 
-export default function DatePicker({
+export default function LightDatePicker({
   value,
   onChange,
   placeholder = 'Выберите дату',
   className = '',
-}: DatePickerProps) {
+}: LightDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Закрытие при клике вне компонента
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Инициализация текущего месяца при открытии
   useEffect(() => {
     if (isOpen && value) {
       const date = new Date(value);
@@ -63,20 +60,15 @@ export default function DatePicker({
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Понедельник = 0
+    const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
     const days: (number | null)[] = [];
-
-    // Добавляем пустые ячейки для дней предыдущего месяца
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
-
-    // Добавляем дни текущего месяца
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(i);
     }
-
     return days;
   };
 
@@ -92,15 +84,13 @@ export default function DatePicker({
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const date = new Date(year, month, day);
-    const formattedDate = date.toISOString().split('T')[0];
-    onChange(formattedDate);
+    onChange(date.toISOString().split('T')[0]);
     setIsOpen(false);
   };
 
   const handleToday = () => {
     const today = new Date();
-    const formattedDate = today.toISOString().split('T')[0];
-    onChange(formattedDate);
+    onChange(today.toISOString().split('T')[0]);
     setCurrentMonth(today);
     setIsOpen(false);
   };
@@ -135,55 +125,52 @@ export default function DatePicker({
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      {/* Кнопка выбора даты */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3 py-2 bg-[#2a3347] border-2 border-violet-500 rounded-xl text-white text-sm text-left focus:outline-none focus:border-violet-400 transition-all hover:bg-[#2f3850] flex items-center justify-between"
+        className={`w-full px-3 py-2.5 bg-gray-50 border rounded-xl text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all hover:bg-gray-100 flex items-center justify-between ${
+          value ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
+        }`}
       >
-        <span className={value ? 'text-white' : 'text-gray-400'}>
+        <span className={value ? 'text-gray-900 font-medium' : 'text-gray-400'}>
           {value ? formatDate(value) : placeholder}
         </span>
-        <Calendar className="w-4 h-4 text-gray-400" />
+        <Calendar className={`w-4 h-4 flex-shrink-0 ${value ? 'text-blue-500' : 'text-gray-400'}`} />
       </button>
 
-      {/* Календарь */}
       {isOpen && (
-        <div className="absolute z-50 w-64 mt-2 bg-[#1e2533] border-2 border-violet-500 rounded-2xl shadow-[0_8px_32px_rgba(139,92,246,0.25)] overflow-hidden">
-          {/* Header с месяцем и годом */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-violet-600/20 to-violet-500/10 border-b border-violet-500/30">
+        <div className="absolute z-50 w-64 mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-blue-50/50 border-b border-gray-100">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1.5 hover:bg-violet-500/20 rounded-lg transition-all text-violet-400 hover:text-white"
+              className="p-1.5 hover:bg-blue-100 rounded-lg transition-all text-blue-500 hover:text-blue-700"
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="text-white font-bold text-sm capitalize tracking-wide">
+            <span className="text-gray-800 font-bold text-sm capitalize tracking-wide">
               {getMonthName(currentMonth)}
             </span>
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1.5 hover:bg-violet-500/20 rounded-lg transition-all text-violet-400 hover:text-white"
+              className="p-1.5 hover:bg-blue-100 rounded-lg transition-all text-blue-500 hover:text-blue-700"
             >
               <ChevronRight size={16} />
             </button>
           </div>
 
-          {/* Дни недели */}
+          {/* Weekdays */}
           <div className="grid grid-cols-7 px-3 pt-3 pb-1">
             {weekDays.map((day) => (
-              <div
-                key={day}
-                className="text-center text-xs font-bold text-violet-400/70 py-1"
-              >
+              <div key={day} className="text-center text-[10px] font-bold text-blue-400 py-1">
                 {day}
               </div>
             ))}
           </div>
 
-          {/* Календарная сетка */}
+          {/* Days grid */}
           <div className="grid grid-cols-7 gap-0.5 px-3 pb-3">
             {days.map((day, index) => (
               <div key={index} className="aspect-square">
@@ -193,10 +180,10 @@ export default function DatePicker({
                     onClick={() => handleDateSelect(day)}
                     className={`w-full h-full flex items-center justify-center text-xs rounded-lg transition-all font-medium ${
                       isSelectedDate(day)
-                        ? 'bg-violet-600 text-white shadow-[0_2px_8px_rgba(139,92,246,0.5)]'
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                         : isToday(day)
-                        ? 'bg-violet-500/25 text-violet-300 ring-1 ring-violet-500/50'
-                        : 'text-gray-300 hover:bg-violet-500/15 hover:text-white'
+                        ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
+                        : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
                     }`}
                   >
                     {day}
@@ -208,19 +195,19 @@ export default function DatePicker({
             ))}
           </div>
 
-          {/* Footer с кнопками */}
-          <div className="flex items-center justify-between px-3 py-2 border-t border-violet-500/20 bg-violet-500/5">
+          {/* Footer */}
+          <div className="flex items-center justify-between px-3 py-2 border-t border-gray-100 bg-gray-50">
             <button
               type="button"
               onClick={handleClear}
-              className="px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 rounded-lg transition-all font-medium"
+              className="px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 rounded-lg transition-all font-medium"
             >
               Удалить
             </button>
             <button
               type="button"
               onClick={handleToday}
-              className="px-3 py-1.5 text-xs text-violet-400 hover:bg-violet-500/15 rounded-lg transition-all font-semibold"
+              className="px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-all font-semibold"
             >
               Сегодня
             </button>

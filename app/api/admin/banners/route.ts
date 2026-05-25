@@ -14,9 +14,15 @@ export async function GET(request: NextRequest) {
 
     const banners = await prisma.banner.findMany({
       orderBy: { id: "desc" },
+      include: { translations: true },
     });
 
-    return NextResponse.json({ banners });
+    const mapped = banners.map((b) => ({
+      ...b,
+      title: b.translations.find((t) => t.locale === 'ru')?.title ?? b.translations[0]?.title ?? '',
+    }));
+
+    return NextResponse.json({ banners: mapped });
   } catch (error) {
     console.error("Error fetching banners:", error);
     return NextResponse.json(
@@ -72,7 +78,13 @@ export async function POST(request: NextRequest) {
         mobileImage,
         url: url?.trim() || null,
         status,
+        translations: {
+          create: [
+            { locale: 'ru', title: title.trim() },
+          ],
+        },
       },
+      include: { translations: true },
     });
 
     return NextResponse.json({ banner }, { status: 201 });

@@ -24,8 +24,11 @@ import {
   Clock,
   ChevronDown,
   Image as ImageIcon,
+  ArrowUpDown,
+  X,
 } from 'lucide-react';
 import CustomSelect from '@/app/components/CustomSelect';
+import DatePicker from '@/app/components/DatePicker';
 
 interface User {
   id: string;
@@ -73,15 +76,23 @@ export default function OrdersClient({ user }: OrdersClientProps) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
   const [branchFilter, setBranchFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [minTotal, setMinTotal] = useState('');
+  const [maxTotal, setMaxTotal] = useState('');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
 
   useEffect(() => {
     fetchOrders();
     fetchBranches();
-  }, [search, statusFilter, branchFilter, page]);
+  }, [search, statusFilter, paymentStatusFilter, branchFilter, dateFrom, dateTo, minTotal, maxTotal, sortBy, sortOrder, page]);
 
   const fetchOrders = async () => {
     try {
@@ -89,7 +100,14 @@ export default function OrdersClient({ user }: OrdersClientProps) {
       const params = new URLSearchParams({
         search,
         status: statusFilter,
+        paymentStatus: paymentStatusFilter,
         branchId: branchFilter,
+        dateFrom,
+        dateTo,
+        minTotal,
+        maxTotal,
+        sortBy,
+        sortOrder,
         page: page.toString(),
         limit: '50',
       });
@@ -99,6 +117,7 @@ export default function OrdersClient({ user }: OrdersClientProps) {
         const data = await response.json();
         setOrders(data.orders);
         setTotalPages(data.pagination.pages);
+        setTotalOrders(data.pagination.total);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -183,8 +202,26 @@ export default function OrdersClient({ user }: OrdersClientProps) {
 
   const activeFiltersCount = [
     statusFilter !== 'all',
+    paymentStatusFilter !== 'all',
     branchFilter !== 'all',
+    dateFrom !== '',
+    dateTo !== '',
+    minTotal !== '',
+    maxTotal !== '',
   ].filter(Boolean).length;
+
+  const resetFilters = () => {
+    setStatusFilter('all');
+    setPaymentStatusFilter('all');
+    setBranchFilter('all');
+    setDateFrom('');
+    setDateTo('');
+    setMinTotal('');
+    setMaxTotal('');
+    setSortBy('created_at');
+    setSortOrder('desc');
+    setPage(1);
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#151b26]">
@@ -357,33 +394,32 @@ export default function OrdersClient({ user }: OrdersClientProps) {
               </div>
 
               {showFilters && (
-                <div className="bg-[#252d3d] rounded-xl p-6 mb-4">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="bg-[#252d3d] rounded-xl p-6 mb-4 border border-gray-700/50">
+                  <div className="flex items-center justify-between mb-5">
                     <h3 className="text-white font-semibold flex items-center gap-2">
-                      <Filter size={18} />
+                      <Filter size={18} className="text-violet-400" />
                       Параметры фильтрации
                     </h3>
                     {activeFiltersCount > 0 && (
                       <button
-                        onClick={() => {
-                          setStatusFilter('all');
-                          setBranchFilter('all');
-                        }}
-                        className="text-red-400 hover:text-red-300 text-sm font-medium"
+                        onClick={resetFilters}
+                        className="flex items-center gap-1.5 text-red-400 hover:text-red-300 text-sm font-medium"
                       >
-                        Сбросить все
+                        <X size={14} />
+                        Сбросить все ({activeFiltersCount})
                       </button>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Статус заказа */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
+                      <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
                         Статус заказа
                       </label>
                       <CustomSelect
                         value={statusFilter}
-                        onChange={(value) => setStatusFilter(value)}
+                        onChange={(value) => { setStatusFilter(value); setPage(1); }}
                         options={[
                           { value: 'all', label: 'Все статусы' },
                           { value: 'paid', label: 'Оплачен' },
@@ -393,13 +429,32 @@ export default function OrdersClient({ user }: OrdersClientProps) {
                       />
                     </div>
 
+                    {/* Статус оплаты */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">
+                      <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+                        Статус оплаты
+                      </label>
+                      <CustomSelect
+                        value={paymentStatusFilter}
+                        onChange={(value) => { setPaymentStatusFilter(value); setPage(1); }}
+                        options={[
+                          { value: 'all', label: 'Все' },
+                          { value: 'pending', label: 'Ожидает' },
+                          { value: 'paid', label: 'Оплачен' },
+                          { value: 'failed', label: 'Ошибка' },
+                          { value: 'refunded', label: 'Возврат' },
+                        ]}
+                      />
+                    </div>
+
+                    {/* Филиал */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
                         Филиал
                       </label>
                       <CustomSelect
                         value={branchFilter}
-                        onChange={(value) => setBranchFilter(value)}
+                        onChange={(value) => { setBranchFilter(value); setPage(1); }}
                         options={[
                           { value: 'all', label: 'Все филиалы' },
                           ...branches.map((branch) => ({
@@ -409,10 +464,103 @@ export default function OrdersClient({ user }: OrdersClientProps) {
                         ]}
                       />
                     </div>
+
+                    {/* Дата от */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+                        Дата от
+                      </label>
+                      <DatePicker
+                        value={dateFrom}
+                        onChange={(v) => { setDateFrom(v); setPage(1); }}
+                        placeholder="Дата от"
+                      />
+                    </div>
+
+                    {/* Дата до */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+                        Дата до
+                      </label>
+                      <DatePicker
+                        value={dateTo}
+                        onChange={(v) => { setDateTo(v); setPage(1); }}
+                        placeholder="Дата до"
+                      />
+                    </div>
+
+                    {/* Сортировка */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+                        Сортировка
+                      </label>
+                      <div className="flex gap-2">
+                        <CustomSelect
+                          value={sortBy}
+                          onChange={(value) => { setSortBy(value); setPage(1); }}
+                          options={[
+                            { value: 'created_at', label: 'По дате' },
+                            { value: 'total', label: 'По сумме' },
+                            { value: 'order_number', label: 'По номеру' },
+                          ]}
+                        />
+                        <button
+                          onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
+                          className="flex-shrink-0 px-3 py-2 bg-[#2a3347] border-2 border-violet-500 rounded-xl text-gray-300 hover:text-white hover:bg-[#2f3850] transition-all"
+                          title={sortOrder === 'asc' ? 'По возрастанию' : 'По убыванию'}
+                        >
+                          <ArrowUpDown size={16} className={sortOrder === 'asc' ? 'rotate-180' : ''} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Сумма от */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+                        Сумма от (с)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={minTotal}
+                        onChange={(e) => { setMinTotal(e.target.value); setPage(1); }}
+                        className="w-full px-3 py-2 bg-[#2a3347] border-2 border-violet-500 rounded-xl text-sm text-white placeholder-gray-400 focus:outline-none focus:border-violet-400 hover:bg-[#2f3850] transition-all"
+                      />
+                    </div>
+
+                    {/* Сумма до */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+                        Сумма до (с)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="∞"
+                        value={maxTotal}
+                        onChange={(e) => { setMaxTotal(e.target.value); setPage(1); }}
+                        className="w-full px-3 py-2 bg-[#2a3347] border-2 border-violet-500 rounded-xl text-sm text-white placeholder-gray-400 focus:outline-none focus:border-violet-400 hover:bg-[#2f3850] transition-all"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
             </div>
+
+            {/* Счётчик */}
+            {!loading && (
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-sm text-gray-400">
+                  Найдено: <span className="text-white font-semibold">{totalOrders}</span> заказов
+                </span>
+                {activeFiltersCount > 0 && (
+                  <span className="text-xs text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full">
+                    Активных фильтров: {activeFiltersCount}
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Orders Table */}
             <div className="bg-[#252d3d] rounded-2xl border border-gray-800/50 overflow-hidden">

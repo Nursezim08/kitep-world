@@ -6,7 +6,8 @@ import { X, AlertTriangle } from 'lucide-react';
 interface Banner {
   id: string;
   title: string;
-  image: string;
+  desktopImage: string;
+  mobileImage: string;
   url: string | null;
   status: 'active' | 'inactive';
 }

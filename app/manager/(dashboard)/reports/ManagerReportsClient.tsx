@@ -36,10 +36,6 @@ export default function ManagerReportsClient() {
 
   return (
     <div>
-      <div className="mb-6 sm:mb-8 text-center">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">Отчеты</h2>
-        <p className="text-sm sm:text-base text-gray-600 font-medium">Аналитика и статистика филиала</p>
-      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {reports.map((report, index) => (

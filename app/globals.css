@@ -17,10 +17,6 @@
   --font-sans: var(--font-nunito);
 }
 
-* {
-  scroll-behavior: smooth;
-}
-
 /* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 8px;
@@ -44,6 +40,7 @@
 
 /* Firefox Scrollbar */
 * {
+  scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: #d1d5db #f3f4f6;
 }
@@ -218,6 +215,46 @@ body {
 
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
+}
+
+/* Dark Date Input Styles */
+input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7) sepia(1) saturate(3) hue-rotate(220deg);
+  cursor: pointer;
+  opacity: 0.8;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background: rgba(139, 92, 246, 0.2);
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: #fff;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  color: #9ca3af;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: #fff;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field:focus,
+input[type="date"]::-webkit-datetime-edit-day-field:focus,
+input[type="date"]::-webkit-datetime-edit-year-field:focus {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 3px;
+  outline: none;
 }
 
 /* Custom Number Input Styles */

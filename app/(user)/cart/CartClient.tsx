@@ -89,6 +89,7 @@ export default function CartClient({ user }: { user: User }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchCart();
@@ -131,6 +132,36 @@ export default function CartClient({ user }: { user: User }) {
   const handleBackToCart = () => {
     setIsCheckout(false);
     setSelectedBranchId('');
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!selectedBranchId) {
+      alert('Пожалуйста, выберите филиал для самовывоза');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const response = await fetch('/api/user/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branchId: selectedBranchId }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        router.push(`/payment/${data.order.id}`);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Ошибка при создании заказа');
+      }
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Ошибка при создании заказа');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const updateQuantity = async (itemId: string, newQuantity: number) => {
@@ -318,32 +349,6 @@ export default function CartClient({ user }: { user: User }) {
               ))}
             </nav>
           </div>
-
-          {/* Quick Actions Card */}
-          {!sidebarCollapsed && (
-            <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
-              <div className="flex items-center gap-2 mb-4 px-2">
-                <span className="text-sm font-semibold text-gray-500">{t('sidebar.quickActions')}</span>
-              </div>
-              
-              <div className="space-y-1">
-                <button
-                  onClick={() => router.push('/catalog')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
-                >
-                  <Grid size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">Каталог</span>
-                </button>
-                <button
-                  onClick={() => router.push('/orders')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
-                >
-                  <Package size={18} className="flex-shrink-0" />
-                  <span className="text-sm font-medium">{t('sidebar.myOrders')}</span>
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Logout Button */}
           <div className="mt-4">
@@ -619,18 +624,21 @@ export default function CartClient({ user }: { user: User }) {
                     {/* Кнопки */}
                     <div className="space-y-2">
                       <button
-                        onClick={() => {
-                          if (!selectedBranchId) {
-                            alert('Пожалуйста, выберите филиал для самовывоза');
-                            return;
-                          }
-                          router.push('/checkout');
-                        }}
-                        disabled={!selectedBranchId}
+                        onClick={handlePlaceOrder}
+                        disabled={!selectedBranchId || submitting}
                         className="w-full py-3 bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                       >
-                        <CreditCard size={18} />
-                        Перейти к оплате
+                        {submitting ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Создание заказа...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard size={18} />
+                            Перейти к оплате
+                          </>
+                        )}
                       </button>
                       <button
                         onClick={handleBackToCart}

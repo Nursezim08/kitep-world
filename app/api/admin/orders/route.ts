@@ -16,6 +16,13 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "all";
     const branchId = searchParams.get("branchId") || "all";
+    const paymentStatus = searchParams.get("paymentStatus") || "all";
+    const dateFrom = searchParams.get("dateFrom") || "";
+    const dateTo = searchParams.get("dateTo") || "";
+    const minTotal = searchParams.get("minTotal") || "";
+    const maxTotal = searchParams.get("maxTotal") || "";
+    const sortBy = searchParams.get("sortBy") || "created_at";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
     const skip = (page - 1) * limit;
@@ -32,15 +39,47 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Фильтр по статусу
+    // Фильтр по статусу заказа
     if (status !== "all") {
       where.order_status = status;
+    }
+
+    // Фильтр по статусу оплаты
+    if (paymentStatus !== "all") {
+      where.payment_status = paymentStatus;
     }
 
     // Фильтр по филиалу
     if (branchId !== "all") {
       where.branch_id = branchId;
     }
+
+    // Фильтр по диапазону дат
+    if (dateFrom || dateTo) {
+      where.created_at = {};
+      if (dateFrom) where.created_at.gte = new Date(dateFrom);
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        where.created_at.lte = end;
+      }
+    }
+
+    // Фильтр по диапазону суммы
+    if (minTotal || maxTotal) {
+      where.total = {};
+      if (minTotal) where.total.gte = parseFloat(minTotal);
+      if (maxTotal) where.total.lte = parseFloat(maxTotal);
+    }
+
+    // Сортировка
+    const allowedSortFields: Record<string, string> = {
+      created_at: "created_at",
+      total: "total",
+      order_number: "order_number",
+    };
+    const sortField = allowedSortFields[sortBy] || "created_at";
+    const orderBy: any = { [sortField]: sortOrder === "asc" ? "asc" : "desc" };
 
     // Получение заказов
     const [orders, total] = await Promise.all([
@@ -75,7 +114,7 @@ export async function GET(request: NextRequest) {
           },
           payments: true,
         },
-        orderBy: { created_at: "desc" },
+        orderBy,
         skip,
         take: limit,
       }),
