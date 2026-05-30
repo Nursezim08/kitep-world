@@ -19,15 +19,15 @@ export default async function BranchDetailPage({ params }: { params: Promise<{ i
   const { id } = await params;
 
   // Получаем полную информацию о филиале
-  const branchData = await prisma.branch.findUnique({
+  const branchData = await prisma.branches.findUnique({
     where: { id },
     include: {
-      branchUsers: {
+      branch_users: {
         include: {
-          user: {
+          users: {
             select: {
               id: true,
-              fullName: true,
+              full_name: true,
               email: true,
               phone: true,
               status: true,
@@ -38,22 +38,22 @@ export default async function BranchDetailPage({ params }: { params: Promise<{ i
       orders: {
         select: {
           id: true,
-          orderNumber: true,
+          order_number: true,
           total: true,
-          orderStatus: true,
-          paymentStatus: true,
-          createdAt: true,
+          order_status: true,
+          payment_status: true,
+          created_at: true,
         },
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
         take: 10,
       },
       _count: {
         select: {
-          branchUsers: true,
+          branch_users: true,
           orders: true,
-          inventory: true,
+          branch_inventory: true,
         },
       },
     },
@@ -63,20 +63,45 @@ export default async function BranchDetailPage({ params }: { params: Promise<{ i
     redirect('/admin/branches');
   }
 
-  // Преобразуем даты в строки для клиентского компонента
+  // Преобразуем данные для клиентского компонента (snake_case -> camelCase)
   const branch = {
-    ...branchData,
-    createdAt: branchData.createdAt.toISOString(),
-    updatedAt: branchData.updatedAt.toISOString(),
-    openTime: branchData.openTime?.toISOString() || null,
-    closeTime: branchData.closeTime?.toISOString() || null,
-    latitude: branchData.latitude?.toString() || null,
-    longitude: branchData.longitude?.toString() || null,
-    orders: branchData.orders.map(order => ({
-      ...order,
-      createdAt: order.createdAt.toISOString(),
-      total: order.total.toString(),
+    id: branchData.id,
+    name: branchData.name,
+    code: branchData.code,
+    city: branchData.city,
+    district: branchData.district,
+    address: branchData.address,
+    phone: branchData.phone,
+    email: branchData.email,
+    latitude: branchData.latitude !== null ? branchData.latitude.toString() : null,
+    longitude: branchData.longitude !== null ? branchData.longitude.toString() : null,
+    openTime: branchData.open_time ? branchData.open_time.toISOString() : null,
+    closeTime: branchData.close_time ? branchData.close_time.toISOString() : null,
+    status: branchData.status,
+    createdAt: branchData.created_at.toISOString(),
+    updatedAt: branchData.updated_at.toISOString(),
+    branchUsers: branchData.branch_users.map((bu) => ({
+      user: {
+        id: bu.users.id,
+        fullName: bu.users.full_name,
+        email: bu.users.email,
+        phone: bu.users.phone,
+        status: bu.users.status,
+      },
     })),
+    orders: branchData.orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.order_number,
+      total: order.total.toString(),
+      orderStatus: order.order_status,
+      paymentStatus: order.payment_status,
+      createdAt: order.created_at.toISOString(),
+    })),
+    _count: {
+      branchUsers: branchData._count.branch_users,
+      orders: branchData._count.orders,
+      inventory: branchData._count.branch_inventory,
+    },
   };
 
   return <BranchDetailClient branch={branch} currentUser={user} />;

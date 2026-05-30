@@ -121,8 +121,29 @@ export async function GET(request: NextRequest) {
       prisma.orders.count({ where }),
     ]);
 
+    const mappedOrders = orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.order_number,
+      user: {
+        id: order.users?.id ?? "",
+        fullName: order.users?.full_name ?? "Неизвестно",
+        email: order.users?.email ?? "",
+        phone: order.users?.phone ?? null,
+      },
+      branch: {
+        id: order.branches?.id ?? "",
+        name: order.branches?.name ?? "",
+        city: order.branches?.city ?? "",
+      },
+      total: Number(order.total),
+      orderStatus: order.order_status,
+      paymentStatus: order.payment_status,
+      createdAt: order.created_at,
+      items: order.order_items,
+    }));
+
     return NextResponse.json({
-      orders,
+      orders: mappedOrders,
       pagination: {
         total,
         page,

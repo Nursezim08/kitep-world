@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Сборка self-contained приложения для запуска в Docker (Timeweb App Platform)
+  output: 'standalone',
   images: {
     remotePatterns: [
       {

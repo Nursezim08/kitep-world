@@ -56,16 +56,21 @@
 }
 
 /* Dark Scrollbar for Admin Pages */
+.dark-scrollbar {
+  scrollbar-color: #3d4d6b #1e2533;
+}
+
 .dark-scrollbar::-webkit-scrollbar-track {
   background: #1e2533;
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb {
-  background: #2a3347;
+  background: #3d4d6b;
+  border-radius: 4px;
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: #4f5f7e;
 }
 
 /* Violet Scrollbar for Product Images */

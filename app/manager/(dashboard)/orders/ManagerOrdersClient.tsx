@@ -8,14 +8,15 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Package,
   ChevronLeft,
   ChevronRight,
-  ArrowUpDown,
   SlidersHorizontal,
   X,
+  PackageCheck,
+  AlertCircle,
 } from 'lucide-react';
 import LightDatePicker from '@/app/components/LightDatePicker';
+import LightCustomSelect from '@/app/components/LightCustomSelect';
 
 interface OrderStats {
   total: string;
@@ -30,7 +31,6 @@ interface Order {
   customer: string;
   email: string;
   phone: string;
-  items: number;
   total: string;
   totalRaw: number;
   status: string;
@@ -64,6 +64,13 @@ export default function ManagerOrdersClient() {
   const [statsLoading, setStatsLoading] = useState(true);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const [confirmOrder, setConfirmOrder] = useState<Order | null>(null);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [completing, setCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
 
   const fetchStats = useCallback(async () => {
     try {
@@ -124,6 +131,70 @@ export default function ManagerOrdersClient() {
     dateTo !== '' ||
     sortBy !== 'date_desc';
 
+  const handleComplete = async () => {
+    if (!confirmOrder || !orderDetails) return;
+    
+    // Извлекаем последние 5 цифр из order_number (убираем дефисы)
+    const orderNumberDigits = confirmOrder.id.replace(/-/g, '').replace(/\D/g, '');
+    const expectedCode = orderNumberDigits.slice(-5);
+    
+    if (verificationCode !== expectedCode) {
+      setCompleteError('Неверный код заказа');
+      return;
+    }
+    
+    setCompleting(true);
+    setCompleteError('');
+    try {
+      const res = await fetch(`/api/manager/orders/${confirmOrder.rawId}/complete`, {
+        method: 'PATCH',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setCompleteError(data.error ?? 'Ошибка');
+        return;
+      }
+      setConfirmOrder(null);
+      setOrderDetails(null);
+      setVerificationCode('');
+      await fetchOrders();
+      await fetchStats();
+    } catch {
+      setCompleteError('Ошибка сети');
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  const openConfirmModal = async (order: Order) => {
+    setConfirmOrder(order);
+    setCompleteError('');
+    setVerificationCode('');
+    setLoadingDetails(true);
+    
+    console.log('[openConfirmModal] Opening modal for order:', order.rawId);
+    
+    try {
+      const res = await fetch(`/api/manager/orders/${order.rawId}`);
+      console.log('[openConfirmModal] Response status:', res.status);
+      
+      if (res.ok) {
+        const data = await res.json();
+        console.log('[openConfirmModal] Order details loaded:', data);
+        setOrderDetails(data);
+      } else {
+        const errorData = await res.json();
+        console.error('[openConfirmModal] Error response:', errorData);
+        setCompleteError(errorData.error || 'Не удалось загрузить детали заказа');
+      }
+    } catch (error) {
+      console.error('[openConfirmModal] Error fetching order details:', error);
+      setCompleteError('Ошибка сети');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   const resetFilters = () => {
     setStatusFilter('all');
     setPaymentFilter('all');
@@ -145,7 +216,7 @@ export default function ManagerOrdersClient() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed': return <CheckCircle size={14} />;
-      case 'paid': return <Package size={14} />;
+      case 'paid': return <ShoppingCart size={14} />;
       case 'cancelled': return <XCircle size={14} />;
       default: return <Clock size={14} />;
     }
@@ -166,10 +237,178 @@ export default function ManagerOrdersClient() {
     { label: 'Отменено', value: orderStats?.cancelled ?? '—', color: 'red' },
   ];
 
-  const selectClass = 'w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-xs sm:text-sm font-medium';
 
   return (
     <div>
+
+      {/* Confirm Modal */}
+      {confirmOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <PackageCheck className="text-green-600" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Выдать заказ</h3>
+                  <p className="text-xs text-gray-500">{confirmOrder.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setConfirmOrder(null); setOrderDetails(null); setCompleteError(''); setVerificationCode(''); }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {loadingDetails ? (
+                <div className="space-y-4 animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                  <div className="h-4 bg-gray-200 rounded w-1/2" />
+                  <div className="h-20 bg-gray-200 rounded" />
+                </div>
+              ) : completeError && !orderDetails ? (
+                <div className="text-center py-8">
+                  <div className="flex items-center justify-center gap-2 text-red-600 text-sm bg-red-50 rounded-lg px-4 py-3 mb-4">
+                    <AlertCircle size={16} />
+                    {completeError}
+                  </div>
+                  <button
+                    onClick={() => openConfirmModal(confirmOrder!)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Попробовать снова
+                  </button>
+                </div>
+              ) : orderDetails ? (
+                <>
+                  {/* Информация о клиенте */}
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Клиент</h4>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-sm font-semibold text-gray-900 mb-1">
+                        {orderDetails.user?.fullName || confirmOrder.customer}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {orderDetails.user?.email || confirmOrder.email}
+                      </p>
+                      {(orderDetails.user?.phone || confirmOrder.phone) && (
+                        <p className="text-xs text-gray-600">
+                          {orderDetails.user?.phone || confirmOrder.phone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Товары */}
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Товары</h4>
+                    <div className="space-y-3">
+                      {orderDetails.orderItems && orderDetails.orderItems.length > 0 ? (
+                        orderDetails.orderItems.map((item: any, index: number) => {
+                          const price = Number(item.price) || 0;
+                          const quantity = Number(item.quantity) || 0;
+                          const total = price * quantity;
+                          
+                          return (
+                            <div key={index} className="flex items-center gap-4 bg-gray-50 rounded-xl p-4">
+                              {item.product?.images && item.product.images[0] && (
+                                <img
+                                  src={item.product.images[0].imageUrl}
+                                  alt={item.product.translations?.[0]?.name || 'Товар'}
+                                  className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 truncate">
+                                  {item.product?.translations?.[0]?.name || 'Без названия'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {quantity} × {price.toLocaleString('ru-RU')} с
+                                </p>
+                              </div>
+                              <p className="text-sm font-bold text-gray-900">
+                                {total.toLocaleString('ru-RU')} с
+                              </p>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm text-gray-500 text-center py-4">Нет товаров</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Итого */}
+                  <div className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-700">Итого к оплате:</span>
+                      <span className="text-2xl font-bold text-gray-900">
+                        {orderDetails.totalAmount 
+                          ? Number(orderDetails.totalAmount).toLocaleString('ru-RU') + ' с'
+                          : confirmOrder.total
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Код подтверждения */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Код заказа (последние 5 цифр номера заказа)
+                    </label>
+                    <input
+                      type="text"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                      placeholder="Введите 5 цифр"
+                      maxLength={5}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 text-center text-2xl font-bold tracking-widest"
+                    />
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      Попросите клиента назвать последние 5 цифр номера заказа
+                    </p>
+                  </div>
+
+                  {completeError && (
+                    <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 rounded-lg px-3 py-2 mb-4">
+                      <AlertCircle size={14} />
+                      {completeError}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => { setConfirmOrder(null); setOrderDetails(null); setCompleteError(''); setVerificationCode(''); }}
+                      disabled={completing}
+                      className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
+                    >
+                      Отмена
+                    </button>
+                    <button
+                      onClick={handleComplete}
+                      disabled={completing || verificationCode.length !== 5}
+                      className="flex-1 px-4 py-3 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {completing ? (
+                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <PackageCheck size={15} />
+                      )}
+                      Выдать заказ
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-8">Не удалось загрузить детали заказа</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
@@ -227,20 +466,28 @@ export default function ManagerOrdersClient() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Статус заказа</label>
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={selectClass}>
-                  <option value="all">Все статусы</option>
-                  <option value="paid">Оплачен</option>
-                  <option value="completed">Завершён</option>
-                  <option value="cancelled">Отменён</option>
-                </select>
+                <LightCustomSelect
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  options={[
+                    { value: 'all', label: 'Все статусы' },
+                    { value: 'paid', label: 'Оплачен' },
+                    { value: 'completed', label: 'Завершён' },
+                    { value: 'cancelled', label: 'Отменён' },
+                  ]}
+                />
               </div>
               <div>
                 <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Статус оплаты</label>
-                <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)} className={selectClass}>
-                  <option value="all">Все</option>
-                  <option value="success">Оплачено</option>
-                  <option value="failed">Не оплачено</option>
-                </select>
+                <LightCustomSelect
+                  value={paymentFilter}
+                  onChange={setPaymentFilter}
+                  options={[
+                    { value: 'all', label: 'Все' },
+                    { value: 'success', label: 'Оплачено' },
+                    { value: 'failed', label: 'Не оплачено' },
+                  ]}
+                />
               </div>
             </div>
 
@@ -264,15 +511,16 @@ export default function ManagerOrdersClient() {
               </div>
               <div>
                 <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Сортировка</label>
-                <div className="relative">
-                  <ArrowUpDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={`${selectClass} pl-8`}>
-                    <option value="date_desc">Дата: сначала новые</option>
-                    <option value="date_asc">Дата: сначала старые</option>
-                    <option value="total_desc">Сумма: по убыванию</option>
-                    <option value="total_asc">Сумма: по возрастанию</option>
-                  </select>
-                </div>
+                <LightCustomSelect
+                  value={sortBy}
+                  onChange={setSortBy}
+                  options={[
+                    { value: 'date_desc', label: 'Дата: сначала новые' },
+                    { value: 'date_asc', label: 'Дата: сначала старые' },
+                    { value: 'total_desc', label: 'Сумма: по убыванию' },
+                    { value: 'total_asc', label: 'Сумма: по возрастанию' },
+                  ]}
+                />
               </div>
             </div>
 
@@ -322,10 +570,8 @@ export default function ManagerOrdersClient() {
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Заказ</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Клиент</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Товары</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Сумма</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Статус</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Оплата</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Дата</th>
                     <th className="px-6 py-4" />
                   </tr>
@@ -347,9 +593,6 @@ export default function ManagerOrdersClient() {
                         {order.phone && <p className="text-xs text-gray-400">{order.phone}</p>}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-gray-900">{order.items} шт</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm font-bold text-gray-900">{order.total}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -359,17 +602,23 @@ export default function ManagerOrdersClient() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold border ${getPaymentColor(order.paymentStatus)}`}>
-                          {order.paymentStatusText}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-xs text-gray-500">{order.date}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600">
-                          <Eye size={16} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {order.status === 'paid' && (
+                            <button
+                              onClick={() => openConfirmModal(order)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-all"
+                            >
+                              <PackageCheck size={13} />
+                              Выдать
+                            </button>
+                          )}
+                          <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600">
+                            <Eye size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -405,20 +654,22 @@ export default function ManagerOrdersClient() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-gray-400">Товары</p>
-                        <p className="text-sm font-medium text-gray-900">{order.items} шт</p>
-                      </div>
-                      <div className="text-right">
                         <p className="text-xs text-gray-400">Сумма</p>
                         <p className="text-sm font-bold text-gray-900">{order.total}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-semibold border ${getPaymentColor(order.paymentStatus)}`}>
-                      {order.paymentStatusText}
-                    </span>
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                    {order.status === 'paid' && (
+                      <button
+                        onClick={() => openConfirmModal(order)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-all"
+                      >
+                        <PackageCheck size={13} />
+                        Выдать
+                      </button>
+                    )}
                     <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600">
                       <Eye size={15} />
                     </button>

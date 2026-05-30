@@ -439,10 +439,8 @@ export default function OrdersClient({ user }: OrdersClientProps) {
                         onChange={(value) => { setPaymentStatusFilter(value); setPage(1); }}
                         options={[
                           { value: 'all', label: 'Все' },
-                          { value: 'pending', label: 'Ожидает' },
-                          { value: 'paid', label: 'Оплачен' },
-                          { value: 'failed', label: 'Ошибка' },
-                          { value: 'refunded', label: 'Возврат' },
+                          { value: 'success', label: 'Оплачен' },
+                          { value: 'failed', label: 'Не оплачен' },
                         ]}
                       />
                     </div>
@@ -564,7 +562,7 @@ export default function OrdersClient({ user }: OrdersClientProps) {
 
             {/* Orders Table */}
             <div className="bg-[#252d3d] rounded-2xl border border-gray-800/50 overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto dark-scrollbar">
                 <table className="w-full">
                   <thead className="bg-[#1e2533] sticky top-0">
                     <tr>
@@ -675,22 +673,44 @@ export default function OrdersClient({ user }: OrdersClientProps) {
               {totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-gray-800/50 flex items-center justify-between">
                   <p className="text-sm text-gray-400">
-                    Страница {page} из {totalPages}
+                    Показано{' '}
+                    <span className="text-white font-semibold">
+                      {Math.min((page - 1) * 50 + 1, totalOrders)}–{Math.min(page * 50, totalOrders)}
+                    </span>{' '}
+                    из <span className="text-white font-semibold">{totalOrders}</span> заказов
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="px-4 py-2 bg-[#1e2533] text-gray-400 hover:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="p-2 border border-gray-700/50 bg-[#1e2533] rounded-lg hover:bg-[#2a3347] hover:text-white text-gray-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      Назад
+                      <ChevronLeft size={16} />
                     </button>
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                      const p = start + i;
+                      if (p > totalPages) return null;
+                      return (
+                        <button
+                          key={p}
+                          onClick={() => setPage(p)}
+                          className={`w-9 h-9 rounded-lg text-sm font-semibold transition-all ${
+                            p === page
+                              ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/30'
+                              : 'border border-gray-700/50 bg-[#1e2533] text-gray-400 hover:bg-[#2a3347] hover:text-white'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      );
+                    })}
                     <button
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="px-4 py-2 bg-[#1e2533] text-gray-400 hover:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="p-2 border border-gray-700/50 bg-[#1e2533] rounded-lg hover:bg-[#2a3347] hover:text-white text-gray-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      Вперед
+                      <ChevronRight size={16} />
                     </button>
                   </div>
                 </div>

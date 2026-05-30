@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Роут динамический: использует переменные окружения и внешний API.
+// Не должен исполняться на этапе сборки.
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+let openaiClient: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY не задан в переменных окружения');
+    }
+    openaiClient = new OpenAI({ apiKey });
+  }
+  return openaiClient;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +42,7 @@ ${description ? `Описание: ${description}` : ''}
   ${description ? '"description_kg": "перевод описания на кыргызский"' : '"description_kg": ""'}
 }`;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {

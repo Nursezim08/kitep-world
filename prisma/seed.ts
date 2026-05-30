@@ -267,12 +267,12 @@ async function main() {
 
   // Очистка существующих данных (опционально)
   console.log('🗑️  Очистка существующих данных...');
-  await prisma.productImage.deleteMany();
-  await prisma.productTranslation.deleteMany();
-  await prisma.productAttribute.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.categoryTranslation.deleteMany();
-  await prisma.category.deleteMany();
+  await prisma.product_images.deleteMany();
+  await prisma.product_translations.deleteMany();
+  await prisma.product_attributes.deleteMany();
+  await prisma.products.deleteMany();
+  await prisma.category_translations.deleteMany();
+  await prisma.categories.deleteMany();
   console.log('✅ Данные очищены\n');
 
   // Создание категорий
@@ -280,17 +280,20 @@ async function main() {
   const createdCategories = [];
 
   for (const category of categories) {
-    const createdCategory = await prisma.category.create({
+    const createdCategory = await prisma.categories.create({
       data: {
+        id: crypto.randomUUID(),
         image: category.image,
         status: CategoryStatus.active,
-        translations: {
+        category_translations: {
           create: [
             {
+              id: crypto.randomUUID(),
               locale: Locale.ru,
               name: category.nameRu,
             },
             {
+              id: crypto.randomUUID(),
               locale: Locale.kg,
               name: category.nameKg,
             },
@@ -298,7 +301,7 @@ async function main() {
         },
       },
       include: {
-        translations: true,
+        category_translations: true,
       },
     });
 
@@ -313,7 +316,7 @@ async function main() {
   let totalProducts = 0;
 
   for (const category of createdCategories) {
-    const categoryNameRu = category.translations.find((t) => t.locale === Locale.ru)?.name || '';
+    const categoryNameRu = category.category_translations.find((t) => t.locale === Locale.ru)?.name || '';
     const templates = productTemplates[categoryNameRu as keyof typeof productTemplates];
 
     if (!templates) {
@@ -331,30 +334,35 @@ async function main() {
       const descRu = descriptions.ru[Math.floor(Math.random() * descriptions.ru.length)];
       const descKg = descriptions.kg[Math.floor(Math.random() * descriptions.kg.length)];
 
-      const product = await prisma.product.create({
+      const product = await prisma.products.create({
         data: {
+          id: crypto.randomUUID(),
           sku,
-          categoryId: category.id,
+          category_id: category.id,
           brand: template.brand,
           price: template.price,
           status: ProductStatus.active,
-          translations: {
+          updated_at: new Date(),
+          product_translations: {
             create: [
               {
+                id: crypto.randomUUID(),
                 locale: Locale.ru,
                 name: template.nameRu,
                 description: descRu,
               },
               {
+                id: crypto.randomUUID(),
                 locale: Locale.kg,
                 name: template.nameKg,
                 description: descKg,
               },
             ],
           },
-          images: {
+          product_images: {
             create: (categoryImages[categoryNameRu] || categoryImages['Канцелярия']).map((url) => ({
-              imageUrl: url,
+              id: crypto.randomUUID(),
+              image_url: url,
               status: 'active',
             })),
           },

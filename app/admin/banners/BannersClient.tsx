@@ -20,6 +20,8 @@ import {
   ShoppingCart,
   MapPin,
   FileText,
+  Monitor,
+  Smartphone,
 } from 'lucide-react';
 import AddBannerModal from './AddBannerModal';
 import EditBannerModal from './EditBannerModal';

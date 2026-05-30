@@ -32,10 +32,10 @@ export async function GET(
     }
 
     // Проверяем, что менеджер имеет доступ к этому филиалу
-    const branchUser = await prisma.branchUser.findFirst({
+    const branchUser = await prisma.branch_users.findFirst({
       where: {
-        branchId: id,
-        userId: user.id,
+        branch_id: id,
+        user_id: user.id,
       },
     });
 
@@ -48,15 +48,15 @@ export async function GET(
     }
 
     // Получаем данные филиала
-    const branch = await prisma.branch.findUnique({
+    const branch = await prisma.branches.findUnique({
       where: { id },
       include: {
-        branchUsers: {
+        branch_users: {
           include: {
-            user: {
+            users: {
               select: {
                 id: true,
-                fullName: true,
+                full_name: true,
                 email: true,
                 avatar: true,
               },
@@ -86,11 +86,18 @@ export async function GET(
         address: branch.address,
         phone: branch.phone,
         email: branch.email,
-        openTime: branch.openTime,
-        closeTime: branch.closeTime,
-        workDays: branch.workDays,
+        openTime: branch.open_time,
+        closeTime: branch.close_time,
+        workDays: branch.work_days,
         status: branch.status,
-        branchUsers: branch.branchUsers,
+        branchUsers: branch.branch_users.map((bu) => ({
+          user: {
+            id: bu.users.id,
+            fullName: bu.users.full_name,
+            email: bu.users.email,
+            avatar: bu.users.avatar,
+          },
+        })),
       },
     });
   } catch (error) {

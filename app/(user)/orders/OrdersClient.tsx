@@ -67,6 +67,7 @@ export default function OrdersClient({ user }: OrdersClientProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   useEffect(() => { syncSidebarToContext(sidebarCollapsed); }, [sidebarCollapsed, syncSidebarToContext]);
   const [cartCount, setCartCount] = useState(0);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -151,6 +152,12 @@ export default function OrdersClient({ user }: OrdersClientProps) {
     return item.product.translations.find((t) => t.locale === 'ru')?.name || 'Без названия';
   };
 
+  const getOrderCode = (orderNumber: string) => {
+    // Убираем дефисы и извлекаем последние 5 цифр
+    const digits = orderNumber.replace(/-/g, '').replace(/\D/g, '');
+    return digits.slice(-5);
+  };
+
   const menuItems = [
     { title: t('nav.home'), icon: Home, href: '/home', active: false },
     { title: t('nav.catalog'), icon: Grid, href: '/catalog', active: false },
@@ -174,6 +181,109 @@ export default function OrdersClient({ user }: OrdersClientProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Order Details Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Заказ #{selectedOrder.orderNumber}</h3>
+                <p className="text-xs text-gray-500">
+                  {new Date(selectedOrder.createdAt).toLocaleDateString('ru-RU', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* Код заказа */}
+              <div className="mb-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-6 border border-violet-200">
+                <p className="text-sm font-semibold text-gray-700 mb-2 text-center">Код для получения заказа</p>
+                <p className="text-4xl font-bold text-violet-600 text-center tracking-widest">
+                  {getOrderCode(selectedOrder.orderNumber)}
+                </p>
+                <p className="text-xs text-gray-600 mt-3 text-center">
+                  Назовите этот код менеджеру при получении заказа
+                </p>
+              </div>
+
+              {/* Статус */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Статус</h4>
+                <div className={`flex items-center gap-2 px-4 py-3 rounded-xl ${getStatusColor(selectedOrder.status)}`}>
+                  {getStatusIcon(selectedOrder.status)}
+                  <span className="font-semibold text-sm">
+                    {getStatusText(selectedOrder.status)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Филиал */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Филиал</h4>
+                <div className="bg-gray-50 rounded-xl p-4 flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{selectedOrder.branch.name}</p>
+                    <p className="text-xs text-gray-600">{selectedOrder.branch.city}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Товары */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Товары</h4>
+                <div className="space-y-3">
+                  {selectedOrder.orderItems.map((item, index) => (
+                    <div key={index} className="flex items-center gap-4 bg-gray-50 rounded-xl p-4">
+                      {item.product.images[0] && (
+                        <img
+                          src={item.product.images[0].imageUrl}
+                          alt={getProductName(selectedOrder, index)}
+                          className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {getProductName(selectedOrder, index)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {item.quantity} × {item.price.toLocaleString('ru-RU')} с
+                        </p>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900">
+                        {(item.quantity * item.price).toLocaleString('ru-RU')} с
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Итого */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700">Итого:</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {selectedOrder.totalAmount.toLocaleString('ru-RU')} с
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <UserHeader
         user={user}
         cartCount={cartCount}
@@ -275,7 +385,8 @@ export default function OrdersClient({ user }: OrdersClientProps) {
                 {orders.map((order) => (
                   <div
                     key={order.id}
-                    className="bg-white rounded-2xl p-6 hover:shadow-lg transition-all border border-gray-200"
+                    onClick={() => setSelectedOrder(order)}
+                    className="bg-white rounded-2xl p-6 hover:shadow-lg transition-all border border-gray-200 cursor-pointer"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div>
