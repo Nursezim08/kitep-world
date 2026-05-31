@@ -12,17 +12,11 @@ import {
   ArrowLeft,
   Package,
   CreditCard,
-  Home,
-  Grid,
-  MessageCircle,
-  User,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
   AlertTriangle,
   X,
 } from 'lucide-react';
 import UserHeader from '@/app/components/UserHeader';
+import UserSidebar from '@/app/components/UserSidebar';
 import { useTranslation } from '@/app/i18n/client';
 import { useChat } from '@/app/(user)/ChatContext';
 
@@ -75,7 +69,7 @@ interface CartItem {
 export default function CartClient({ user }: { user: User }) {
   const router = useRouter();
   const { t } = useTranslation('user');
-  const { openChat, setSidebarCollapsed: syncSidebarToContext } = useChat();
+  const { setSidebarCollapsed: syncSidebarToContext } = useChat();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
@@ -271,26 +265,7 @@ export default function CartClient({ user }: { user: User }) {
     );
   };
 
-  const menuItems = [
-    { title: t('nav.home'), icon: Home, href: '/home', active: false },
-    { title: t('nav.catalog'), icon: Grid, href: '/catalog', active: false },
-    { title: t('nav.orders'), icon: Package, href: '/orders', active: false },
-    { title: t('nav.cart'), icon: ShoppingCart, href: '/cart', active: true },
-    { title: t('nav.aiChat'), icon: MessageCircle, href: '/ai-chat', active: false, onClick: openChat },
-    { title: t('nav.profile'), icon: User, href: '/profile', active: false },
-  ];
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-      router.push('/login');
-      router.refresh();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+  // Удалили старые menuItems
 
   if (loading) {
     return (
@@ -309,70 +284,23 @@ export default function CartClient({ user }: { user: User }) {
         onSearchChange={setSearchQuery}
       />
 
-      <div className="flex pt-[57px]">
-        {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
-          {/* Main Navigation Card */}
-          <div className="bg-white rounded-2xl shadow-sm p-4 mb-4">
-            <div className="flex items-center justify-between mb-4">
-              {!sidebarCollapsed && (
-                <h3 className="text-sm font-bold text-gray-900">{t('sidebar.navigation')}</h3>
-              )}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
-              >
-                {sidebarCollapsed ? (
-                  <ChevronRight size={18} className="text-gray-600" />
-                ) : (
-                  <ChevronLeft size={18} className="text-gray-600" />
-                )}
-              </button>
-            </div>
-
-            <nav className="space-y-1">
-              {menuItems.map((item) => (
-                <button
-                  key={item.title}
-                  onClick={() => item.onClick ? item.onClick() : router.push(item.href)}
-                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-xl transition-all ${
-                    item.active
-                      ? 'bg-gradient-to-r from-violet-500 to-violet-600 text-white shadow-lg shadow-violet-500/30'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <item.icon size={20} />
-                  {!sidebarCollapsed && (
-                    <span className="text-sm font-medium">{item.title}</span>
-                  )}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Logout Button */}
-          <div className="mt-4">
-            <button
-              onClick={handleLogout}
-              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all`}
-            >
-              <LogOut size={20} />
-              {!sidebarCollapsed && (
-                <span className="text-sm font-medium">{t('sidebar.logout')}</span>
-              )}
-            </button>
-          </div>
-        </aside>
+      <div className="flex pt-[57px] pb-16 lg:pb-0">
+        <UserSidebar
+          active="cart"
+          collapsed={sidebarCollapsed}
+          onCollapseChange={setSidebarCollapsed}
+          cartCount={cartItems.length}
+        />
 
         {/* Main Content */}
-        <main className="flex-1 p-8">
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
         {cartItems.length === 0 ? (
           <>
             {/* Page Title */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <ShoppingCart size={32} className="text-violet-600" />
+            <div className="mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <ShoppingCart className="w-7 h-7 sm:w-8 sm:h-8 text-violet-600" />
                 Корзина
               </h1>
             </div>
@@ -381,16 +309,16 @@ export default function CartClient({ user }: { user: User }) {
 
         {cartItems.length === 0 ? (
           // Пустая корзина
-          <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
+          <div className="bg-white rounded-2xl shadow-sm p-8 sm:p-12 text-center">
             <div className="flex justify-center mb-6">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
-                <ShoppingCart size={48} className="text-gray-400" />
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center">
+                <ShoppingCart size={40} className="text-gray-400" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               Корзина пуста
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm sm:text-base text-gray-600 mb-6">
               Добавьте товары из каталога, чтобы оформить заказ
             </p>
             <button
@@ -401,35 +329,36 @@ export default function CartClient({ user }: { user: User }) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Левая колонка: Заголовок + Список товаров */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               {/* Page Title */}
-              <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                  <ShoppingCart size={32} className="text-violet-600" />
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                  <ShoppingCart className="w-7 h-7 sm:w-8 sm:h-8 text-violet-600" />
                   Корзина
                 </h1>
                 
                 <button
                   onClick={clearCart}
-                  className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-1.5 px-4 py-2 hover:bg-red-50 rounded-xl transition-all"
+                  className="text-xs sm:text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-1.5 px-3 sm:px-4 py-2 hover:bg-red-50 rounded-xl transition-all"
                 >
                   <Trash2 size={16} />
-                  Очистить корзину
+                  <span className="hidden sm:inline">Очистить корзину</span>
+                  <span className="sm:hidden">Очистить</span>
                 </button>
               </div>
 
               {/* Список товаров */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
               {cartItems.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow"
+                  className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 sm:gap-4">
                     {/* Изображение */}
-                    <div className="relative w-32 h-32 flex-shrink-0">
+                    <div className="relative w-20 h-20 sm:w-32 sm:h-32 flex-shrink-0">
                       <Image
                         src={getProductImage(item)}
                         alt={getProductName(item)}
@@ -440,12 +369,12 @@ export default function CartClient({ user }: { user: User }) {
 
                     {/* Информация */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-2">
+                      <div className="flex items-start justify-between gap-2 sm:gap-4 mb-2">
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">
+                          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 line-clamp-2">
                             {getProductName(item)}
                           </h3>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                             {item.product.brand && (
                               <span>{item.product.brand}</span>
                             )}
@@ -453,17 +382,17 @@ export default function CartClient({ user }: { user: User }) {
                               <span>•</span>
                             )}
                             {getCategoryName(item) && (
-                              <span>{getCategoryName(item)}</span>
+                              <span className="truncate">{getCategoryName(item)}</span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                             Артикул: {item.product.sku}
                           </p>
                         </div>
 
                         {/* Цена */}
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-gray-900">
+                          <p className="text-base sm:text-2xl font-bold text-gray-900 whitespace-nowrap">
                             {Number(item.product.price).toLocaleString('ru-RU')}{' '}
                             сом
                           </p>
@@ -471,8 +400,8 @@ export default function CartClient({ user }: { user: User }) {
                       </div>
 
                       {/* Управление количеством */}
-                      <div className="flex items-center justify-between mt-4">
-                        <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-between mt-3 sm:mt-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
                           <button
                             onClick={() =>
                               updateQuantity(item.id, item.quantity - 1)
@@ -484,7 +413,7 @@ export default function CartClient({ user }: { user: User }) {
                           >
                             <Minus size={16} />
                           </button>
-                          <span className="w-12 text-center font-semibold text-gray-900">
+                          <span className="w-8 sm:w-12 text-center font-semibold text-gray-900 text-sm">
                             {item.quantity}
                           </span>
                           <button
@@ -509,7 +438,7 @@ export default function CartClient({ user }: { user: User }) {
 
                       {/* Итого за товар */}
                       <div className="mt-3 pt-3 border-t border-gray-100">
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-xs sm:text-sm">
                           <span className="text-gray-600">Итого:</span>
                           <span className="font-bold text-gray-900">
                             {(
@@ -528,7 +457,7 @@ export default function CartClient({ user }: { user: User }) {
 
             {/* Правая колонка: Итоговая информация / Оформление заказа */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
+              <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 lg:sticky lg:top-24">
                 {!isCheckout ? (
                   <>
                     {/* Блок "Итого" */}

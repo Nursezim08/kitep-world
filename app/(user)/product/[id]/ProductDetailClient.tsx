@@ -3,17 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Home,
-  Grid,
-  ShoppingCart,
   Package,
-  MessageCircle,
-  User,
   ChevronRight,
   Star,
   Heart,
-  ChevronLeft,
-  LogOut,
   ArrowLeft,
   Plus,
   Minus,
@@ -22,6 +15,7 @@ import {
   Check,
 } from 'lucide-react';
 import UserHeader from '@/app/components/UserHeader';
+import UserSidebar from '@/app/components/UserSidebar';
 import { useTranslation } from '@/app/i18n/client';
 import { useChat } from '@/app/(user)/ChatContext';
 
@@ -89,7 +83,7 @@ interface ProductDetailClientProps {
 export default function ProductDetailClient({ user, productId }: ProductDetailClientProps) {
   const router = useRouter();
   const { t } = useTranslation('user');
-  const { openChat, setSidebarCollapsed: syncSidebarToContext } = useChat();
+  const { setSidebarCollapsed: syncSidebarToContext } = useChat();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -263,27 +257,6 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
     return category.translations.find((t) => t.locale === 'ru')?.name || 'Без категории';
   };
 
-  const menuItems = [
-    { title: t('nav.home'), icon: Home, href: '/home', active: false },
-    { title: t('nav.catalog'), icon: Grid, href: '/catalog', active: false },
-    { title: t('nav.orders'), icon: Package, href: '/orders', active: false },
-    { title: t('nav.cart'), icon: ShoppingCart, href: '/cart', active: false },
-    { title: t('nav.aiChat'), icon: MessageCircle, href: '/ai-chat', active: false, onClick: openChat },
-    { title: t('nav.profile'), icon: User, href: '/profile', active: false },
-  ];
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-      router.push('/login');
-      router.refresh();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
   const copyToClipboard = async (label: string, value: string) => {
     try {
       await navigator.clipboard.writeText(`${label}: ${value}`);
@@ -318,69 +291,27 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
         onSearchChange={setSearchQuery}
       />
 
-      <div className="flex pt-[57px]">
-        {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
-          {/* Main Navigation Card */}
-          <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
-            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
-              {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-500">{t('sidebar.navigation')}</span>}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2 hover:bg-gray-50 rounded-lg transition-all text-gray-500 hover:text-gray-900"
-                title={sidebarCollapsed ? 'Развернуть' : 'Свернуть'}
-              >
-                {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-              </button>
-            </div>
-            
-            <nav className="space-y-1">
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => item.onClick ? item.onClick() : router.push(item.href)}
-                  className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
-                    item.active 
-                      ? 'bg-violet-500/15 text-violet-600' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                  title={sidebarCollapsed ? item.title : ''}
-                >
-                  <item.icon size={18} className="flex-shrink-0" />
-                  {!sidebarCollapsed && <span className="text-sm font-medium">{item.title}</span>}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Logout Button Card */}
-          <div className="mt-4">
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
-              <button
-                onClick={handleLogout}
-                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl font-medium text-sm transition-all`}
-                title={sidebarCollapsed ? t('sidebar.logout') : ''}
-              >
-                <LogOut size={16} />
-                {!sidebarCollapsed && <span>{t('sidebar.logout')}</span>}
-              </button>
-            </div>
-          </div>
-        </aside>
+      <div className="flex pt-[57px] pb-16 lg:pb-0">
+        <UserSidebar
+          active="catalog"
+          collapsed={sidebarCollapsed}
+          onCollapseChange={setSidebarCollapsed}
+          cartCount={cartCount}
+        />
 
         {/* Main Content */}
-        <div className="flex-1">
-          <main className="p-8">
+        <div className="flex-1 min-w-0">
+          <main className="p-4 sm:p-6 lg:p-8">
             {/* Back Button */}
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-medium"
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 sm:mb-6 font-medium text-sm"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
               <span>Назад к каталогу</span>
             </button>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 lg:gap-8">
               {/* Left Column: Images */}
               <div className="space-y-4">
                 {/* Main Image */}
@@ -438,7 +369,7 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
                 </div>
 
                 {/* Title */}
-                <h1 className="text-3xl font-bold text-gray-900 leading-tight">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
                   {getProductName(product)}
                 </h1>
 
@@ -646,12 +577,12 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
             </div>
 
             {/* Reviews Section (Full Width at Bottom) */}
-            <div className="mt-8 bg-white rounded-2xl p-8 border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <div className="mt-8 bg-white rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-200">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Отзывы
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {/* Примерные отзывы - только вторая строка */}
                 {[
                   {
@@ -734,7 +665,7 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
             {/* Related Products Section */}
             {relatedProducts.length > 0 && (
               <div id="related-products" className="mt-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                   Смотрите также
                 </h2>
                 
@@ -747,7 +678,7 @@ export default function ProductDetailClient({ user, productId }: ProductDetailCl
 
                   return (
                     <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                         {paginatedRelatedProducts.map((relatedProduct) => (
                           <div
                             key={relatedProduct.id}

@@ -38,11 +38,13 @@ export default function UserHeader({
   const { t } = useTranslation('user');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState<Language>('ru');
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [internalCartCount, setInternalCartCount] = useState(0);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const langDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
 
   const isSearchControlled = onSearchChange !== undefined;
   const searchQuery = isSearchControlled ? (searchQueryProp ?? '') : internalSearchQuery;
@@ -62,6 +64,13 @@ export default function UserHeader({
   useEffect(() => {
     setCurrentLang(getLanguageCookie() || 'ru');
   }, []);
+
+  useEffect(() => {
+    if (mobileSearchOpen) {
+      // small timeout to allow render
+      setTimeout(() => mobileSearchInputRef.current?.focus(), 50);
+    }
+  }, [mobileSearchOpen]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -113,29 +122,33 @@ export default function UserHeader({
     } else if (internalSearchQuery.trim().length >= 2) {
       router.push(`/search?q=${encodeURIComponent(internalSearchQuery.trim())}`);
     }
+    setMobileSearchOpen(false);
   };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-      <div className="px-8 py-2.5">
-        <div className="flex items-center justify-between">
+      <div className="px-4 sm:px-6 lg:px-8 py-2.5">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
           {/* Logo */}
-          <div className="flex items-center gap-3 w-72">
+          <a
+            href="/home"
+            className="flex items-center gap-2 sm:gap-3 lg:w-72 flex-shrink-0"
+          >
             <img
               src="/logonur.png"
               alt="Nur-Kitep Logo"
               className="w-9 h-9 rounded-xl object-cover"
             />
-            <div>
-              <h1 className="text-base font-bold text-gray-900">Nur-Kitep</h1>
-              <p className="text-[10px] text-gray-500">Книги и канцелярия</p>
+            <div className="leading-tight">
+              <h1 className="text-sm sm:text-base font-bold text-gray-900">Nur-Kitep</h1>
+              <p className="hidden sm:block text-[10px] text-gray-500">Книги и канцелярия</p>
             </div>
-          </div>
+          </a>
 
-          {/* Search */}
+          {/* Search (desktop) */}
           <form
             onSubmit={handleSearchSubmit}
-            className="flex items-center gap-4 flex-1 max-w-xl mx-8"
+            className="hidden md:flex items-center gap-4 flex-1 max-w-xl mx-4 lg:mx-8"
           >
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -150,12 +163,21 @@ export default function UserHeader({
           </form>
 
           {/* Right Side */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3">
+            {/* Mobile search toggle */}
+            <button
+              onClick={() => setMobileSearchOpen((v) => !v)}
+              className="md:hidden p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900"
+              aria-label="Search"
+            >
+              <Search size={18} />
+            </button>
+
             {/* Language Switcher */}
             <div ref={langDropdownRef} className="relative">
               <button
                 onClick={() => setLangDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900 border border-gray-200"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900 border border-gray-200"
               >
                 <Globe size={15} />
                 <span className="text-xs font-bold">{languageLabels[currentLang]}</span>
@@ -180,7 +202,7 @@ export default function UserHeader({
               )}
             </div>
 
-            <button className="relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
+            <button className="hidden sm:inline-flex relative p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-600 hover:text-gray-900">
               <Bell size={18} />
               <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full" />
             </button>
@@ -201,14 +223,14 @@ export default function UserHeader({
             <div ref={profileDropdownRef} className="relative">
               <button
                 onClick={() => setProfileDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-2.5 hover:bg-gray-50 rounded-xl transition-colors px-2.5 py-1.5"
+                className="flex items-center gap-2.5 hover:bg-gray-50 rounded-xl transition-colors px-1.5 sm:px-2.5 py-1.5"
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
                   {user.fullName.charAt(0)}
                 </div>
-                <div className="hidden lg:block text-left">
-                  <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
-                  <p className="text-[10px] text-gray-500">{user.email}</p>
+                <div className="hidden xl:block text-left">
+                  <p className="text-sm font-semibold text-gray-900 truncate max-w-[140px]">{user.fullName}</p>
+                  <p className="text-[10px] text-gray-500 truncate max-w-[140px]">{user.email}</p>
                 </div>
               </button>
 
@@ -238,6 +260,26 @@ export default function UserHeader({
             </div>
           </div>
         </div>
+
+        {/* Mobile search expandable row */}
+        {mobileSearchOpen && (
+          <form
+            onSubmit={handleSearchSubmit}
+            className="md:hidden mt-2.5 animate-fade-in"
+          >
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                ref={mobileSearchInputRef}
+                type="text"
+                placeholder={t('header.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-sm text-gray-900 placeholder-gray-400"
+              />
+            </div>
+          </form>
+        )}
       </div>
     </header>
   );

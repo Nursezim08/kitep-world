@@ -5,24 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
   Search,
-  Home,
-  Grid,
-  ShoppingCart,
   Package,
-  MessageCircle,
-  User,
-  ChevronRight,
   Star,
-  Filter,
   X,
   Heart,
-  ChevronLeft,
-  LogOut,
   SlidersHorizontal,
   ChevronDown,
   Check,
 } from 'lucide-react';
 import UserHeader from '@/app/components/UserHeader';
+import UserSidebar from '@/app/components/UserSidebar';
 import { useTranslation } from '@/app/i18n/client';
 import { useChat } from '@/app/(user)/ChatContext';
 
@@ -94,7 +86,7 @@ interface CatalogClientProps {
 export default function CatalogClient({ user }: CatalogClientProps) {
   const router = useRouter();
   const { t } = useTranslation('user');
-  const { openChat, setSidebarCollapsed: syncSidebarToContext } = useChat();
+  const { setSidebarCollapsed: syncSidebarToContext } = useChat();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
 
@@ -326,27 +318,6 @@ export default function CatalogClient({ user }: CatalogClientProps) {
     setCurrentPage(1);
   }, [selectedCategory, sortBy, priceRange, selectedRating, searchQuery]);
 
-  const menuItems = [
-    { title: t('nav.home'), icon: Home, href: '/home', active: false },
-    { title: t('nav.catalog'), icon: Grid, href: '/catalog', active: true },
-    { title: t('nav.orders'), icon: Package, href: '/orders', active: false },
-    { title: t('nav.cart'), icon: ShoppingCart, href: '/cart', active: false },
-    { title: t('nav.aiChat'), icon: MessageCircle, href: '/ai-chat', active: false, onClick: openChat },
-    { title: t('nav.profile'), icon: User, href: '/profile', active: false },
-  ];
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-      router.push('/login');
-      router.refresh();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
   const sortOptions = [
     { value: 'popular', label: 'Популярные' },
     { value: 'newest', label: 'Сначала новые' },
@@ -371,68 +342,26 @@ export default function CatalogClient({ user }: CatalogClientProps) {
         onSearchChange={setSearchQuery}
       />
 
-      <div className="flex pt-[57px]">
-        {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
-          {/* Main Navigation Card */}
-          <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
-            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
-              {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-500">{t('sidebar.navigation')}</span>}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2 hover:bg-gray-50 rounded-lg transition-all text-gray-500 hover:text-gray-900"
-                title={sidebarCollapsed ? 'Развернуть' : 'Свернуть'}
-              >
-                {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-              </button>
-            </div>
-            
-            <nav className="space-y-1">
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => item.onClick ? item.onClick() : router.push(item.href)}
-                  className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
-                    item.active 
-                      ? 'bg-violet-500/15 text-violet-600' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                  title={sidebarCollapsed ? item.title : ''}
-                >
-                  <item.icon size={18} className="flex-shrink-0" />
-                  {!sidebarCollapsed && <span className="text-sm font-medium">{item.title}</span>}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Logout Button Card */}
-          <div className="mt-4">
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
-              <button
-                onClick={handleLogout}
-                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl font-medium text-sm transition-all`}
-                title={sidebarCollapsed ? t('sidebar.logout') : ''}
-              >
-                <LogOut size={16} />
-                {!sidebarCollapsed && <span>{t('sidebar.logout')}</span>}
-              </button>
-            </div>
-          </div>
-        </aside>
+      <div className="flex pt-[57px] pb-16 lg:pb-0">
+        <UserSidebar
+          active="catalog"
+          collapsed={sidebarCollapsed}
+          onCollapseChange={setSidebarCollapsed}
+          cartCount={cartCount}
+        />
 
         {/* Main Content */}
-        <div className="flex-1">
-          <main className="p-8">
+        <div className="flex-1 min-w-0">
+          <main className="p-4 sm:p-6 lg:p-8">
             {/* Page Header with Search and Filters */}
-            <div className="mb-8">
-              <div className="flex items-center gap-4 mb-1">
+            <div className="mb-6 sm:mb-8">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4 mb-1">
                 {/* Title and Subtitle */}
                 <div className="flex-shrink-0">
-                  <h1 className="text-3xl font-extrabold text-gray-900">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
                     Каталог
                   </h1>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
                     {selectedCategory === 'all' 
                       ? `Найдено ${filteredProducts.length} товаров`
                       : `${getCategoryName(categories.find(c => c.id === selectedCategory))} — ${filteredProducts.length} товаров`
@@ -441,28 +370,31 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                 </div>
 
                 {/* Spacer */}
-                <div className="w-32 flex-shrink-0"></div>
+                <div className="hidden xl:block xl:w-32 flex-shrink-0"></div>
 
-                {/* Search - занимает всё доступное пространство */}
-                <div className="relative flex-1 max-w-xl">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Поиск товаров..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-sm text-gray-900 placeholder-gray-400"
-                  />
+                {/* Search and Filters Row */}
+                <div className="flex items-center gap-2 sm:gap-3 lg:flex-1">
+                  {/* Search */}
+                  <div className="relative flex-1 lg:max-w-xl">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Поиск товаров..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-sm text-gray-900 placeholder-gray-400"
+                    />
+                  </div>
+
+                  {/* Filters Button */}
+                  <button
+                    onClick={openFilters}
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:border-violet-300 hover:bg-violet-50/50 transition-all text-gray-900 font-semibold text-sm flex-shrink-0"
+                  >
+                    <SlidersHorizontal size={18} />
+                    <span className="hidden sm:inline">Фильтры</span>
+                  </button>
                 </div>
-
-                {/* Filters Button */}
-                <button
-                  onClick={openFilters}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:border-violet-300 hover:bg-violet-50/50 transition-all text-gray-900 font-semibold text-sm flex-shrink-0"
-                >
-                  <SlidersHorizontal size={18} />
-                  <span>Фильтры</span>
-                </button>
               </div>
             </div>
 
@@ -632,11 +564,11 @@ export default function CatalogClient({ user }: CatalogClientProps) {
 
             {/* Products Grid */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                 {[...Array(12)].map((_, i) => (
                   <div key={i} className="bg-white rounded-3xl overflow-hidden animate-pulse border border-gray-200">
                     <div className="aspect-square bg-gray-200" />
-                    <div className="p-5 space-y-2">
+                    <div className="p-3 sm:p-5 space-y-2">
                       <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
                       <div className="h-4 bg-gray-200 rounded w-3/4" />
                       <div className="flex items-center justify-between pt-1">
@@ -649,11 +581,11 @@ export default function CatalogClient({ user }: CatalogClientProps) {
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-16">
-                <Package className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <Package className="w-20 h-20 sm:w-24 sm:h-24 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
                   Товары не найдены
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-sm sm:text-base text-gray-600 mb-6">
                   Попробуйте изменить параметры поиска или фильтры
                 </p>
                 <button
@@ -669,7 +601,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                   {paginatedProducts.map((product) => {
                   const mainImage = product.images[0];
                   return (
@@ -679,7 +611,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                       className="group bg-white rounded-2xl overflow-hidden hover:shadow-xl transition-all border border-gray-200 cursor-pointer"
                     >
                       {/* Product Image */}
-                      <div className="relative aspect-square bg-white overflow-hidden p-4">
+                      <div className="relative aspect-square bg-white overflow-hidden p-2 sm:p-4">
                         {mainImage ? (
                           <img
                             src={mainImage.imageUrl}
@@ -688,7 +620,7 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center rounded-xl">
-                            <Package className="w-24 h-24 text-gray-300" />
+                            <Package className="w-16 h-16 sm:w-24 sm:h-24 text-gray-300" />
                           </div>
                         )}
                         
@@ -698,15 +630,15 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                             e.stopPropagation();
                             // TODO: Add to wishlist
                           }}
-                          className="absolute top-6 right-6 p-2.5 bg-white rounded-full hover:bg-gray-50 transition-all shadow-md"
+                          className="absolute top-3 right-3 sm:top-6 sm:right-6 p-2 sm:p-2.5 bg-white rounded-full hover:bg-gray-50 transition-all shadow-md"
                         >
-                          <Heart className="w-5 h-5 text-gray-700" />
+                          <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
                         </button>
                       </div>
 
                       {/* Product Info */}
-                      <div className="p-5 space-y-3">
-                        <h3 className="text-base font-bold text-gray-900 line-clamp-2 min-h-[3rem]">
+                      <div className="p-3 sm:p-5 space-y-2 sm:space-y-3">
+                        <h3 className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
                           {getProductName(product)}
                         </h3>
 
@@ -725,13 +657,13 @@ export default function CatalogClient({ user }: CatalogClientProps) {
                                 <Star className="w-4 h-4 fill-violet-600 text-violet-600" />
                               </div>
                             </div>
-                            <span className="text-sm font-semibold text-gray-900">
+                            <span className="text-xs sm:text-sm font-semibold text-gray-900">
                               {product.averageRating > 0 ? product.averageRating.toFixed(1) : '0'}
                             </span>
                           </div>
 
                           {/* Price */}
-                          <span className="text-base font-bold text-gray-900">
+                          <span className="text-sm sm:text-base font-bold text-gray-900">
                             {product.price}с
                           </span>
                         </div>

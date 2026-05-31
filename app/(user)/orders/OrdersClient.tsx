@@ -3,23 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Home,
-  Grid,
-  ShoppingCart,
   Package,
-  MessageCircle,
-  User,
   ChevronRight,
   ChevronLeft,
-  LogOut,
   Clock,
   CheckCircle,
   XCircle,
   MapPin,
 } from 'lucide-react';
 import UserHeader from '@/app/components/UserHeader';
+import UserSidebar from '@/app/components/UserSidebar';
+import QRCodeDisplay from '@/app/components/QRCodeDisplay';
 import { useTranslation } from '@/app/i18n/client';
 import { useChat } from '@/app/(user)/ChatContext';
+import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
 interface User {
   id: string;
@@ -60,7 +57,7 @@ interface OrdersClientProps {
 export default function OrdersClient({ user }: OrdersClientProps) {
   const router = useRouter();
   const { t } = useTranslation('user');
-  const { openChat, setSidebarCollapsed: syncSidebarToContext } = useChat();
+  const { setSidebarCollapsed: syncSidebarToContext } = useChat();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,6 +65,9 @@ export default function OrdersClient({ user }: OrdersClientProps) {
   useEffect(() => { syncSidebarToContext(sidebarCollapsed); }, [sidebarCollapsed, syncSidebarToContext]);
   const [cartCount, setCartCount] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // Блокируем скролл страницы пока открыта модалка
+  useBlockScroll(!!selectedOrder);
 
   useEffect(() => {
     fetchOrders();
@@ -153,38 +153,17 @@ export default function OrdersClient({ user }: OrdersClientProps) {
   };
 
   const getOrderCode = (orderNumber: string) => {
-    // Убираем дефисы и извлекаем последние 5 цифр
-    const digits = orderNumber.replace(/-/g, '').replace(/\D/g, '');
+    // Убираем нецифровые символы и берём последние 5 цифр
+    const digits = orderNumber.replace(/\D/g, '');
     return digits.slice(-5);
-  };
-
-  const menuItems = [
-    { title: t('nav.home'), icon: Home, href: '/home', active: false },
-    { title: t('nav.catalog'), icon: Grid, href: '/catalog', active: false },
-    { title: t('nav.orders'), icon: Package, href: '/orders', active: true },
-    { title: t('nav.cart'), icon: ShoppingCart, href: '/cart', active: false },
-    { title: t('nav.aiChat'), icon: MessageCircle, href: '/ai-chat', active: false, onClick: openChat },
-    { title: t('nav.profile'), icon: User, href: '/profile', active: false },
-  ];
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-      router.push('/login');
-      router.refresh();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Order Details Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-[65px] sm:pt-[72px] overflow-y-auto no-scrollbar">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto no-scrollbar">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Заказ #{selectedOrder.orderNumber}</h3>
@@ -207,14 +186,51 @@ export default function OrdersClient({ user }: OrdersClientProps) {
             </div>
 
             <div className="p-6">
-              {/* Код заказа */}
-              <div className="mb-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-6 border border-violet-200">
-                <p className="text-sm font-semibold text-gray-700 mb-2 text-center">Код для получения заказа</p>
-                <p className="text-4xl font-bold text-violet-600 text-center tracking-widest">
-                  {getOrderCode(selectedOrder.orderNumber)}
+              {/* Способы подтверждения: QR + код */}
+              <div className="mb-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-6 border border-violet-200">
+                <p className="text-sm font-semibold text-gray-700 mb-4 text-center">
+                  Покажите QR-код или назовите код менеджеру
                 </p>
-                <p className="text-xs text-gray-600 mt-3 text-center">
-                  Назовите этот код менеджеру при получении заказа
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                  {/* QR-код */}
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-violet-100">
+                      <QRCodeDisplay
+                        value={`ORDER:${selectedOrder.id}`}
+                        size={200}
+                      />
+                    </div>
+                    <p className="text-[11px] text-gray-500">Способ 1: QR-код</p>
+                  </div>
+
+                  {/* Разделитель */}
+                  <div className="flex sm:flex-col items-center gap-2 text-gray-400">
+                    <div className="hidden sm:block w-px h-16 bg-violet-200" />
+                    <span className="text-xs font-bold uppercase tracking-wider">или</span>
+                    <div className="hidden sm:block w-px h-16 bg-violet-200" />
+                    <div className="sm:hidden h-px w-16 bg-violet-200" />
+                  </div>
+
+                  {/* Код */}
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="bg-white px-6 py-5 rounded-2xl shadow-sm border border-violet-100 min-w-[200px]">
+                      <p className="text-[11px] font-semibold text-gray-500 text-center mb-2 uppercase tracking-wider">
+                        Код заказа
+                      </p>
+                      <p className="text-4xl font-bold text-violet-600 text-center tracking-widest">
+                        {getOrderCode(selectedOrder.orderNumber)}
+                      </p>
+                    </div>
+                    <p className="text-[11px] text-gray-500">Способ 2: цифровой код</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-600 mt-5 text-center">
+                  Менеджер отсканирует QR или введёт код для подтверждения выдачи
+                </p>
+                <p className="text-[11px] text-gray-500 mt-2 text-center">
+                  Номер заказа: <span className="font-mono">{selectedOrder.orderNumber}</span>
                 </p>
               </div>
 
@@ -292,64 +308,22 @@ export default function OrdersClient({ user }: OrdersClientProps) {
         onSearchSubmit={handleSearch}
       />
 
-      <div className="flex pt-[57px]">
-        {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
-          {/* Main Navigation Card */}
-          <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
-            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
-              {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-500">{t('sidebar.navigation')}</span>}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2 hover:bg-gray-50 rounded-lg transition-all text-gray-500 hover:text-gray-900"
-                title={sidebarCollapsed ? 'Развернуть' : 'Свернуть'}
-              >
-                {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-              </button>
-            </div>
-            
-            <nav className="space-y-1">
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => item.onClick ? item.onClick() : router.push(item.href)}
-                  className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
-                    item.active 
-                      ? 'bg-violet-500/15 text-violet-600' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                  title={sidebarCollapsed ? item.title : ''}
-                >
-                  <item.icon size={18} className="flex-shrink-0" />
-                  {!sidebarCollapsed && <span className="text-sm font-medium">{item.title}</span>}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Logout Button Card */}
-          <div className="mt-4">
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
-              <button
-                onClick={handleLogout}
-                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl font-medium text-sm transition-all`}
-                title={sidebarCollapsed ? t('sidebar.logout') : ''}
-              >
-                <LogOut size={16} />
-                {!sidebarCollapsed && <span>{t('sidebar.logout')}</span>}
-              </button>
-            </div>
-          </div>
-        </aside>
+      <div className="flex pt-[57px] pb-16 lg:pb-0">
+        <UserSidebar
+          active="orders"
+          collapsed={sidebarCollapsed}
+          onCollapseChange={setSidebarCollapsed}
+          cartCount={cartCount}
+        />
 
         {/* Main Content */}
-        <div className="flex-1">
-          <main className="p-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
+        <div className="flex-1 min-w-0">
+          <main className="p-4 sm:p-6 lg:p-8">
+            <div className="mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1 sm:mb-2">
                 {t('orders.title')}
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 История ваших заказов и их статусы
               </p>
             </div>
@@ -386,14 +360,14 @@ export default function OrdersClient({ user }: OrdersClientProps) {
                   <div
                     key={order.id}
                     onClick={() => setSelectedOrder(order)}
-                    className="bg-white rounded-2xl p-6 hover:shadow-lg transition-all border border-gray-200 cursor-pointer"
+                    className="bg-white rounded-2xl p-4 sm:p-6 hover:shadow-lg transition-all border border-gray-200 cursor-pointer"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">
+                    <div className="flex items-start justify-between gap-2 mb-3 sm:mb-4 flex-wrap">
+                      <div className="min-w-0">
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 truncate">
                           Заказ #{order.orderNumber}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs sm:text-sm text-gray-600">
                           {new Date(order.createdAt).toLocaleDateString('ru-RU', {
                             day: 'numeric',
                             month: 'long',
@@ -403,29 +377,29 @@ export default function OrdersClient({ user }: OrdersClientProps) {
                           })}
                         </p>
                       </div>
-                      <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${getStatusColor(order.status)}`}>
+                      <div className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl ${getStatusColor(order.status)}`}>
                         {getStatusIcon(order.status)}
-                        <span className="font-semibold text-sm">
+                        <span className="font-semibold text-xs sm:text-sm">
                           {getStatusText(order.status)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                      <MapPin className="w-4 h-4" />
-                      <span>{order.branch.name}, {order.branch.city}</span>
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
+                      <MapPin className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{order.branch.name}, {order.branch.city}</span>
                     </div>
 
-                    <div className="border-t border-gray-200 pt-4">
+                    <div className="border-t border-gray-200 pt-3 sm:pt-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">
+                          <span className="text-xs sm:text-sm text-gray-600">
                             {order.orderItems.length} {order.orderItems.length === 1 ? 'товар' : 'товара'}
                           </span>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm text-gray-600 mb-1">Итого:</p>
-                          <p className="text-2xl font-bold text-gray-900">
+                          <p className="text-xs sm:text-sm text-gray-600 mb-0.5 sm:mb-1">Итого:</p>
+                          <p className="text-lg sm:text-2xl font-bold text-gray-900">
                             {order.totalAmount.toLocaleString('ru-RU')} с
                           </p>
                         </div>

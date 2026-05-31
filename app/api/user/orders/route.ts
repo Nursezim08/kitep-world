@@ -19,9 +19,12 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Возвращаем только заказы с успешной оплатой —
+    // неоплаченные/отменённые заказы пользователю в "Мои заказы" не показываем.
     const orders = await prisma.orders.findMany({
       where: {
         user_id: user.id,
+        payment_status: "success",
       },
       include: {
         branches: {
@@ -138,6 +141,15 @@ export async function POST(request: NextRequest) {
     const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const orderId = crypto.randomUUID();
 
+    // Удаляем все предыдущие неоплаченные заказы пользователя,
+    // чтобы не накапливались дубликаты при перезапуске оформления.
+    await prisma.orders.deleteMany({
+      where: {
+        user_id: user.id,
+        payment_status: "failed",
+      },
+    });
+
     const order = await prisma.orders.create({
       data: {
         id: orderId,
@@ -146,6 +158,8 @@ export async function POST(request: NextRequest) {
         branch_id: branchId,
         comment: comment || null,
         total: total,
+        // Заказ ещё не оплачен. Статусы переведутся в success/paid
+        // только после подтверждения оплаты в Finik webhook.
         payment_status: "failed",
         order_status: "paid",
         order_items: {
@@ -159,7 +173,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await prisma.carts.deleteMany({ where: { user_id: user.id } });
+    // Корзину НЕ очищаем — она очистится после успешной оплаты в webhook.
+    // Иначе при отмене/неудаче оплаты пользователь потеряет товары.
 
     return NextResponse.json({ order });
   } catch (error) {

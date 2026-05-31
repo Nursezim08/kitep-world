@@ -3,18 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Home,
   Grid,
-  ShoppingCart,
   Package,
-  MessageCircle,
-  User,
   ChevronRight,
   Star,
   Heart,
   TrendingUp,
-  ChevronLeft,
-  LogOut,
   BookOpen,
   Pen,
   Palette,
@@ -24,6 +18,7 @@ import {
   Loader2,
 } from "lucide-react";
 import UserHeader from "@/app/components/UserHeader";
+import UserSidebar from "@/app/components/UserSidebar";
 import { useTranslation } from "@/app/i18n/client";
 import { useChat } from "@/app/(user)/ChatContext";
 
@@ -86,7 +81,7 @@ interface HomeClientProps {
 export default function HomeClient({ user }: HomeClientProps) {
   const router = useRouter();
   const { t } = useTranslation('user');
-  const { openChat, setSidebarCollapsed: syncSidebarToContext } = useChat();
+  const { setSidebarCollapsed: syncSidebarToContext } = useChat();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -202,27 +197,6 @@ export default function HomeClient({ user }: HomeClientProps) {
     return Grid; // По умолчанию
   };
 
-  const menuItems = [
-    { title: t('nav.home'), icon: Home, href: "/home", active: true },
-    { title: t('nav.catalog'), icon: Grid, href: "/catalog", active: false },
-    { title: t('nav.orders'), icon: Package, href: "/orders", active: false },
-    { title: t('nav.cart'), icon: ShoppingCart, href: "/cart", active: false },
-    { title: t('nav.aiChat'), icon: MessageCircle, href: "/ai-chat", active: false, onClick: openChat },
-    { title: t('nav.profile'), icon: User, href: "/profile", active: false },
-  ];
-
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-      router.push("/login");
-      router.refresh();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <UserHeader
@@ -233,84 +207,29 @@ export default function HomeClient({ user }: HomeClientProps) {
         onSearchSubmit={handleSearch}
       />
 
-      <div className="flex pt-[57px]">
-        {/* Sidebar */}
-        <aside
-          className={`${sidebarCollapsed ? "w-20" : "w-72"} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}
-        >
-          {/* Main Navigation Card */}
-          <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
-            <div
-              className={`flex items-center ${sidebarCollapsed ? "justify-center" : "justify-between"} mb-4 px-2`}
-            >
-              {!sidebarCollapsed && (
-                <span className="text-sm font-semibold text-gray-500">
-                  {t('sidebar.navigation')}
-                </span>
-              )}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2 hover:bg-gray-50 rounded-lg transition-all text-gray-500 hover:text-gray-900"
-                title={sidebarCollapsed ? t('sidebar.expand') : t('sidebar.collapse')}
-              >
-                {sidebarCollapsed ? (
-                  <ChevronRight size={18} />
-                ) : (
-                  <ChevronLeft size={18} />
-                )}
-              </button>
-            </div>
-
-            <nav className="space-y-1">
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => item.onClick ? item.onClick() : router.push(item.href)}
-                  className={`w-full flex items-center justify-center ${sidebarCollapsed ? "" : "justify-start gap-3 px-3"} py-2.5 rounded-xl transition-all ${
-                    item.active
-                      ? "bg-violet-500/15 text-violet-600"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                  title={sidebarCollapsed ? item.title : ""}
-                >
-                  <item.icon size={18} className="flex-shrink-0" />
-                  {!sidebarCollapsed && (
-                    <span className="text-sm font-medium">{item.title}</span>
-                  )}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Logout Button Card */}
-          <div className="mt-4">
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
-              <button
-                onClick={handleLogout}
-                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center" : "justify-center gap-2"} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl font-medium text-sm transition-all`}
-                title={sidebarCollapsed ? t('sidebar.logout') : ""}
-              >
-                <LogOut size={16} />
-                {!sidebarCollapsed && <span>{t('sidebar.logout')}</span>}
-              </button>
-            </div>
-          </div>
-        </aside>
+      <div className="flex pt-[57px] pb-16 lg:pb-0">
+        {/* Sidebar / Bottom Navigation */}
+        <UserSidebar
+          active="home"
+          collapsed={sidebarCollapsed}
+          onCollapseChange={setSidebarCollapsed}
+          cartCount={cartCount}
+        />
 
         {/* Main Content */}
-        <div className="flex-1">
-          <main className="p-8">
+        <div className="flex-1 min-w-0">
+          <main className="p-4 sm:p-6 lg:p-8">
             {/* Banner */}
             {loading ? (
-              <div className="mb-8 relative rounded-2xl overflow-hidden shadow-xl">
-                <div className="relative h-48 sm:h-60 lg:h-72 bg-gray-100 flex flex-col items-center justify-center gap-3">
+              <div className="mb-6 sm:mb-8 relative rounded-2xl overflow-hidden shadow-xl">
+                <div className="relative h-40 sm:h-60 lg:h-72 bg-gray-100 flex flex-col items-center justify-center gap-3">
                   <Loader2 className="w-10 h-10 text-violet-500 animate-spin" />
                   <span className="text-gray-500 text-sm font-medium">Загрузка баннера...</span>
                 </div>
               </div>
             ) : banners.length > 0 ? (
-              <div className="mb-8 relative rounded-2xl overflow-hidden shadow-xl">
-                <div className="relative h-48 sm:h-60 lg:h-72">
+              <div className="mb-6 sm:mb-8 relative rounded-2xl overflow-hidden shadow-xl">
+                <div className="relative h-40 sm:h-60 lg:h-72">
                   {banners.map((banner, index) => (
                     <div
                       key={banner.id}
@@ -326,8 +245,8 @@ export default function HomeClient({ user }: HomeClientProps) {
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-2">
+                      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8">
+                        <h2 className="text-xl sm:text-2xl lg:text-4xl font-extrabold text-white mb-2">
                           {banner.title}
                         </h2>
                         {banner.url && (
@@ -336,10 +255,10 @@ export default function HomeClient({ user }: HomeClientProps) {
                               e.stopPropagation();
                               router.push(banner.url!);
                             }}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-violet-600 rounded-xl font-bold hover:shadow-lg transition-all"
+                            className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-white text-violet-600 rounded-xl font-bold hover:shadow-lg transition-all text-sm sm:text-base"
                           >
                             Подробнее
-                            <ChevronRight className="w-5 h-5" />
+                            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                           </button>
                         )}
                       </div>
@@ -366,28 +285,28 @@ export default function HomeClient({ user }: HomeClientProps) {
               </div>
             ) : (
               // Fallback banner если нет баннеров в БД (после загрузки)
-              <div className="mb-8 relative rounded-2xl overflow-hidden shadow-xl">
-                <div className="relative h-48 sm:h-60 lg:h-72 bg-gradient-to-br from-violet-600 via-violet-500 to-indigo-600">
+              <div className="mb-6 sm:mb-8 relative rounded-2xl overflow-hidden shadow-xl">
+                <div className="relative h-40 sm:h-60 lg:h-72 bg-gradient-to-br from-violet-600 via-violet-500 to-indigo-600">
                   <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
 
                   <div className="relative h-full flex items-center">
-                    <div className="container mx-auto px-6 sm:px-8">
+                    <div className="container mx-auto px-4 sm:px-8">
                       <div className="max-w-2xl">
-                        <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-bold mb-4">
+                        <div className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs sm:text-sm font-bold mb-2 sm:mb-4">
                           🎉 {t('home.newSeason')}
                         </div>
-                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight">
+                        <h1 className="text-xl sm:text-3xl lg:text-5xl font-extrabold text-white mb-2 sm:mb-4 leading-tight">
                           {t('home.welcomeTitle')}
                         </h1>
-                        <p className="text-lg sm:text-xl text-white/90 mb-6 font-medium">
+                        <p className="hidden sm:block text-base sm:text-xl text-white/90 mb-4 sm:mb-6 font-medium">
                           {t('home.welcomeSub')}
                         </p>
                         <button
                           onClick={() => router.push("/catalog")}
-                          className="inline-flex items-center gap-2 px-8 py-4 bg-white text-violet-600 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all"
+                          className="inline-flex items-center gap-2 px-5 sm:px-8 py-2.5 sm:py-4 bg-white text-violet-600 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all text-sm sm:text-base"
                         >
                           {t('home.toCatalog')}
-                          <ChevronRight className="w-5 h-5" />
+                          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </div>
                     </div>
@@ -401,36 +320,37 @@ export default function HomeClient({ user }: HomeClientProps) {
             )}
 
             {/* Categories */}
-            <section className="mb-12">
-              <div className="flex items-center justify-between mb-6">
+            <section className="mb-8 sm:mb-12">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div>
-                  <h2 className="text-2xl font-extrabold text-gray-900">
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
                     {t('home.categoriesTitle')}
                   </h2>
                 </div>
                 <button
                   onClick={() => router.push("/catalog/categories")}
-                  className="flex items-center gap-2 text-violet-600 hover:text-violet-700 font-semibold"
+                  className="flex items-center gap-1 sm:gap-2 text-violet-600 hover:text-violet-700 font-semibold text-sm sm:text-base"
                 >
-                  {t('home.allCategories')}
-                  <ChevronRight className="w-5 h-5" />
+                  <span className="hidden sm:inline">{t('home.allCategories')}</span>
+                  <span className="sm:hidden">Все</span>
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
               {loading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                   {[...Array(6)].map((_, i) => (
                     <div
                       key={i}
-                      className="bg-white rounded-2xl p-6 animate-pulse"
+                      className="bg-white rounded-2xl p-4 sm:p-6 animate-pulse"
                     >
-                      <div className="w-16 h-16 bg-gray-200 rounded-xl mb-4 mx-auto" />
-                      <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-xl mb-3 sm:mb-4 mx-auto" />
+                      <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4 mx-auto" />
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                   {categories.slice(0, 6).map((category) => {
                     const categoryName = getCategoryName(category);
                     const CategoryIcon = getCategoryIcon(categoryName);
@@ -441,23 +361,23 @@ export default function HomeClient({ user }: HomeClientProps) {
                         onClick={() =>
                           router.push(`/catalog?category=${category.id}`)
                         }
-                        className="group bg-white rounded-2xl p-6 hover:shadow-xl transition-all border border-gray-100 hover:border-violet-200"
+                        className="group bg-white rounded-2xl p-3 sm:p-6 hover:shadow-xl transition-all border border-gray-100 hover:border-violet-200"
                       >
-                        <div className="w-16 h-16 bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl flex items-center justify-center mb-2 sm:mb-4 mx-auto group-hover:scale-110 transition-transform">
                           {category.image ? (
                             <img
                               src={category.image}
                               alt={categoryName}
-                              className="w-10 h-10 object-contain"
+                              className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
                             />
                           ) : (
-                            <CategoryIcon className="w-8 h-8 text-violet-600" />
+                            <CategoryIcon className="w-6 h-6 sm:w-8 sm:h-8 text-violet-600" />
                           )}
                         </div>
-                        <h3 className="text-sm font-bold text-gray-900 text-center mb-1">
+                        <h3 className="text-xs sm:text-sm font-bold text-gray-900 text-center mb-0.5 sm:mb-1 line-clamp-2">
                           {categoryName}
                         </h3>
-                        <p className="text-xs text-gray-500 text-center">
+                        <p className="text-[10px] sm:text-xs text-gray-500 text-center">
                           {category._count.products} {t('home.items')}
                         </p>
                       </button>
@@ -469,36 +389,37 @@ export default function HomeClient({ user }: HomeClientProps) {
 
             {/* Popular Products */}
             <section>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <TrendingUp className="w-6 h-6 text-violet-600" />
-                    <h2 className="text-2xl font-extrabold text-gray-900">
+                    <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-violet-600" />
+                    <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
                       {t('home.popularTitle')}
                     </h2>
                   </div>
-                  <p className="text-gray-600">
+                  <p className="hidden sm:block text-gray-600">
                     {t('home.popularSub')}
                   </p>
                 </div>
                 <button
                   onClick={() => router.push("/catalog")}
-                  className="flex items-center gap-2 text-violet-600 hover:text-violet-700 font-semibold"
+                  className="flex items-center gap-1 sm:gap-2 text-violet-600 hover:text-violet-700 font-semibold text-sm sm:text-base"
                 >
-                  {t('home.allProducts')}
-                  <ChevronRight className="w-5 h-5" />
+                  <span className="hidden sm:inline">{t('home.allProducts')}</span>
+                  <span className="sm:hidden">Все</span>
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
               {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                   {[...Array(8)].map((_, i) => (
                     <div
                       key={i}
                       className="bg-white rounded-2xl overflow-hidden animate-pulse"
                     >
                       <div className="aspect-square bg-gray-200" />
-                      <div className="p-4 space-y-3">
+                      <div className="p-3 sm:p-4 space-y-3">
                         <div className="h-4 bg-gray-200 rounded w-3/4" />
                         <div className="h-4 bg-gray-200 rounded w-1/2" />
                         <div className="h-10 bg-gray-200 rounded" />
@@ -507,7 +428,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                   {products.map((product) => {
                     const mainImage = product.images[0];
                     return (
@@ -517,7 +438,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                         className="group bg-white rounded-2xl overflow-hidden hover:shadow-xl transition-all border border-gray-200 cursor-pointer"
                       >
                         {/* Product Image */}
-                        <div className="relative aspect-square bg-white overflow-hidden p-4">
+                        <div className="relative aspect-square bg-white overflow-hidden p-2 sm:p-4">
                           {mainImage ? (
                             <img
                               src={mainImage.imageUrl}
@@ -526,7 +447,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center rounded-xl">
-                              <Package className="w-24 h-24 text-gray-300" />
+                              <Package className="w-16 h-16 sm:w-24 sm:h-24 text-gray-300" />
                             </div>
                           )}
 
@@ -536,15 +457,15 @@ export default function HomeClient({ user }: HomeClientProps) {
                               e.stopPropagation();
                               // TODO: Add to wishlist
                             }}
-                            className="absolute top-6 right-6 p-2.5 bg-white rounded-full hover:bg-gray-50 transition-all shadow-md"
+                            className="absolute top-3 right-3 sm:top-6 sm:right-6 p-2 sm:p-2.5 bg-white rounded-full hover:bg-gray-50 transition-all shadow-md"
                           >
-                            <Heart className="w-5 h-5 text-gray-700" />
+                            <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
                           </button>
                         </div>
 
                         {/* Product Info */}
-                        <div className="p-5 space-y-3">
-                          <h3 className="text-base font-bold text-gray-900 line-clamp-2 min-h-[3rem]">
+                        <div className="p-3 sm:p-5 space-y-2 sm:space-y-3">
+                          <h3 className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
                             {getProductName(product)}
                           </h3>
 
@@ -565,7 +486,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                                   <Star className="w-4 h-4 fill-violet-600 text-violet-600" />
                                 </div>
                               </div>
-                              <span className="text-sm font-semibold text-gray-900">
+                              <span className="text-xs sm:text-sm font-semibold text-gray-900">
                                 {product.averageRating > 0
                                   ? product.averageRating.toFixed(1)
                                   : "0"}
@@ -573,7 +494,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                             </div>
 
                             {/* Price */}
-                            <span className="text-base font-bold text-gray-900">
+                            <span className="text-sm sm:text-base font-bold text-gray-900">
                               {product.price}с
                             </span>
                           </div>

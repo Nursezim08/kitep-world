@@ -1,17 +1,76 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bot, X, Maximize2, Minimize2, Send } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Bot, X, Maximize2, Minimize2, Send, Package, Star } from 'lucide-react';
 import { useChat } from '@/app/(user)/ChatContext';
+
+interface ProductCard {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  brand: string | null;
+  sku: string;
+  imageUrl: string | null;
+  averageRating: number;
+  reviewsCount: number;
+  categoryId: string;
+  categoryName: string | null;
+  inStock: boolean;
+}
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  products?: ProductCard[];
+}
+
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat('ru-RU').format(price);
+}
+
+function ProductCardItem({ product, onClick }: { product: ProductCard; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      className="flex gap-2 bg-white border border-gray-200 rounded-xl p-2 hover:shadow-md hover:border-violet-300 transition-all cursor-pointer"
+    >
+      <div className="w-14 h-14 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
+        {product.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain" />
+        ) : (
+          <Package className="w-6 h-6 text-gray-300" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-xs text-gray-900 line-clamp-2 leading-tight">{product.name}</p>
+        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+          {product.reviewsCount > 0 && (
+            <div className="flex items-center gap-0.5 text-[10px] text-gray-600">
+              <Star className="w-2.5 h-2.5 fill-violet-600 text-violet-600" />
+              <span>{product.averageRating}</span>
+            </div>
+          )}
+          <span
+            className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+              product.inStock ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+            }`}
+          >
+            {product.inStock ? 'В наличии' : 'Нет'}
+          </span>
+        </div>
+        <p className="text-sm font-bold text-gray-900 mt-0.5">{formatPrice(product.price)} KGS</p>
+      </div>
+    </div>
+  );
 }
 
 export default function AIChatPanel() {
+  const router = useRouter();
   const { isOpen, closeChat, sidebarCollapsed } = useChat();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -22,6 +81,7 @@ export default function AIChatPanel() {
   const [initialized, setInitialized] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!initialized) {
@@ -39,7 +99,8 @@ export default function AIChatPanel() {
         {
           id: '1',
           role: 'assistant',
-          content: 'Здравствуйте! Я AI-помощник Nur-Kitep. Чем могу помочь вам сегодня?',
+          content:
+            'Здравствуйте! Я AI-помощник Nur-Kitep. Помогу подобрать товары из каталога. Если нужного товара нет в наличии — предложу аналоги.',
           timestamp: new Date(),
         },
       ]);
@@ -48,7 +109,15 @@ export default function AIChatPanel() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, loading]);
+
+  // Авто-рост textarea
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`;
+  }, [inputMessage]);
 
   const handleDragStart = useCallback(
     (e: React.MouseEvent) => {
@@ -104,14 +173,14 @@ export default function AIChatPanel() {
     [position, size],
   );
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputMessage.trim() || loading) return;
+  const handleSendMessage = async () => {
+    const text = inputMessage.trim();
+    if (!text || loading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: inputMessage,
+      content: text,
       timestamp: new Date(),
     };
 
@@ -119,33 +188,67 @@ export default function AIChatPanel() {
     setInputMessage('');
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const history = messages.map((m) => ({ role: m.role, content: m.content }));
+      const response = await fetch('/api/user/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, messages: history }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Ошибка запроса');
+      }
+
+      const data = await response.json();
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content:
-          'Спасибо за ваш вопрос! AI-помощник находится в разработке. Скоро я смогу помочь вам с выбором товаров, ответить на вопросы о заказах и многое другое.',
+        content: data.reply || '...',
         timestamp: new Date(),
+        products: Array.isArray(data.products) ? data.products : [],
       };
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `Не удалось получить ответ: ${error?.message || 'неизвестная ошибка'}.`,
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSendMessage();
+  };
+
+  // Enter — перенос строки, отправка только по кнопке.
+  // Textarea по умолчанию не сабмитит форму на Enter, поэтому ничего блокировать не нужно.
+  const handleKeyDown = (_e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    return;
   };
 
   if (!isOpen || !initialized) return null;
 
-  const sidebarLeft = sidebarCollapsed ? 80 : 288;
-
   const panelStyle = isFullscreen
     ? ({
         position: 'fixed',
-        top: 57,
-        left: sidebarLeft,
+        top: 0,
+        left: 0,
         right: 0,
         bottom: 0,
-        width: `calc(100% - ${sidebarLeft}px)`,
-        height: 'calc(100vh - 57px)',
-        zIndex: 9999,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
         borderRadius: 0,
       } as React.CSSProperties)
     : ({
@@ -206,14 +309,27 @@ export default function AIChatPanel() {
               </div>
             )}
             <div
-              className={`max-w-[78%] rounded-2xl px-3 py-2.5 ${
-                message.role === 'user' ? 'bg-violet-600 text-white' : 'bg-white text-gray-900 shadow-sm border border-gray-100'
+              className={`max-w-[78%] flex flex-col gap-2 ${
+                message.role === 'user' ? 'items-end' : 'items-start'
               }`}
             >
-              <p className="text-sm leading-relaxed">{message.content}</p>
-              <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-violet-200' : 'text-gray-400'}`}>
-                {message.timestamp.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-              </p>
+              <div
+                className={`rounded-2xl px-3 py-2.5 ${
+                  message.role === 'user' ? 'bg-violet-600 text-white' : 'bg-white text-gray-900 shadow-sm border border-gray-100'
+                }`}
+              >
+                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+                <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-violet-200' : 'text-gray-400'}`}>
+                  {message.timestamp.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              {message.role === 'assistant' && message.products && message.products.length > 0 && (
+                <div className="flex flex-col gap-1.5 w-full">
+                  {message.products.map((p) => (
+                    <ProductCardItem key={p.id} product={p} onClick={() => router.push(`/product/${p.id}`)} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -235,14 +351,16 @@ export default function AIChatPanel() {
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSendMessage} className="border-t border-gray-200 p-3 bg-white flex-shrink-0">
-        <div className="flex gap-2">
-          <input
-            type="text"
+      <form onSubmit={handleFormSubmit} className="border-t border-gray-200 p-3 bg-white flex-shrink-0">
+        <div className="flex gap-2 items-end">
+          <textarea
+            ref={textareaRef}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Введите сообщение..."
-            className="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-gray-900 placeholder-gray-400"
+            rows={1}
+            className="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-gray-900 placeholder-gray-400 resize-none max-h-32 leading-relaxed no-scrollbar"
             disabled={loading}
           />
           <button

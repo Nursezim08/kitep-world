@@ -4,15 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
-  ShoppingCart,
-  Home,
-  Grid,
   Package,
-  MessageCircle,
   User,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
   MapPin,
   CreditCard,
   ArrowLeft,
@@ -21,6 +14,7 @@ import {
 } from 'lucide-react';
 import BranchSelect from '@/app/components/BranchSelect';
 import UserHeader from '@/app/components/UserHeader';
+import UserSidebar from '@/app/components/UserSidebar';
 import { useTranslation } from '@/app/i18n/client';
 import { useChat } from '@/app/(user)/ChatContext';
 
@@ -66,7 +60,7 @@ interface Branch {
 export default function CheckoutClient({ user }: { user: User }) {
   const router = useRouter();
   const { t } = useTranslation('user');
-  const { openChat, setSidebarCollapsed: syncSidebarToContext } = useChat();
+  const { setSidebarCollapsed: syncSidebarToContext } = useChat();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>('');
@@ -166,26 +160,7 @@ export default function CheckoutClient({ user }: { user: User }) {
     }
   };
 
-  const menuItems = [
-    { title: t('nav.home'), icon: Home, href: '/home', active: false },
-    { title: t('nav.catalog'), icon: Grid, href: '/catalog', active: false },
-    { title: t('nav.orders'), icon: Package, href: '/orders', active: false },
-    { title: t('nav.cart'), icon: ShoppingCart, href: '/cart', active: true },
-    { title: t('nav.aiChat'), icon: MessageCircle, href: '/ai-chat', active: false, onClick: openChat },
-    { title: t('nav.profile'), icon: User, href: '/profile', active: false },
-  ];
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-      router.push('/login');
-      router.refresh();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+  // Удалили menuItems в пользу UserSidebar
 
   if (loading) {
     return (
@@ -204,112 +179,65 @@ export default function CheckoutClient({ user }: { user: User }) {
         onSearchChange={setSearchQuery}
       />
 
-      <div className="flex pt-[57px]">
-        {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
-          {/* Main Navigation Card */}
-          <div className="bg-white rounded-2xl shadow-sm p-4 mb-4">
-            <div className="flex items-center justify-between mb-4">
-              {!sidebarCollapsed && (
-                <h3 className="text-sm font-bold text-gray-900">{t('sidebar.navigation')}</h3>
-              )}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
-              >
-                {sidebarCollapsed ? (
-                  <ChevronRight size={18} className="text-gray-600" />
-                ) : (
-                  <ChevronLeft size={18} className="text-gray-600" />
-                )}
-              </button>
-            </div>
-
-            <nav className="space-y-1">
-              {menuItems.map((item) => (
-                <button
-                  key={item.title}
-                  onClick={() => item.onClick ? item.onClick() : router.push(item.href)}
-                  className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-xl transition-all ${
-                    item.active
-                      ? 'bg-gradient-to-r from-violet-500 to-violet-600 text-white shadow-lg shadow-violet-500/30'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <item.icon size={20} />
-                  {!sidebarCollapsed && (
-                    <span className="text-sm font-medium">{item.title}</span>
-                  )}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Logout Button */}
-          <div className="mt-4">
-            <button
-              onClick={handleLogout}
-              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all`}
-            >
-              <LogOut size={20} />
-              {!sidebarCollapsed && (
-                <span className="text-sm font-medium">{t('sidebar.logout')}</span>
-              )}
-            </button>
-          </div>
-        </aside>
+      <div className="flex pt-[57px] pb-16 lg:pb-0">
+        <UserSidebar
+          active="cart"
+          collapsed={sidebarCollapsed}
+          onCollapseChange={setSidebarCollapsed}
+          cartCount={cartItems.length}
+        />
 
         {/* Main Content */}
-        <main className="flex-1 p-8">
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             {/* Page Title */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <button
                 onClick={() => router.push('/cart')}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 sm:mb-4 transition-colors"
               >
-                <ArrowLeft size={20} />
+                <ArrowLeft size={18} />
                 <span className="text-sm font-medium">Назад в корзину</span>
               </button>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <CreditCard size={32} className="text-violet-600" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                <CreditCard className="w-7 h-7 sm:w-8 sm:h-8 text-violet-600" />
                 Оформление заказа
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
                 Выберите филиал для самовывоза и подтвердите заказ
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
               {/* Форма оформления */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                 {/* Информация о покупателе */}
-                <div className="bg-white rounded-2xl shadow-sm p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <User size={24} className="text-violet-600" />
+                <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+                    <User className="w-5 h-5 sm:w-6 sm:h-6 text-violet-600" />
                     Информация о покупателе
                   </h2>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                      <User size={18} className="text-gray-600" />
-                      <div>
-                        <p className="text-sm text-gray-600">Имя</p>
-                        <p className="font-semibold text-gray-900">{user.fullName}</p>
+                      <User size={18} className="text-gray-600 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm text-gray-600">Имя</p>
+                        <p className="text-sm sm:text-base font-semibold text-gray-900 truncate">{user.fullName}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                      <Mail size={18} className="text-gray-600" />
-                      <div>
-                        <p className="text-sm text-gray-600">Email</p>
-                        <p className="font-semibold text-gray-900">{user.email}</p>
+                      <Mail size={18} className="text-gray-600 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm text-gray-600">Email</p>
+                        <p className="text-sm sm:text-base font-semibold text-gray-900 truncate">{user.email}</p>
                       </div>
                     </div>
                     {user.phone && (
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                        <Phone size={18} className="text-gray-600" />
-                        <div>
-                          <p className="text-sm text-gray-600">Телефон</p>
-                          <p className="font-semibold text-gray-900">{user.phone}</p>
+                        <Phone size={18} className="text-gray-600 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm text-gray-600">Телефон</p>
+                          <p className="text-sm sm:text-base font-semibold text-gray-900 truncate">{user.phone}</p>
                         </div>
                       </div>
                     )}
@@ -317,12 +245,12 @@ export default function CheckoutClient({ user }: { user: User }) {
                 </div>
 
                 {/* Выбор филиала */}
-                <div className="bg-white rounded-2xl shadow-sm p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <MapPin size={24} className="text-violet-600" />
+                <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 flex-wrap">
+                    <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-violet-600" />
                     Выберите филиал для самовывоза
                     {branches.length > 0 && (
-                      <span className="text-sm font-normal text-gray-600">
+                      <span className="text-xs sm:text-sm font-normal text-gray-600">
                         ({branches.length} доступно)
                       </span>
                     )}
@@ -344,8 +272,8 @@ export default function CheckoutClient({ user }: { user: User }) {
                 </div>
 
                 {/* Комментарий к заказу */}
-                <div className="bg-white rounded-2xl shadow-sm p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">
+                <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">
                     Комментарий к заказу (необязательно)
                   </h2>
                   <textarea
@@ -353,15 +281,15 @@ export default function CheckoutClient({ user }: { user: User }) {
                     onChange={(e) => setComment(e.target.value)}
                     placeholder="Укажите дополнительные пожелания или информацию..."
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-gray-900 placeholder-gray-400 resize-none"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 text-gray-900 placeholder-gray-400 resize-none text-sm"
                   />
                 </div>
               </div>
 
               {/* Итоговая информация */}
               <div className="lg:col-span-1">
-                <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6">
+                <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 lg:sticky lg:top-24">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
                     Ваш заказ
                   </h2>
 

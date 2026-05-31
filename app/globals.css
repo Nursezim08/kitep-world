@@ -87,6 +87,11 @@
   background: #a78bfa;
 }
 
+/* Mobile bottom nav safe-area */
+.bottom-nav-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

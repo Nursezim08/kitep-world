@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import LightDatePicker from '@/app/components/LightDatePicker';
 import LightCustomSelect from '@/app/components/LightCustomSelect';
+import QRScanner from '@/app/components/QRScanner';
+import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
 interface OrderStats {
   total: string;
@@ -70,7 +72,14 @@ export default function ManagerOrdersClient() {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [completeError, setCompleteError] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
+  const [confirmMode, setConfirmMode] = useState<'qr' | 'code'>('qr');
+  const [scannerActive, setScannerActive] = useState(false);
+  const [scannedCode, setScannedCode] = useState('');
+  const [scanStatus, setScanStatus] = useState<'idle' | 'success' | 'invalid'>('idle');
+  const [manualCode, setManualCode] = useState('');
+
+  // Блокируем скролл страницы пока открыта модалка выдачи
+  useBlockScroll(!!confirmOrder);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -131,18 +140,65 @@ export default function ManagerOrdersClient() {
     dateTo !== '' ||
     sortBy !== 'date_desc';
 
+  const getExpectedQrCode = (order: Order | null) => {
+    if (!order) return '';
+    return `ORDER:${order.rawId}`;
+  };
+
+  const getExpectedManualCode = (order: Order | null) => {
+    if (!order) return '';
+    // Последние 5 цифр номера заказа (как у клиента в модалке)
+    const digits = order.id.replace(/\D/g, '');
+    return digits.slice(-5);
+  };
+
+  const handleScan = (decoded: string) => {
+    if (!confirmOrder) return;
+    if (scanStatus === 'success') return;
+
+    const trimmed = decoded.trim();
+    const expected = getExpectedQrCode(confirmOrder);
+
+    if (trimmed === expected) {
+      setScannedCode(trimmed);
+      setScanStatus('success');
+      setScannerActive(false);
+      setCompleteError('');
+    } else {
+      setScanStatus('invalid');
+      setCompleteError('QR-код не соответствует этому заказу');
+    }
+  };
+
+  const isQrConfirmed = () =>
+    !!confirmOrder &&
+    scanStatus === 'success' &&
+    scannedCode === getExpectedQrCode(confirmOrder);
+
+  const isCodeConfirmed = () =>
+    !!confirmOrder &&
+    manualCode.length === 5 &&
+    manualCode === getExpectedManualCode(confirmOrder);
+
   const handleComplete = async () => {
     if (!confirmOrder || !orderDetails) return;
-    
-    // Извлекаем последние 5 цифр из order_number (убираем дефисы)
-    const orderNumberDigits = confirmOrder.id.replace(/-/g, '').replace(/\D/g, '');
-    const expectedCode = orderNumberDigits.slice(-5);
-    
-    if (verificationCode !== expectedCode) {
-      setCompleteError('Неверный код заказа');
-      return;
+
+    if (confirmMode === 'qr') {
+      if (!isQrConfirmed()) {
+        setCompleteError('Сначала отсканируйте QR-код заказа');
+        return;
+      }
+    } else {
+      if (manualCode.length !== 5) {
+        setCompleteError('Введите 5 цифр кода');
+        return;
+      }
+      if (!isCodeConfirmed()) {
+        setCompleteError('Неверный код заказа');
+        return;
+      }
     }
-    
+
     setCompleting(true);
     setCompleteError('');
     try {
@@ -156,7 +212,11 @@ export default function ManagerOrdersClient() {
       }
       setConfirmOrder(null);
       setOrderDetails(null);
-      setVerificationCode('');
+      setScannedCode('');
+      setScanStatus('idle');
+      setScannerActive(false);
+      setManualCode('');
+      setConfirmMode('qr');
       await fetchOrders();
       await fetchStats();
     } catch {
@@ -166,10 +226,25 @@ export default function ManagerOrdersClient() {
     }
   };
 
+  const closeConfirmModal = () => {
+    setConfirmOrder(null);
+    setOrderDetails(null);
+    setCompleteError('');
+    setScannedCode('');
+    setScanStatus('idle');
+    setScannerActive(false);
+    setManualCode('');
+    setConfirmMode('qr');
+  };
+
   const openConfirmModal = async (order: Order) => {
     setConfirmOrder(order);
     setCompleteError('');
-    setVerificationCode('');
+    setScannedCode('');
+    setScanStatus('idle');
+    setScannerActive(true);
+    setManualCode('');
+    setConfirmMode('qr');
     setLoadingDetails(true);
     
     console.log('[openConfirmModal] Opening modal for order:', order.rawId);
@@ -256,7 +331,7 @@ export default function ManagerOrdersClient() {
                 </div>
               </div>
               <button
-                onClick={() => { setConfirmOrder(null); setOrderDetails(null); setCompleteError(''); setVerificationCode(''); }}
+                onClick={closeConfirmModal}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X size={18} />
@@ -355,22 +430,134 @@ export default function ManagerOrdersClient() {
                     </div>
                   </div>
 
-                  {/* Код подтверждения */}
+                  {/* Способ подтверждения */}
                   <div className="mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Код заказа (последние 5 цифр номера заказа)
-                    </label>
-                    <input
-                      type="text"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                      placeholder="Введите 5 цифр"
-                      maxLength={5}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 text-center text-2xl font-bold tracking-widest"
-                    />
-                    <p className="text-xs text-gray-500 mt-2 text-center">
-                      Попросите клиента назвать последние 5 цифр номера заказа
-                    </p>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Подтверждение выдачи
+                      </label>
+                      {(scanStatus === 'success' || isCodeConfirmed()) && (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-lg">
+                          <CheckCircle size={12} /> Подтверждено
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setConfirmMode('qr');
+                          setCompleteError('');
+                        }}
+                        className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                          confirmMode === 'qr'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        Сканировать QR
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setConfirmMode('code');
+                          setCompleteError('');
+                          setScannerActive(false);
+                        }}
+                        className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                          confirmMode === 'code'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        Ввести код
+                      </button>
+                    </div>
+
+                    {confirmMode === 'qr' ? (
+                      scanStatus === 'success' ? (
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <CheckCircle className="text-green-600" size={20} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-green-700">QR-код успешно отсканирован</p>
+                            <p className="text-xs text-green-600 truncate">Заказ совпадает. Можно выдать.</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setScanStatus('idle');
+                              setScannedCode('');
+                              setCompleteError('');
+                              setScannerActive(true);
+                            }}
+                            className="text-xs font-semibold text-green-700 hover:text-green-800"
+                          >
+                            Сканировать ещё
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-end mb-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setScanStatus('idle');
+                                setScannedCode('');
+                                setCompleteError('');
+                                setScannerActive((v) => !v);
+                              }}
+                              className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                            >
+                              {scannerActive ? 'Остановить камеру' : 'Включить камеру'}
+                            </button>
+                          </div>
+                          {scannerActive ? (
+                            <QRScanner
+                              active={scannerActive}
+                              onScan={handleScan}
+                              onError={(err) => setCompleteError(err)}
+                            />
+                          ) : (
+                            <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center">
+                              <p className="text-xs text-gray-500">
+                                Нажмите «Включить камеру», чтобы отсканировать QR-код заказа.
+                              </p>
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500 mt-2 text-center">
+                            Попросите клиента показать QR-код из его аккаунта
+                          </p>
+                        </>
+                      )
+                    ) : (
+                      <>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          value={manualCode}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, '').slice(0, 5);
+                            setManualCode(digits);
+                            if (completeError) setCompleteError('');
+                          }}
+                          placeholder="Введите 5 цифр"
+                          maxLength={5}
+                          className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 text-center text-2xl font-bold tracking-widest ${
+                            isCodeConfirmed()
+                              ? 'border-green-500 focus:ring-green-500/40 text-green-700'
+                              : 'border-gray-200 focus:ring-green-500/40 focus:border-green-500'
+                          }`}
+                        />
+                        <p className="text-xs text-gray-500 mt-2 text-center">
+                          Попросите клиента назвать 5-значный код заказа
+                        </p>
+                      </>
+                    )}
                   </div>
 
                   {completeError && (
@@ -382,7 +569,7 @@ export default function ManagerOrdersClient() {
 
                   <div className="flex gap-3">
                     <button
-                      onClick={() => { setConfirmOrder(null); setOrderDetails(null); setCompleteError(''); setVerificationCode(''); }}
+                      onClick={closeConfirmModal}
                       disabled={completing}
                       className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
                     >
@@ -390,7 +577,10 @@ export default function ManagerOrdersClient() {
                     </button>
                     <button
                       onClick={handleComplete}
-                      disabled={completing || verificationCode.length !== 5}
+                      disabled={
+                        completing ||
+                        (confirmMode === 'qr' ? !isQrConfirmed() : !isCodeConfirmed())
+                      }
                       className="flex-1 px-4 py-3 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {completing ? (

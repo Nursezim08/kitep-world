@@ -25,7 +25,10 @@ const FINIK_ACCOUNT_ID = process.env.FINIK_ACCOUNT_ID;
 
 const FINIK_PRIVATE_KEY = (() => {
   if (process.env.FINIK_PRIVATE_KEY) {
-    const key = process.env.FINIK_PRIVATE_KEY.trim();
+    // Поддержка ключа, заданного одной строкой с литеральными \n
+    // (стандартная практика передачи PEM через Docker --env-file и системы CI/CD,
+    //  которые не умеют корректно работать с многострочными значениями)
+    const key = process.env.FINIK_PRIVATE_KEY.replace(/\\n/g, '\n').trim();
     if (!isInitialized) {
       if (process.env.NODE_ENV === 'development') {
         console.log('✓ Using FINIK_PRIVATE_KEY from environment');
@@ -104,6 +107,15 @@ export async function createFinikPayment(data: CreatePaymentData): Promise<strin
 
   if (FINIK_ENV === 'prod' && !FINIK_PRIVATE_KEY) {
     throw new Error('FINIK_PRIVATE_KEY is required for production environment');
+  }
+
+  if (FINIK_ENV === 'prod' && FINIK_PRIVATE_KEY) {
+    if (!FINIK_PRIVATE_KEY.includes('-----BEGIN') || !FINIK_PRIVATE_KEY.includes('-----END')) {
+      throw new Error('FINIK_PRIVATE_KEY is malformed: missing PEM header/footer');
+    }
+    if (FINIK_PRIVATE_KEY.includes('вставь сюда') || FINIK_PRIVATE_KEY.includes('YOUR_')) {
+      throw new Error('FINIK_PRIVATE_KEY contains a placeholder value, not the real key');
+    }
   }
 
   const timestamp = Date.now().toString();

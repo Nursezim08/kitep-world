@@ -3,15 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Home,
   Grid,
-  ShoppingCart,
-  Package,
-  MessageCircle,
-  User,
-  ChevronRight,
-  ChevronLeft,
-  LogOut,
   BookOpen,
   Pen,
   Palette,
@@ -21,6 +13,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import UserHeader from '@/app/components/UserHeader';
+import UserSidebar from '@/app/components/UserSidebar';
 import { useTranslation } from '@/app/i18n/client';
 import { useChat } from '@/app/(user)/ChatContext';
 
@@ -52,7 +45,7 @@ interface CategoriesClientProps {
 export default function CategoriesClient({ user }: CategoriesClientProps) {
   const router = useRouter();
   const { t } = useTranslation('user');
-  const { openChat, setSidebarCollapsed: syncSidebarToContext } = useChat();
+  const { setSidebarCollapsed: syncSidebarToContext } = useChat();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,27 +105,6 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
     return name.includes(searchQuery.toLowerCase());
   });
 
-  const menuItems = [
-    { title: t('nav.home'), icon: Home, href: '/home', active: false },
-    { title: t('nav.catalog'), icon: Grid, href: '/catalog', active: true },
-    { title: t('nav.orders'), icon: Package, href: '/orders', active: false },
-    { title: t('nav.cart'), icon: ShoppingCart, href: '/cart', active: false },
-    { title: t('nav.aiChat'), icon: MessageCircle, href: '/ai-chat', active: false, onClick: openChat },
-    { title: t('nav.profile'), icon: User, href: '/profile', active: false },
-  ];
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-      router.push('/login');
-      router.refresh();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <UserHeader
@@ -142,99 +114,57 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
         onSearchChange={setSearchQuery}
       />
 
-      <div className="flex pt-[57px]">
-        {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
-          {/* Main Navigation Card */}
-          <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
-            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
-              {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-500">{t('sidebar.navigation')}</span>}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2 hover:bg-gray-50 rounded-lg transition-all text-gray-500 hover:text-gray-900"
-                title={sidebarCollapsed ? 'Развернуть' : 'Свернуть'}
-              >
-                {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-              </button>
-            </div>
-            
-            <nav className="space-y-1">
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => item.onClick ? item.onClick() : router.push(item.href)}
-                  className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
-                    item.active 
-                      ? 'bg-violet-500/15 text-violet-600' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                  title={sidebarCollapsed ? item.title : ''}
-                >
-                  <item.icon size={18} className="flex-shrink-0" />
-                  {!sidebarCollapsed && <span className="text-sm font-medium">{item.title}</span>}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Logout Button Card */}
-          <div className="mt-4">
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
-              <button
-                onClick={handleLogout}
-                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl font-medium text-sm transition-all`}
-                title={sidebarCollapsed ? t('sidebar.logout') : ''}
-              >
-                <LogOut size={16} />
-                {!sidebarCollapsed && <span>{t('sidebar.logout')}</span>}
-              </button>
-            </div>
-          </div>
-        </aside>
+      <div className="flex pt-[57px] pb-16 lg:pb-0">
+        <UserSidebar
+          active="catalog"
+          collapsed={sidebarCollapsed}
+          onCollapseChange={setSidebarCollapsed}
+          cartCount={cartCount}
+        />
 
         {/* Main Content */}
-        <div className="flex-1">
-          <main className="p-8">
+        <div className="flex-1 min-w-0">
+          <main className="p-4 sm:p-6 lg:p-8">
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <button
                 onClick={() => router.push('/home')}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 font-medium"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 sm:mb-4 font-medium text-sm"
               >
-                <ArrowLeft size={20} />
+                <ArrowLeft size={18} />
                 Назад на главную
               </button>
-              <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1 sm:mb-2">
                 Все категории
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Выберите категорию для просмотра товаров
               </p>
             </div>
 
             {/* Categories Grid */}
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {[...Array(12)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl p-6 animate-pulse">
-                    <div className="w-16 h-16 bg-gray-200 rounded-xl mb-4 mx-auto" />
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2" />
-                    <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto" />
+                  <div key={i} className="bg-white rounded-2xl p-4 sm:p-6 animate-pulse">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-xl mb-3 sm:mb-4 mx-auto" />
+                    <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2" />
+                    <div className="h-2 sm:h-3 bg-gray-200 rounded w-1/2 mx-auto" />
                   </div>
                 ))}
               </div>
             ) : filteredCategories.length === 0 ? (
               <div className="text-center py-16">
                 <Grid className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
                   Категории не найдены
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-sm sm:text-base text-gray-600">
                   Попробуйте изменить поисковый запрос
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {filteredCategories.map((category) => {
                   const categoryName = getCategoryName(category);
                   const CategoryIcon = getCategoryIcon(categoryName);
@@ -243,23 +173,23 @@ export default function CategoriesClient({ user }: CategoriesClientProps) {
                     <button
                       key={category.id}
                       onClick={() => router.push(`/catalog?category=${category.id}`)}
-                      className="group bg-white rounded-2xl p-6 hover:shadow-xl transition-all border border-gray-100 hover:border-violet-200"
+                      className="group bg-white rounded-2xl p-3 sm:p-6 hover:shadow-xl transition-all border border-gray-100 hover:border-violet-200"
                     >
-                      <div className="w-16 h-16 bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl flex items-center justify-center mb-2 sm:mb-4 mx-auto group-hover:scale-110 transition-transform">
                         {category.image ? (
                           <img
                             src={category.image}
                             alt={categoryName}
-                            className="w-10 h-10 object-contain"
+                            className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
                           />
                         ) : (
-                          <CategoryIcon className="w-8 h-8 text-violet-600" />
+                          <CategoryIcon className="w-6 h-6 sm:w-8 sm:h-8 text-violet-600" />
                         )}
                       </div>
-                      <h3 className="text-sm font-bold text-gray-900 text-center mb-1">
+                      <h3 className="text-xs sm:text-sm font-bold text-gray-900 text-center mb-0.5 sm:mb-1 line-clamp-2">
                         {categoryName}
                       </h3>
-                      <p className="text-xs text-gray-500 text-center">
+                      <p className="text-[10px] sm:text-xs text-gray-500 text-center">
                         {category._count.products} товаров
                       </p>
                     </button>

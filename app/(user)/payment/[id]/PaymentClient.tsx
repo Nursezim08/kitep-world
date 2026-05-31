@@ -43,22 +43,19 @@ export default function PaymentClient({ orderId, user }: PaymentClientProps) {
 
   const fetchOrder = async () => {
     try {
-      const res = await fetch('/api/user/orders');
+      const res = await fetch(`/api/user/orders/${orderId}`);
       if (res.ok) {
-        const orders = await res.json();
-        const found = orders.find((o: any) => o.id === orderId);
-        if (found) {
-          setOrder({
-            id: found.id,
-            order_number: found.orderNumber,
-            total: found.totalAmount,
-            payment_status: found.paymentStatus,
-            order_status: found.status,
-            created_at: found.createdAt,
-          });
-        } else {
-          setError('Заказ не найден');
-        }
+        const found = await res.json();
+        setOrder({
+          id: found.id,
+          order_number: found.orderNumber,
+          total: found.totalAmount,
+          payment_status: found.paymentStatus,
+          order_status: found.status,
+          created_at: found.createdAt,
+        });
+      } else {
+        setError('Заказ не найден');
       }
     } catch {
       setError('Ошибка при загрузке заказа');

@@ -71,17 +71,19 @@ export async function POST(request: NextRequest) {
     const prisma = getPrismaClient();
 
     if (body.status === 'SUCCEEDED' || body.status === 'succeeded') {
-      const { orderId } = metadata;
+      const { orderId, userId } = metadata;
 
       if (!orderId) {
         console.error('Missing orderId in webhook metadata');
         return NextResponse.json({ error: 'Missing metadata' }, { status: 400 });
       }
 
+      // Фиксируем оплату: переводим заказ в success/paid и сохраняем платёж.
       await prisma.orders.update({
         where: { id: orderId },
         data: {
           payment_status: 'success',
+          order_status: 'paid',
           payments: {
             create: {
               id: crypto.randomUUID(),
@@ -97,11 +99,28 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Корзину чистим только после подтверждения успешной оплаты.
+      // Берём userId либо из metadata, либо из самого заказа (на случай, если metadata недоступна).
+      let cartUserId = userId;
+      if (!cartUserId) {
+        const order = await prisma.orders.findUnique({
+          where: { id: orderId },
+          select: { user_id: true },
+        });
+        cartUserId = order?.user_id;
+      }
+
+      if (cartUserId) {
+        await prisma.carts.deleteMany({ where: { user_id: cartUserId } });
+      }
+
       console.log(`[PAYMENT_SUCCESS] Order ID: ${orderId} | Amount: ${body.amount} | Transaction: ${body.transactionId}`);
     } else if (body.status === 'FAILED' || body.status === 'failed') {
       const { orderId } = metadata;
 
       if (orderId) {
+        // Помечаем заказ как неоплаченный — в "Мои заказы" он не попадёт,
+        // а корзина пользователя остаётся нетронутой, чтобы можно было повторить оплату.
         await prisma.orders.update({
           where: { id: orderId },
           data: { payment_status: 'failed' },

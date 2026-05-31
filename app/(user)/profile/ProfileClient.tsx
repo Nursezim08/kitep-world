@@ -4,24 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AiOutlineUser, AiOutlineMail, AiOutlinePhone, AiOutlineLogout } from 'react-icons/ai';
-import {
-  Globe,
-  Home,
-  Grid,
-  ShoppingCart,
-  Package,
-  MessageCircle,
-  User,
-  ChevronRight,
-  X,
-  Menu,
-  ChevronLeft,
-  LogOut,
-} from 'lucide-react';
 import UserHeader from '@/app/components/UserHeader';
-import { useTranslation, setLanguageCookie } from '@/app/i18n/client';
+import UserSidebar from '@/app/components/UserSidebar';
+import { useTranslation } from '@/app/i18n/client';
 import { useChat } from '@/app/(user)/ChatContext';
-import { languages, type Language } from '@/app/i18n/settings';
 
 interface User {
   id: string;
@@ -35,11 +21,10 @@ interface User {
 
 export default function ProfileClient({ user }: { user: User }) {
   const router = useRouter();
-  const { t, lang } = useTranslation('auth');
+  const { t } = useTranslation('auth');
   const { t: tu } = useTranslation('user');
-  const { openChat, setSidebarCollapsed: syncSidebarToContext } = useChat();
+  const { setSidebarCollapsed: syncSidebarToContext } = useChat();
   const [loading, setLoading] = useState(false);
-  const [isLangOpen, setIsLangOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   useEffect(() => { syncSidebarToContext(sidebarCollapsed); }, [sidebarCollapsed, syncSidebarToContext]);
 
@@ -58,86 +43,23 @@ export default function ProfileClient({ user }: { user: User }) {
     }
   };
 
-  const handleLanguageChange = (newLang: Language) => {
-    setLanguageCookie(newLang);
-    setIsLangOpen(false);
-    window.location.reload();
-  };
-
-  const languageLabels: Record<Language, string> = {
-    ru: 'Русский',
-    kg: 'Кыргызча',
-  };
-
-  const menuItems = [
-    { title: tu('nav.home'), icon: Home, href: '/home', active: false },
-    { title: tu('nav.catalog'), icon: Grid, href: '/catalog', active: false },
-    { title: tu('nav.orders'), icon: Package, href: '/orders', active: false },
-    { title: tu('nav.cart'), icon: ShoppingCart, href: '/cart', active: false },
-    { title: tu('nav.aiChat'), icon: MessageCircle, href: '/ai-chat', active: false, onClick: openChat },
-    { title: tu('nav.profile'), icon: User, href: '/profile', active: true },
-  ];
-
   return (
     <div className="min-h-screen bg-gray-50">
       <UserHeader user={user} />
 
-      <div className="flex pt-[57px]">
-        {/* Sidebar */}
-        <aside className={`${sidebarCollapsed ? 'w-20' : 'w-72'} px-4 pt-4 flex flex-col transition-all duration-300 sticky top-[57px] self-start`}>
-          {/* Main Navigation Card */}
-          <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-200">
-            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between'} mb-4 px-2`}>
-              {!sidebarCollapsed && <span className="text-sm font-semibold text-gray-500">{tu('sidebar.navigation')}</span>}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2 hover:bg-gray-50 rounded-lg transition-all text-gray-500 hover:text-gray-900"
-                title={sidebarCollapsed ? 'Развернуть' : 'Свернуть'}
-              >
-                {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-              </button>
-            </div>
-            
-            <nav className="space-y-1">
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => item.onClick ? item.onClick() : (item.href !== '#' && router.push(item.href))}
-                  className={`w-full flex items-center justify-center ${sidebarCollapsed ? '' : 'justify-start gap-3 px-3'} py-2.5 rounded-xl transition-all ${
-                    item.active 
-                      ? 'bg-violet-500/15 text-violet-600' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                  title={sidebarCollapsed ? item.title : ''}
-                >
-                  <item.icon size={18} className="flex-shrink-0" />
-                  {!sidebarCollapsed && <span className="text-sm font-medium">{item.title}</span>}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Logout Button Card */}
-          <div className="mt-4">
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
-              <button
-                onClick={handleLogout}
-                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-center gap-2'} px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-xl font-medium text-sm transition-all`}
-                title={sidebarCollapsed ? tu('sidebar.logout') : ''}
-              >
-                <LogOut size={16} />
-                {!sidebarCollapsed && <span>{tu('sidebar.logout')}</span>}
-              </button>
-            </div>
-          </div>
-        </aside>
+      <div className="flex pt-[57px] pb-16 lg:pb-0">
+        <UserSidebar
+          active="profile"
+          collapsed={sidebarCollapsed}
+          onCollapseChange={setSidebarCollapsed}
+        />
 
         {/* Main Content */}
-        <div className="flex-1">
-          <main className="p-8">
+        <div className="flex-1 min-w-0">
+          <main className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-2xl mx-auto">
               {/* Back to Home */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <Link 
                   href="/home" 
                   className="inline-flex items-center gap-1.5 text-violet-600 hover:text-violet-700 font-bold transition text-sm"
@@ -148,9 +70,9 @@ export default function ProfileClient({ user }: { user: User }) {
 
               <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-violet-500 to-violet-600 px-6 py-8 text-white">
+                <div className="bg-gradient-to-r from-violet-500 to-violet-600 px-4 sm:px-6 py-6 sm:py-8 text-white">
                   <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center overflow-hidden backdrop-blur-sm flex-shrink-0">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 flex items-center justify-center overflow-hidden backdrop-blur-sm flex-shrink-0">
                       {user.avatar ? (
                         <img
                           src={user.avatar}
@@ -158,19 +80,19 @@ export default function ProfileClient({ user }: { user: User }) {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <AiOutlineUser size={40} />
+                        <AiOutlineUser size={36} />
                       )}
                     </div>
-                    <div>
-                      <h1 className="text-2xl font-extrabold mb-1">{user.fullName}</h1>
-                      <p className="text-violet-100 font-semibold">{t(`profile.roles.${user.role}`)}</p>
+                    <div className="min-w-0">
+                      <h1 className="text-xl sm:text-2xl font-extrabold mb-1 truncate">{user.fullName}</h1>
+                      <p className="text-violet-100 font-semibold text-sm sm:text-base">{t(`profile.roles.${user.role}`)}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
-                  <h2 className="text-lg font-extrabold text-gray-900 mb-4">
+                <div className="p-4 sm:p-6">
+                  <h2 className="text-base sm:text-lg font-extrabold text-gray-900 mb-3 sm:mb-4">
                     {t('profile.profileInfo')}
                   </h2>
 
