@@ -162,12 +162,12 @@ export default function OrdersClient({ user }: OrdersClientProps) {
     <div className="min-h-screen bg-gray-50">
       {/* Order Details Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 pt-[65px] sm:pt-[72px] overflow-y-auto no-scrollbar">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto no-scrollbar">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Заказ #{selectedOrder.orderNumber}</h3>
-                <p className="text-xs text-gray-500">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto no-scrollbar">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-y-auto no-scrollbar mt-[80px] sm:mt-[96px] mb-4">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-gray-900 truncate">Заказ #{selectedOrder.orderNumber}</h3>
+                <p className="text-[11px] text-gray-500">
                   {new Date(selectedOrder.createdAt).toLocaleDateString('ru-RU', {
                     day: 'numeric',
                     month: 'long',
@@ -179,106 +179,102 @@ export default function OrdersClient({ user }: OrdersClientProps) {
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 ml-2"
               >
                 <ChevronLeft size={18} />
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-4">
               {/* Способы подтверждения: QR + код */}
-              <div className="mb-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-6 border border-violet-200">
-                <p className="text-sm font-semibold text-gray-700 mb-4 text-center">
+              <div className="mb-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-4 border border-violet-200">
+                <p className="text-xs font-semibold text-gray-700 mb-3 text-center">
                   Покажите QR-код или назовите код менеджеру
                 </p>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <div className="flex flex-col items-center justify-center gap-3">
                   {/* QR-код */}
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-violet-100">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="bg-white p-2.5 rounded-xl shadow-sm border border-violet-100">
                       <QRCodeDisplay
                         value={`ORDER:${selectedOrder.id}`}
-                        size={200}
+                        size={140}
                       />
                     </div>
-                    <p className="text-[11px] text-gray-500">Способ 1: QR-код</p>
+                    <p className="text-[10px] text-gray-500">QR-код</p>
                   </div>
 
                   {/* Разделитель */}
-                  <div className="flex sm:flex-col items-center gap-2 text-gray-400">
-                    <div className="hidden sm:block w-px h-16 bg-violet-200" />
-                    <span className="text-xs font-bold uppercase tracking-wider">или</span>
-                    <div className="hidden sm:block w-px h-16 bg-violet-200" />
-                    <div className="sm:hidden h-px w-16 bg-violet-200" />
+                  <div className="flex items-center gap-2 text-gray-400 w-full">
+                    <div className="flex-1 h-px bg-violet-200" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">или</span>
+                    <div className="flex-1 h-px bg-violet-200" />
                   </div>
 
                   {/* Код */}
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="bg-white px-6 py-5 rounded-2xl shadow-sm border border-violet-100 min-w-[200px]">
-                      <p className="text-[11px] font-semibold text-gray-500 text-center mb-2 uppercase tracking-wider">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="bg-white px-4 py-2.5 rounded-xl shadow-sm border border-violet-100 min-w-[160px]">
+                      <p className="text-[10px] font-semibold text-gray-500 text-center mb-1 uppercase tracking-wider">
                         Код заказа
                       </p>
-                      <p className="text-4xl font-bold text-violet-600 text-center tracking-widest">
+                      <p className="text-2xl font-bold text-violet-600 text-center tracking-widest">
                         {getOrderCode(selectedOrder.orderNumber)}
                       </p>
                     </div>
-                    <p className="text-[11px] text-gray-500">Способ 2: цифровой код</p>
+                    <p className="text-[10px] text-gray-500">Цифровой код</p>
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-600 mt-5 text-center">
+                <p className="text-[10px] text-gray-600 mt-3 text-center">
                   Менеджер отсканирует QR или введёт код для подтверждения выдачи
-                </p>
-                <p className="text-[11px] text-gray-500 mt-2 text-center">
-                  Номер заказа: <span className="font-mono">{selectedOrder.orderNumber}</span>
                 </p>
               </div>
 
               {/* Статус */}
-              <div className="mb-6">
-                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Статус</h4>
-                <div className={`flex items-center gap-2 px-4 py-3 rounded-xl ${getStatusColor(selectedOrder.status)}`}>
+              <div className="mb-4">
+                <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Статус</h4>
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-xl ${getStatusColor(selectedOrder.status)}`}>
                   {getStatusIcon(selectedOrder.status)}
-                  <span className="font-semibold text-sm">
+                  <span className="font-semibold text-xs">
                     {getStatusText(selectedOrder.status)}
                   </span>
                 </div>
               </div>
 
               {/* Филиал */}
-              <div className="mb-6">
-                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Филиал</h4>
-                <div className="bg-gray-50 rounded-xl p-4 flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{selectedOrder.branch.name}</p>
-                    <p className="text-xs text-gray-600">{selectedOrder.branch.city}</p>
+              <div className="mb-4">
+                <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Филиал</h4>
+                <div className="bg-gray-50 rounded-xl p-3 flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{selectedOrder.branch.name}</p>
+                    <p className="text-[11px] text-gray-600">{selectedOrder.branch.city}</p>
                   </div>
                 </div>
               </div>
 
               {/* Товары */}
-              <div className="mb-6">
-                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Товары</h4>
-                <div className="space-y-3">
+              <div className="mb-4">
+                <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Товары</h4>
+                <div className="space-y-2">
                   {selectedOrder.orderItems.map((item, index) => (
-                    <div key={index} className="flex items-center gap-4 bg-gray-50 rounded-xl p-4">
+                    <div key={index} className="flex items-center gap-2.5 bg-gray-50 rounded-xl p-2.5">
                       {item.product.images[0] && (
                         <img
                           src={item.product.images[0].imageUrl}
                           alt={getProductName(selectedOrder, index)}
-                          className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                          className="w-10 h-10 object-cover rounded-lg flex-shrink-0"
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
+                        <p className="text-xs font-semibold text-gray-900 line-clamp-2">
                           {getProductName(selectedOrder, index)}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-[11px] text-gray-500">
                           {item.quantity} × {item.price.toLocaleString('ru-RU')} с
                         </p>
                       </div>
-                      <p className="text-sm font-bold text-gray-900">
+                      <p className="text-xs font-bold text-gray-900 whitespace-nowrap">
                         {(item.quantity * item.price).toLocaleString('ru-RU')} с
                       </p>
                     </div>
@@ -287,10 +283,10 @@ export default function OrdersClient({ user }: OrdersClientProps) {
               </div>
 
               {/* Итого */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-700">Итого:</span>
-                  <span className="text-2xl font-bold text-gray-900">
+                  <span className="text-xs font-semibold text-gray-700">Итого:</span>
+                  <span className="text-lg font-bold text-gray-900">
                     {selectedOrder.totalAmount.toLocaleString('ru-RU')} с
                   </span>
                 </div>

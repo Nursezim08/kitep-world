@@ -146,6 +146,7 @@ export async function GET(request: NextRequest) {
       userId: user.id,
       email: user.email,
       role: user.role,
+      loginType: 'user',
     });
 
     await setAuthCookie(token);

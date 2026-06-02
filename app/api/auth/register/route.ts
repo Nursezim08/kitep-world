@@ -3,6 +3,7 @@ import { getPrismaClient } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { validateEmail, validatePassword } from "@/lib/validation";
 import { generateVerificationCode, sendVerificationEmail } from "@/lib/email";
+import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   const prisma = getPrismaClient();
