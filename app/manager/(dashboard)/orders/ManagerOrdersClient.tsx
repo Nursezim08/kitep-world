@@ -13,12 +13,9 @@ import {
   SlidersHorizontal,
   X,
   PackageCheck,
-  AlertCircle,
 } from 'lucide-react';
 import LightDatePicker from '@/app/components/LightDatePicker';
 import LightCustomSelect from '@/app/components/LightCustomSelect';
-import QRScanner from '@/app/components/QRScanner';
-import { useBlockScroll } from '@/app/hooks/useBlockScroll';
 
 interface OrderStats {
   total: string;
@@ -66,20 +63,6 @@ export default function ManagerOrdersClient() {
   const [statsLoading, setStatsLoading] = useState(true);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
-
-  const [confirmOrder, setConfirmOrder] = useState<Order | null>(null);
-  const [orderDetails, setOrderDetails] = useState<any>(null);
-  const [loadingDetails, setLoadingDetails] = useState(false);
-  const [completing, setCompleting] = useState(false);
-  const [completeError, setCompleteError] = useState('');
-  const [confirmMode, setConfirmMode] = useState<'qr' | 'code'>('qr');
-  const [scannerActive, setScannerActive] = useState(false);
-  const [scannedCode, setScannedCode] = useState('');
-  const [scanStatus, setScanStatus] = useState<'idle' | 'success' | 'invalid'>('idle');
-  const [manualCode, setManualCode] = useState('');
-
-  // Блокируем скролл страницы пока открыта модалка выдачи
-  useBlockScroll(!!confirmOrder);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -140,136 +123,6 @@ export default function ManagerOrdersClient() {
     dateTo !== '' ||
     sortBy !== 'date_desc';
 
-  const getExpectedQrCode = (order: Order | null) => {
-    if (!order) return '';
-    return `ORDER:${order.rawId}`;
-  };
-
-  const getExpectedManualCode = (order: Order | null) => {
-    if (!order) return '';
-    // Последние 5 цифр номера заказа (как у клиента в модалке)
-    const digits = order.id.replace(/\D/g, '');
-    return digits.slice(-5);
-  };
-
-  const handleScan = (decoded: string) => {
-    if (!confirmOrder) return;
-    if (scanStatus === 'success') return;
-
-    const trimmed = decoded.trim();
-    const expected = getExpectedQrCode(confirmOrder);
-
-    if (trimmed === expected) {
-      setScannedCode(trimmed);
-      setScanStatus('success');
-      setScannerActive(false);
-      setCompleteError('');
-    } else {
-      setScanStatus('invalid');
-      setCompleteError('QR-код не соответствует этому заказу');
-    }
-  };
-
-  const isQrConfirmed = () =>
-    !!confirmOrder &&
-    scanStatus === 'success' &&
-    scannedCode === getExpectedQrCode(confirmOrder);
-
-  const isCodeConfirmed = () =>
-    !!confirmOrder &&
-    manualCode.length === 5 &&
-    manualCode === getExpectedManualCode(confirmOrder);
-
-  const handleComplete = async () => {
-    if (!confirmOrder || !orderDetails) return;
-
-    if (confirmMode === 'qr') {
-      if (!isQrConfirmed()) {
-        setCompleteError('Сначала отсканируйте QR-код заказа');
-        return;
-      }
-    } else {
-      if (manualCode.length !== 5) {
-        setCompleteError('Введите 5 цифр кода');
-        return;
-      }
-      if (!isCodeConfirmed()) {
-        setCompleteError('Неверный код заказа');
-        return;
-      }
-    }
-
-    setCompleting(true);
-    setCompleteError('');
-    try {
-      const res = await fetch(`/api/manager/orders/${confirmOrder.rawId}/complete`, {
-        method: 'PATCH',
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setCompleteError(data.error ?? 'Ошибка');
-        return;
-      }
-      setConfirmOrder(null);
-      setOrderDetails(null);
-      setScannedCode('');
-      setScanStatus('idle');
-      setScannerActive(false);
-      setManualCode('');
-      setConfirmMode('qr');
-      await fetchOrders();
-      await fetchStats();
-    } catch {
-      setCompleteError('Ошибка сети');
-    } finally {
-      setCompleting(false);
-    }
-  };
-
-  const closeConfirmModal = () => {
-    setConfirmOrder(null);
-    setOrderDetails(null);
-    setCompleteError('');
-    setScannedCode('');
-    setScanStatus('idle');
-    setScannerActive(false);
-    setManualCode('');
-    setConfirmMode('qr');
-  };
-
-  const openConfirmModal = async (order: Order) => {
-    setConfirmOrder(order);
-    setCompleteError('');
-    setScannedCode('');
-    setScanStatus('idle');
-    setScannerActive(true);
-    setManualCode('');
-    setConfirmMode('qr');
-    setLoadingDetails(true);
-    
-    console.log('[openConfirmModal] Opening modal for order:', order.rawId);
-    
-    try {
-      const res = await fetch(`/api/manager/orders/${order.rawId}`);
-      console.log('[openConfirmModal] Response status:', res.status);
-      
-      if (res.ok) {
-        const data = await res.json();
-        console.log('[openConfirmModal] Order details loaded:', data);
-        setOrderDetails(data);
-      } else {
-        const errorData = await res.json();
-        console.error('[openConfirmModal] Error response:', errorData);
-        setCompleteError(errorData.error || 'Не удалось загрузить детали заказа');
-      }
-    } catch (error) {
-      console.error('[openConfirmModal] Error fetching order details:', error);
-      setCompleteError('Ошибка сети');
-    } finally {
-      setLoadingDetails(false);
-    }
-  };
-
   const resetFilters = () => {
     setStatusFilter('all');
     setPaymentFilter('all');
@@ -315,291 +168,6 @@ export default function ManagerOrdersClient() {
 
   return (
     <div>
-
-      {/* Confirm Modal */}
-      {confirmOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <PackageCheck className="text-green-600" size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-gray-900">Выдать заказ</h3>
-                  <p className="text-xs text-gray-500">{confirmOrder.id}</p>
-                </div>
-              </div>
-              <button
-                onClick={closeConfirmModal}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-6">
-              {loadingDetails ? (
-                <div className="space-y-4 animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-3/4" />
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  <div className="h-20 bg-gray-200 rounded" />
-                </div>
-              ) : completeError && !orderDetails ? (
-                <div className="text-center py-8">
-                  <div className="flex items-center justify-center gap-2 text-red-600 text-sm bg-red-50 rounded-lg px-4 py-3 mb-4">
-                    <AlertCircle size={16} />
-                    {completeError}
-                  </div>
-                  <button
-                    onClick={() => openConfirmModal(confirmOrder!)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                  >
-                    Попробовать снова
-                  </button>
-                </div>
-              ) : orderDetails ? (
-                <>
-                  {/* Информация о клиенте */}
-                  <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Клиент</h4>
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <p className="text-sm font-semibold text-gray-900 mb-1">
-                        {orderDetails.user?.fullName || confirmOrder.customer}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        {orderDetails.user?.email || confirmOrder.email}
-                      </p>
-                      {(orderDetails.user?.phone || confirmOrder.phone) && (
-                        <p className="text-xs text-gray-600">
-                          {orderDetails.user?.phone || confirmOrder.phone}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Товары */}
-                  <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Товары</h4>
-                    <div className="space-y-3">
-                      {orderDetails.orderItems && orderDetails.orderItems.length > 0 ? (
-                        orderDetails.orderItems.map((item: any, index: number) => {
-                          const price = Number(item.price) || 0;
-                          const quantity = Number(item.quantity) || 0;
-                          const total = price * quantity;
-                          
-                          return (
-                            <div key={index} className="flex items-center gap-4 bg-gray-50 rounded-xl p-4">
-                              {item.product?.images && item.product.images[0] && (
-                                <img
-                                  src={item.product.images[0].imageUrl}
-                                  alt={item.product.translations?.[0]?.name || 'Товар'}
-                                  className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                                />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">
-                                  {item.product?.translations?.[0]?.name || 'Без названия'}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {quantity} × {price.toLocaleString('ru-RU')} с
-                                </p>
-                              </div>
-                              <p className="text-sm font-bold text-gray-900">
-                                {total.toLocaleString('ru-RU')} с
-                              </p>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <p className="text-sm text-gray-500 text-center py-4">Нет товаров</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Итого */}
-                  <div className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-700">Итого к оплате:</span>
-                      <span className="text-2xl font-bold text-gray-900">
-                        {orderDetails.totalAmount 
-                          ? Number(orderDetails.totalAmount).toLocaleString('ru-RU') + ' с'
-                          : confirmOrder.total
-                        }
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Способ подтверждения */}
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Подтверждение выдачи
-                      </label>
-                      {(scanStatus === 'success' || isCodeConfirmed()) && (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-lg">
-                          <CheckCircle size={12} /> Подтверждено
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Tabs */}
-                    <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setConfirmMode('qr');
-                          setCompleteError('');
-                        }}
-                        className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
-                          confirmMode === 'qr'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                      >
-                        Сканировать QR
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setConfirmMode('code');
-                          setCompleteError('');
-                          setScannerActive(false);
-                        }}
-                        className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
-                          confirmMode === 'code'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                      >
-                        Ввести код
-                      </button>
-                    </div>
-
-                    {confirmMode === 'qr' ? (
-                      scanStatus === 'success' ? (
-                        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
-                          <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <CheckCircle className="text-green-600" size={20} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-green-700">QR-код успешно отсканирован</p>
-                            <p className="text-xs text-green-600 truncate">Заказ совпадает. Можно выдать.</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setScanStatus('idle');
-                              setScannedCode('');
-                              setCompleteError('');
-                              setScannerActive(true);
-                            }}
-                            className="text-xs font-semibold text-green-700 hover:text-green-800"
-                          >
-                            Сканировать ещё
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center justify-end mb-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setScanStatus('idle');
-                                setScannedCode('');
-                                setCompleteError('');
-                                setScannerActive((v) => !v);
-                              }}
-                              className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                            >
-                              {scannerActive ? 'Остановить камеру' : 'Включить камеру'}
-                            </button>
-                          </div>
-                          {scannerActive ? (
-                            <QRScanner
-                              active={scannerActive}
-                              onScan={handleScan}
-                              onError={(err) => setCompleteError(err)}
-                            />
-                          ) : (
-                            <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 text-center">
-                              <p className="text-xs text-gray-500">
-                                Нажмите «Включить камеру», чтобы отсканировать QR-код заказа.
-                              </p>
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-500 mt-2 text-center">
-                            Попросите клиента показать QR-код из его аккаунта
-                          </p>
-                        </>
-                      )
-                    ) : (
-                      <>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          autoComplete="off"
-                          value={manualCode}
-                          onChange={(e) => {
-                            const digits = e.target.value.replace(/\D/g, '').slice(0, 5);
-                            setManualCode(digits);
-                            if (completeError) setCompleteError('');
-                          }}
-                          placeholder="Введите 5 цифр"
-                          maxLength={5}
-                          className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 text-center text-2xl font-bold tracking-widest ${
-                            isCodeConfirmed()
-                              ? 'border-green-500 focus:ring-green-500/40 text-green-700'
-                              : 'border-gray-200 focus:ring-green-500/40 focus:border-green-500'
-                          }`}
-                        />
-                        <p className="text-xs text-gray-500 mt-2 text-center">
-                          Попросите клиента назвать 5-значный код заказа
-                        </p>
-                      </>
-                    )}
-                  </div>
-
-                  {completeError && (
-                    <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 rounded-lg px-3 py-2 mb-4">
-                      <AlertCircle size={14} />
-                      {completeError}
-                    </div>
-                  )}
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={closeConfirmModal}
-                      disabled={completing}
-                      className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
-                    >
-                      Отмена
-                    </button>
-                    <button
-                      onClick={handleComplete}
-                      disabled={
-                        completing ||
-                        (confirmMode === 'qr' ? !isQrConfirmed() : !isCodeConfirmed())
-                      }
-                      className="flex-1 px-4 py-3 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {completing ? (
-                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <PackageCheck size={15} />
-                      )}
-                      Выдать заказ
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-8">Не удалось загрузить детали заказа</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {stats.map((stat, index) => (
@@ -797,13 +365,13 @@ export default function ManagerOrdersClient() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           {order.status === 'paid' && (
-                            <button
-                              onClick={() => openConfirmModal(order)}
+                            <a
+                              href={`/manager/orders/${order.rawId}/complete`}
                               className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-all"
                             >
                               <PackageCheck size={13} />
                               Выдать
-                            </button>
+                            </a>
                           )}
                           <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600">
                             <Eye size={16} />
@@ -852,13 +420,13 @@ export default function ManagerOrdersClient() {
 
                   <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
                     {order.status === 'paid' && (
-                      <button
-                        onClick={() => openConfirmModal(order)}
+                      <a
+                        href={`/manager/orders/${order.rawId}/complete`}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-all"
                       >
                         <PackageCheck size={13} />
                         Выдать
-                      </button>
+                      </a>
                     )}
                     <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600">
                       <Eye size={15} />
