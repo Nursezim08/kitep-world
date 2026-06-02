@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run setup:env && next build",
     "start": "next start",
     "lint": "eslint",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "setup:env": "node -e \"const fs = require('fs'); if (fs.existsSync('.env.production')) { fs.copyFileSync('.env.production', '.env'); console.log('✅ .env created from .env.production'); }\""
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
