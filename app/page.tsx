@@ -104,7 +104,6 @@ export default async function Home() {
         <section className="py-8 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="relative bg-gradient-to-r from-violet-500 to-violet-600 rounded-3xl overflow-hidden shadow-xl">
-              <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>
               <div className="relative px-8 py-16 md:py-20 text-center">
                 <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">
                   {t.banner.title}
