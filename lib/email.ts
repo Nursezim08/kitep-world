@@ -9,16 +9,24 @@ export function generateVerificationCode(): string {
 function createTransporter() {
   return nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465, // SSL порт вместо 587
-    secure: true, // SSL соединение
+    port: 587, // STARTTLS порт (может работать лучше с хостингом)
+    secure: false, // false для STARTTLS
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-    // Таймаут для предотвращения долгого ожидания
-    connectionTimeout: 5000, // 5 секунд на подключение
-    greetingTimeout: 5000, // 5 секунд на приветствие
-    socketTimeout: 5000, // 5 секунд на операции
+    // Таймауты увеличены для медленных соединений хостинга
+    connectionTimeout: 15000, // 15 секунд на подключение
+    greetingTimeout: 15000, // 15 секунд на приветствие
+    socketTimeout: 15000, // 15 секунд на операции
+    // Дополнительные настройки для совместимости с хостингами
+    tls: {
+      rejectUnauthorized: false, // Игнорировать проблемы с SSL сертификатами
+      ciphers: 'SSLv3', // Поддержка старых протоколов
+    },
+    requireTLS: true, // Обязательное использование TLS
+    logger: true, // Включить логирование для диагностики
+    debug: true, // Детальная отладка
   });
 }
 
@@ -303,16 +311,17 @@ export async function sendVerificationEmail(email: string, code: string): Promis
       html: getVerificationEmailTemplate(code),
     };
 
-    // Отправка email с промисом таймаута
+    // Отправка email с увеличенным таймаутом для хостинга
     const sendPromise = transporter.sendMail(mailOptions);
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Email timeout')), 7000)
+      setTimeout(() => reject(new Error('Email timeout')), 20000) // 20 секунд
     );
     
     const info = await Promise.race([sendPromise, timeoutPromise]);
     
     console.log('✅ Email sent successfully:', (info as any).messageId);
     console.log(`📧 To: ${email}`);
+    console.log(`📊 Response:`, info);
     
     return true;
   } catch (error) {
@@ -360,16 +369,17 @@ export async function sendManagerLoginEmail(email: string, code: string): Promis
       html: getManagerLoginEmailTemplate(code),
     };
 
-    // Отправка email с промисом таймаута
+    // Отправка email с увеличенным таймаутом для хостинга
     const sendPromise = transporter.sendMail(mailOptions);
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Email timeout')), 7000)
+      setTimeout(() => reject(new Error('Email timeout')), 20000) // 20 секунд
     );
     
     const info = await Promise.race([sendPromise, timeoutPromise]);
     
     console.log('✅ Manager login email sent successfully:', (info as any).messageId);
     console.log(`📧 To: ${email}`);
+    console.log(`📊 Response:`, info);
     
     return true;
   } catch (error) {
@@ -417,16 +427,17 @@ export async function sendPasswordResetEmail(email: string, code: string): Promi
       html: getPasswordResetEmailTemplate(code),
     };
 
-    // Отправка email с промисом таймаута
+    // Отправка email с увеличенным таймаутом для хостинга
     const sendPromise = transporter.sendMail(mailOptions);
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Email timeout')), 7000)
+      setTimeout(() => reject(new Error('Email timeout')), 20000) // 20 секунд
     );
     
     const info = await Promise.race([sendPromise, timeoutPromise]);
     
     console.log('✅ Password reset email sent successfully:', (info as any).messageId);
     console.log(`📧 To: ${email}`);
+    console.log(`📊 Response:`, info);
     
     return true;
   } catch (error) {
