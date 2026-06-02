@@ -329,7 +329,8 @@ export async function sendManagerLoginEmail(email: string, code: string): Promis
     console.log('[SMTP] SMTP_PASS exists:', !!process.env.SMTP_PASS);
     console.log('[SMTP] SMTP_USER value:', process.env.SMTP_USER);
     
-    // Проверка наличия необходимых переменных окружения
+    // Временно убираем проверку SMTP credentials для продакшена
+    // Код всегда будет выводиться в консоль для отладки
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.warn('⚠️  SMTP credentials not configured. Email will be logged to console only.');
       console.log('='.repeat(50));
