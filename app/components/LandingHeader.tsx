@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
+import Link from 'next/link';
 import LanguageSwitcher from './LanguageSwitcher';
 import LoginButton from './LoginButton';
 import { type Language } from '../i18n/settings';
@@ -17,6 +18,7 @@ interface LandingHeaderProps {
         contacts: string;
       };
       login: string;
+      register: string;
     };
   };
   initialLang: Language;
@@ -55,20 +57,40 @@ export default function LandingHeader({ t, initialLang }: LandingHeaderProps) {
             {/* Actions */}
             <div className="flex items-center gap-3">
               <LanguageSwitcher initialLang={initialLang} />
+              
+              <Link
+                href="/register"
+                className="hidden md:flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-violet-500 hover:bg-violet-50 rounded-xl transition-all"
+              >
+                {t.header.register}
+              </Link>
+              
               <LoginButton text={t.header.login} />
 
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors md:hidden"
-                aria-label="Toggle menu"
-              >
-                {isMenuOpen ? (
-                  <X className="w-6 h-6 text-black" />
-                ) : (
-                  <Menu className="w-6 h-6 text-black" />
-                )}
-              </button>
+              {/* Mobile Actions */}
+              <div className="flex md:hidden items-center gap-1">
+                {/* Mobile Login Button */}
+                <Link
+                  href="/login"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-violet-500 hover:bg-violet-50 rounded-xl transition-all"
+                >
+                  <User className="w-5 h-5" />
+                  <span>{t.header.login}</span>
+                </Link>
+
+                {/* Mobile Menu Button */}
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors"
+                  aria-label="Toggle menu"
+                >
+                  {isMenuOpen ? (
+                    <X className="w-6 h-6 text-black" />
+                  ) : (
+                    <Menu className="w-6 h-6 text-black" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -104,6 +126,15 @@ export default function LandingHeader({ t, initialLang }: LandingHeaderProps) {
                 >
                   {t.header.nav.contacts}
                 </a>
+                <div className="border-t border-gray-100 pt-4 mt-2">
+                  <Link
+                    href="/register"
+                    className="block text-center py-2 text-violet-500 font-semibold hover:bg-violet-50 rounded-xl transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {t.header.register}
+                  </Link>
+                </div>
               </div>
             </nav>
           )}
