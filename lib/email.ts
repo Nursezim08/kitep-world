@@ -9,8 +9,8 @@ export function generateVerificationCode(): string {
 function createTransporter() {
   return nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // true для порта 465, false для других портов
+    port: 465, // SSL порт вместо 587
+    secure: true, // SSL соединение
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
