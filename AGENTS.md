@@ -12,6 +12,53 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- END:nextjs-agent-rules -->
 
 
+### Исправление: QR-код не соответствует заказу при выдаче (10.05.2026)
+
+**Проблема:**
+- При сканировании QR-кода заказа менеджером всегда появлялась ошибка "QR-код не соответствует этому заказу"
+- Даже при правильном QR-коде система не распознавала его
+
+**Причина:**
+- Пользовательский QR-код содержал номер заказа (order_number): `ORDER:ORD-1779710728185-808`
+- Менеджер ожидал UUID из БД: `ORDER:c3e7a8b9-4f5d-...`
+- Сравнивались разные значения!
+
+**Решение:**
+
+1. **Исправлен компонент менеджера** (`app/manager/(dashboard)/orders/[id]/complete/page.tsx`):
+   - ✅ Интерфейс `OrderDetails` - убран несуществующий `rawId`, добавлен `orderNumber`
+   - ✅ Функция `getExpectedQrCode()` теперь использует `orderDetails.orderNumber`
+   - ✅ Функция `getExpectedManualCode()` извлекает 5 цифр из `orderDetails.orderNumber`
+   - ✅ Отображение номера заказа обновлено на `orderDetails.orderNumber`
+   - ✅ API запрос для завершения использует `orderDetails.id` (UUID)
+
+2. **Исправлен компонент пользователя** (`app/(user)/orders/OrdersClient.tsx`):
+   - ✅ QR-код теперь генерируется с `orderNumber` вместо `id` (UUID)
+   - ✅ Функция `getOrderCode()` корректно извлекает 5 цифр из `orderNumber`
+
+**Логика работы:**
+```typescript
+// Пользователь получает QR с номером заказа
+value={`ORDER:${selectedOrder.orderNumber}`}  // ORDER:ORD-xxx
+
+// Менеджер проверяет тот же формат
+const expected = `ORDER:${orderDetails.orderNumber}`;  // ORDER:ORD-xxx
+
+// Теперь коды совпадают! ✅
+```
+
+**Пример:**
+- Заказ: `ORD-1779710728185-808`
+- QR-код: `ORDER:ORD-1779710728185-808`
+- 5-значный код: `85808` (последние 5 цифр)
+
+**Файлы:**
+- `app/manager/(dashboard)/orders/[id]/complete/page.tsx` - Исправлена логика проверки QR
+- `app/(user)/orders/OrdersClient.tsx` - Исправлена генерация QR-кода
+- `QR_CODE_FIX.md` - Детальная документация исправления
+- `AGENTS.md` - Обновлена история изменений
+
+
 ### Исправление: Ошибка "Cannot read properties of undefined (reading 'findUnique')" (19.05.2026)
 
 **Проблема:**

@@ -197,7 +197,7 @@ export default function OrdersClient({ user }: OrdersClientProps) {
                   <div className="flex flex-col items-center gap-1.5">
                     <div className="bg-white p-2.5 rounded-xl shadow-sm border border-violet-100">
                       <QRCodeDisplay
-                        value={`ORDER:${selectedOrder.id}`}
+                        value={`ORDER:${selectedOrder.orderNumber}`}
                         size={140}
                       />
                     </div>

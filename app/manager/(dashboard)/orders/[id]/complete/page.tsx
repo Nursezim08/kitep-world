@@ -13,7 +13,7 @@ import QRScanner from '@/app/components/QRScanner';
 
 interface OrderDetails {
   id: string;
-  rawId: string;
+  orderNumber: string;
   user?: {
     fullName: string;
     email: string;
@@ -72,12 +72,12 @@ export default function CompleteOrderPage() {
 
   const getExpectedQrCode = () => {
     if (!orderDetails) return '';
-    return `ORDER:${orderDetails.rawId}`;
+    return `ORDER:${orderDetails.orderNumber}`;
   };
 
   const getExpectedManualCode = () => {
     if (!orderDetails) return '';
-    const digits = orderDetails.id.replace(/\D/g, '');
+    const digits = orderDetails.orderNumber.replace(/\D/g, '');
     return digits.slice(-5);
   };
 
@@ -128,7 +128,7 @@ export default function CompleteOrderPage() {
     setCompleting(true);
     setCompleteError('');
     try {
-      const res = await fetch(`/api/manager/orders/${orderDetails.rawId}/complete`, {
+      const res = await fetch(`/api/manager/orders/${orderDetails.id}/complete`, {
         method: 'PATCH',
       });
       if (!res.ok) {
@@ -213,7 +213,7 @@ export default function CompleteOrderPage() {
               </div>
               <div>
                 <h1 className="text-base font-bold text-gray-900">Выдать заказ</h1>
-                <p className="text-xs text-gray-500">{orderDetails.id}</p>
+                <p className="text-xs text-gray-500">{orderDetails.orderNumber}</p>
               </div>
             </div>
           </div>
