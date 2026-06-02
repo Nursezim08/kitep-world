@@ -324,6 +324,11 @@ export async function sendVerificationEmail(email: string, code: string): Promis
 // Отправка email с кодом для входа менеджера
 export async function sendManagerLoginEmail(email: string, code: string): Promise<boolean> {
   try {
+    console.log('[SMTP] Checking environment variables...');
+    console.log('[SMTP] SMTP_USER exists:', !!process.env.SMTP_USER);
+    console.log('[SMTP] SMTP_PASS exists:', !!process.env.SMTP_PASS);
+    console.log('[SMTP] SMTP_USER value:', process.env.SMTP_USER);
+    
     // Проверка наличия необходимых переменных окружения
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.warn('⚠️  SMTP credentials not configured. Email will be logged to console only.');
