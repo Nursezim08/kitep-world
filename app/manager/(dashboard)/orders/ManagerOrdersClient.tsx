@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   ShoppingCart,
   Search,
@@ -365,13 +366,13 @@ export default function ManagerOrdersClient() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           {order.status === 'paid' && (
-                            <a
+                            <Link
                               href={`/manager/orders/${order.rawId}/complete`}
                               className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-all"
                             >
                               <PackageCheck size={13} />
                               Выдать
-                            </a>
+                            </Link>
                           )}
                           <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600">
                             <Eye size={16} />
@@ -420,13 +421,13 @@ export default function ManagerOrdersClient() {
 
                   <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
                     {order.status === 'paid' && (
-                      <a
+                      <Link
                         href={`/manager/orders/${order.rawId}/complete`}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-all"
                       >
                         <PackageCheck size={13} />
                         Выдать
-                      </a>
+                      </Link>
                     )}
                     <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600">
                       <Eye size={15} />
