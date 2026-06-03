@@ -345,17 +345,26 @@ export async function sendManagerLoginEmail(email: string, code: string): Promis
   try {
     // Проверка наличия необходимых переменных окружения
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.warn('⚠️  SMTP credentials not configured. Email will be logged to console only.');
+      console.error('❌ SMTP credentials not configured!');
+      console.error('SMTP_USER:', process.env.SMTP_USER ? 'SET' : 'NOT SET');
+      console.error('SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
       console.log('='.repeat(50));
       console.log('📧 MANAGER LOGIN CODE (Development Mode)');
       console.log('='.repeat(50));
       console.log(`To: ${email}`);
       console.log(`Code: ${code}`);
       console.log('='.repeat(50));
-      return true;
+      return false; // Возвращаем false, чтобы показать ошибку
     }
 
+    console.log('📧 [Manager Login Email] Starting email send...');
+    console.log('📧 [Manager Login Email] To:', email);
+    console.log('📧 [Manager Login Email] SMTP User:', process.env.SMTP_USER);
+    console.log('📧 [Manager Login Email] Creating transporter...');
+
     const transporter = createTransporter();
+
+    console.log('📧 [Manager Login Email] Transporter created successfully');
 
     // Настройки письма
     const mailOptions = {
@@ -369,32 +378,46 @@ export async function sendManagerLoginEmail(email: string, code: string): Promis
       html: getManagerLoginEmailTemplate(code),
     };
 
+    console.log('📧 [Manager Login Email] Mail options configured, sending...');
+
     // Отправка email с увеличенным таймаутом для хостинга
     const sendPromise = transporter.sendMail(mailOptions);
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Email timeout')), 20000) // 20 секунд
+      setTimeout(() => reject(new Error('Email timeout after 20 seconds')), 20000)
     );
     
     const info = await Promise.race([sendPromise, timeoutPromise]);
     
-    console.log('✅ Manager login email sent successfully:', (info as any).messageId);
-    console.log(`📧 To: ${email}`);
-    console.log(`📊 Response:`, info);
+    console.log('✅ Manager login email sent successfully!');
+    console.log('📧 Message ID:', (info as any).messageId);
+    console.log('📧 To:', email);
+    console.log('📊 Full Response:', JSON.stringify(info, null, 2));
     
     return true;
-  } catch (error) {
-    console.error('❌ Error sending manager login email:', error);
+  } catch (error: any) {
+    console.error('❌ Error sending manager login email:');
+    console.error('Error type:', error?.constructor?.name);
+    console.error('Error message:', error?.message);
+    console.error('Error code:', error?.code);
+    console.error('Error stack:', error?.stack);
     
-    // В режиме разработки выводим код в консоль как fallback
-    console.log('='.repeat(50));
-    console.log('📧 MANAGER LOGIN CODE (Fallback)');
-    console.log('='.repeat(50));
-    console.log(`To: ${email}`);
-    console.log(`Code: ${code}`);
-    console.log('='.repeat(50));
+    // Детальная информация об ошибке SMTP
+    if (error?.responseCode) {
+      console.error('SMTP Response Code:', error.responseCode);
+    }
+    if (error?.response) {
+      console.error('SMTP Response:', error.response);
+    }
+    if (error?.command) {
+      console.error('SMTP Command:', error.command);
+    }
     
-    // Возвращаем true чтобы не блокировать вход
-    return true;
+    // НЕ выводим код в консоль как fallback - это не безопасно
+    // Вместо этого возвращаем false чтобы показать ошибку пользователю
+    console.error('❌ Email delivery failed. Code will NOT be shown in console for security reasons.');
+    
+    // Возвращаем false чтобы показать ошибку
+    return false;
   }
 }
 

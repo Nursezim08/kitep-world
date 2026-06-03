@@ -12,6 +12,59 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- END:nextjs-agent-rules -->
 
 
+### Исправление отправки email для менеджеров (10.05.2026)
+
+**Проблема:**
+- Код входа менеджера отправлялся в логи приложения вместо email
+- Функция `sendManagerLoginEmail()` работала в fallback режиме
+
+**Решение:**
+- ✅ Улучшена диагностика отправки email
+- ✅ Добавлено детальное логирование всех этапов отправки
+- ✅ Убран fallback вывод кода в консоль (небезопасно)
+- ✅ API теперь возвращает ошибку если email не отправлен
+- ✅ Добавлена подробная документация по устранению проблем
+
+**Изменения в `lib/email.ts`:**
+- Добавлено детальное логирование каждого этапа отправки
+- Функция возвращает `false` при ошибке (было `true`)
+- Детальная информация об ошибках SMTP
+- Удален небезопасный fallback в консоль
+
+**Изменения в `app/api/manager/login/route.ts`:**
+- API возвращает ошибку 500 если email не отправлен
+- Пользователю показывается понятное сообщение об ошибке
+
+**Логирование:**
+```
+📧 [Manager Login Email] Starting email send...
+📧 [Manager Login Email] To: manager@example.com
+📧 [Manager Login Email] SMTP User: nursezim416@gmail.com
+📧 [Manager Login Email] Creating transporter...
+📧 [Manager Login Email] Transporter created successfully
+📧 [Manager Login Email] Mail options configured, sending...
+✅ Manager login email sent successfully!
+📧 Message ID: <xxx@gmail.com>
+```
+
+**Файлы:**
+- `lib/email.ts` - Улучшена диагностика и безопасность
+- `app/api/manager/login/route.ts` - Правильная обработка ошибок
+- `EMAIL_TROUBLESHOOTING.md` - Инструкция по устранению проблем
+
+**Возможные проблемы и решения:**
+1. **Неверный App Password** - создать новый на https://myaccount.google.com/apppasswords
+2. **Блокировка SMTP хостингом** - связаться с поддержкой Timeweb
+3. **Таймаут соединения** - проверить файрвол и порт 587
+4. **Альтернативы** - использовать SendGrid или Mailgun
+
+**Результат:**
+- ✅ Код отправляется ТОЛЬКО на email (безопасно)
+- ✅ Детальная диагностика проблем
+- ✅ Понятные сообщения об ошибках
+- ✅ Документация по устранению проблем
+
+
 ### Страницы "Политика конфиденциальности" и "Условия использования" (10.05.2026)
 
 **Реализованы юридические страницы в соответствии с законодательством КР:**

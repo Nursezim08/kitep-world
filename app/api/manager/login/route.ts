@@ -114,12 +114,14 @@ export async function POST(request: NextRequest) {
     const sent = await sendManagerLoginEmail(user.email, code);
 
     if (!sent) {
-      console.log(
-        "[Manager Login] WARNING: Failed to send email, but code is saved",
+      console.error("[Manager Login] ERROR: Failed to send email!");
+      return NextResponse.json(
+        { error: "Не удалось отправить код на email. Пожалуйста, попробуйте позже или обратитесь к администратору." },
+        { status: 500 },
       );
     }
 
-    console.log("[Manager Login] SUCCESS: Code sent via email");
+    console.log("[Manager Login] SUCCESS: Code sent via email to", user.email);
 
     return NextResponse.json({
       success: true,
