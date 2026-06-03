@@ -259,6 +259,19 @@ export default function RegisterPage() {
             {t('register.login')}
           </Link>
         </p>
+
+        <div className="mt-4 pt-3 border-t border-gray-200">
+          <p className="text-center text-xs text-gray-500">
+            Регистрируясь, вы соглашаетесь с{' '}
+            <Link href="/terms" className="text-violet-500 hover:text-violet-600 underline">
+              Условиями использования
+            </Link>
+            {' '}и{' '}
+            <Link href="/privacy" className="text-violet-500 hover:text-violet-600 underline">
+              Политикой конфиденциальности
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

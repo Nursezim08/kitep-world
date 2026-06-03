@@ -211,6 +211,18 @@ function LoginForm() {
             {t('login.register')}
           </Link>
         </p>
+
+        <div className="mt-3 pt-3 border-t border-gray-200">
+          <p className="text-center text-xs text-gray-500">
+            <Link href="/terms" className="text-violet-500 hover:text-violet-600 underline">
+              Условия использования
+            </Link>
+            {' · '}
+            <Link href="/privacy" className="text-violet-500 hover:text-violet-600 underline">
+              Политика конфиденциальности
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
