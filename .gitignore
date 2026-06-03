@@ -30,9 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (содержат секретные ключи, НЕ должны попасть в репозиторий)
 .env*
-!.env.production
+# Но шаблоны (без секретов) можно коммитить
+!.env.example
+!.env*.example
 
 # docker env file (содержит секреты, не должен попасть в репозиторий)
 docker.env
