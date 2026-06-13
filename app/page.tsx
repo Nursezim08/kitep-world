@@ -5,6 +5,7 @@ import { FaChild } from "react-icons/fa6";
 import { FaPencilAlt } from "react-icons/fa";
 import { getLanguage, getTranslations } from './i18n';
 import LandingHeader from './components/LandingHeader';
+import { OrganizationSchema, WebSiteSchema } from './components/StructuredData';
 
 export default async function Home() {
   const lang = await getLanguage();
@@ -52,6 +53,10 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      {/* Structured Data для SEO */}
+      <OrganizationSchema />
+      <WebSiteSchema />
+
       {/* Header */}
       <LandingHeader t={t} initialLang={lang} />
 

@@ -11,8 +11,36 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Nur-kitep - Канцелярский магазин",
-  description: "Интернет-магазин канцелярских товаров с самовывозом в Кыргызстане",
+  metadataBase: new URL('https://nur-kitep.kg'),
+  title: {
+    default: "Nur-kitep - Интернет-магазин канцелярских товаров в Кыргызстане | Книги, тетради, ручки с доставкой",
+    template: "%s | Nur-kitep"
+  },
+  description: "Nur-kitep - крупнейший интернет-магазин канцелярских товаров в Кыргызстане. Книги, школьные принадлежности, офисные товары. Самовывоз из 10+ филиалов. ✓ Низкие цены ✓ Широкий ассортимент ✓ Гарантия качества",
+  keywords: [
+    "канцелярские товары Кыргызстан",
+    "канцелярия Бишкек",
+    "школьные принадлежности",
+    "книги Бишкек",
+    "тетради купить",
+    "ручки оптом",
+    "офисные товары",
+    "Nur-kitep",
+    "канцтовары онлайн",
+    "школьные товары Кыргызстан",
+    "учебники Бишкек",
+    "краски для детей",
+    "рюкзаки школьные",
+    "пеналы купить"
+  ],
+  authors: [{ name: "Nur-kitep" }],
+  creator: "Nur-kitep",
+  publisher: "Nur-kitep",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   manifest: "/manifest.json",
   themeColor: "#8b5cf6",
   appleWebApp: {
@@ -35,6 +63,44 @@ export const metadata: Metadata = {
       { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" },
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
     ],
+  },
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    alternateLocale: "ky_KG",
+    url: "https://nur-kitep.kg",
+    siteName: "Nur-kitep",
+    title: "Nur-kitep - Интернет-магазин канцелярских товаров в Кыргызстане",
+    description: "Крупнейший интернет-магазин канцелярских товаров в Кыргызстане. Книги, школьные принадлежности, офисные товары. Самовывоз из 10+ филиалов.",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Nur-kitep - Канцелярский магазин",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Nur-kitep - Интернет-магазин канцелярских товаров",
+    description: "Книги, школьные принадлежности, офисные товары с самовывозом в Кыргызстане",
+    images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: "your-google-verification-code",
+    yandex: "your-yandex-verification-code",
   },
 };
 
@@ -59,6 +125,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-152x152.png" />
         <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
         <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
+        <link rel="canonical" href="https://nur-kitep.kg" />
       </head>
       <body className="min-h-full flex flex-col">
         <RegisterSW />

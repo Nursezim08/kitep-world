@@ -1,0 +1,58 @@
+# Robots.txt для Nur-kitep
+# https://nur-kitep.kg/robots.txt
+
+User-agent: *
+Allow: /
+
+# Основные страницы
+Allow: /
+Allow: /catalog
+Allow: /product/*
+Allow: /search
+Allow: /terms
+Allow: /privacy
+
+# Блокируем административные и служебные страницы
+Disallow: /admin/
+Disallow: /manager/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Блокируем личные кабинеты
+Disallow: /profile
+Disallow: /cart
+Disallow: /checkout
+Disallow: /orders
+Disallow: /payment
+
+# Разрешаем медиа файлы
+Allow: /icons/
+Allow: /images/
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.webp$
+Allow: /*.svg$
+
+# Sitemap
+Sitemap: https://nur-kitep.kg/sitemap.xml
+
+# Специальные правила для Яндекса
+User-agent: Yandex
+Allow: /
+
+# Специальные правила для Google
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+# Блокируем плохих ботов
+User-agent: AhrefsBot
+User-agent: SemrushBot
+User-agent: DotBot
+User-agent: MJ12bot
+Disallow: /
