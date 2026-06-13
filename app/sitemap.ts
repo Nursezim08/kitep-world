@@ -3,7 +3,7 @@ import { getPrismaClient } from '@/lib/prisma';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const prisma = getPrismaClient();
-  const baseUrl = 'https://nur-kitep.kg';
+  const baseUrl = 'https://nur-kitep.store';
 
   // Статические страницы
   const staticPages: MetadataRoute.Sitemap = [

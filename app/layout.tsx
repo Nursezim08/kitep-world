@@ -11,7 +11,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://nur-kitep.kg'),
+  metadataBase: new URL('https://nur-kitep.store'),
   title: {
     default: "Nur-kitep - Интернет-магазин канцелярских товаров в Кыргызстане | Книги, тетради, ручки с доставкой",
     template: "%s | Nur-kitep"
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ru_RU",
     alternateLocale: "ky_KG",
-    url: "https://nur-kitep.kg",
+    url: "https://nur-kitep.store",
     siteName: "Nur-kitep",
     title: "Nur-kitep - Интернет-магазин канцелярских товаров в Кыргызстане",
     description: "Крупнейший интернет-магазин канцелярских товаров в Кыргызстане. Книги, школьные принадлежности, офисные товары. Самовывоз из 10+ филиалов.",
@@ -125,7 +125,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-152x152.png" />
         <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
         <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
-        <link rel="canonical" href="https://nur-kitep.kg" />
+        <link rel="canonical" href="https://nur-kitep.store" />
       </head>
       <body className="min-h-full flex flex-col">
         <RegisterSW />

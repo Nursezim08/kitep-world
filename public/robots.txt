@@ -39,7 +39,7 @@ Allow: /*.webp$
 Allow: /*.svg$
 
 # Sitemap
-Sitemap: https://nur-kitep.kg/sitemap.xml
+Sitemap: https://nur-kitep.store/sitemap.xml
 
 # Специальные правила для Яндекса
 User-agent: Yandex

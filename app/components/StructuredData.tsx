@@ -28,8 +28,8 @@ export function OrganizationSchema() {
       type="Organization"
       data={{
         name: 'Nur-kitep',
-        url: 'https://nur-kitep.kg',
-        logo: 'https://nur-kitep.kg/logonur.png',
+        url: 'https://nur-kitep.store',
+        logo: 'https://nur-kitep.store/logonur.png',
         description: 'Крупнейший интернет-магазин канцелярских товаров в Кыргызстане',
         address: {
           '@type': 'PostalAddress',
@@ -57,12 +57,12 @@ export function WebSiteSchema() {
       type="WebSite"
       data={{
         name: 'Nur-kitep',
-        url: 'https://nur-kitep.kg',
+        url: 'https://nur-kitep.store',
         potentialAction: {
           '@type': 'SearchAction',
           target: {
             '@type': 'EntryPoint',
-            urlTemplate: 'https://nur-kitep.kg/search?q={search_term_string}',
+            urlTemplate: 'https://nur-kitep.store/search?q={search_term_string}',
           },
           'query-input': 'required name=search_term_string',
         },
