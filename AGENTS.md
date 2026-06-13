@@ -12,6 +12,77 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- END:nextjs-agent-rules -->
 
 
+### Исправление: PWA иконки теперь отображаются на мобильных устройствах (09.05.2026)
+
+**Проблема:**
+- Логотип не отображался при установке PWA на мобильных устройствах (Android и iOS)
+- Иконки были с прозрачным фоном
+- Android и iOS не могли корректно отобразить прозрачные иконки
+
+**Решение:**
+- ✅ Пересозданы все 8 размеров иконок с **фиолетовым фоном** (#8b5cf6)
+- ✅ Логотип занимает 75% размера иконки (12.5% padding со всех сторон)
+- ✅ Сохранена прозрачность альфа-канала логотипа при наложении
+- ✅ Обновлен `manifest.json`: `background_color` изменен на #8b5cf6
+- ✅ Добавлены параметры `scope` и `display_override` для лучшей совместимости
+
+**Изменения в `scripts/generate-icons.mjs`:**
+- Иконки создаются с фиолетовым фоном RGB(139, 92, 246)
+- Логотип корректно накладывается с сохранением прозрачности
+- Высокое качество PNG (quality: 100, compression: 9)
+
+**Изменения в `public/manifest.json`:**
+```json
+{
+  "background_color": "#8b5cf6",  // Фиолетовый (было #ffffff)
+  "theme_color": "#8b5cf6",
+  "scope": "/",                    // Добавлен явный scope
+  "display_override": ["standalone", "minimal-ui"]  // Fallback режимы
+}
+```
+
+**Созданные иконки:**
+- icon-72x72.png (логотип 54x54, padding 9px)
+- icon-96x96.png (логотип 72x72, padding 12px)
+- icon-128x128.png (логотип 96x96, padding 16px)
+- icon-144x144.png (логотип 108x108, padding 18px)
+- icon-152x152.png (логотип 114x114, padding 19px) - для iOS
+- icon-192x192.png (логотип 144x144, padding 24px) - основная Android
+- icon-384x384.png (логотип 288x288, padding 48px)
+- icon-512x512.png (логотип 384x384, padding 64px) - splash screen
+
+**Apple Touch Icons (iOS):**
+- Добавлены в `app/layout.tsx` для iOS устройств
+- Размеры: 152x152, 192x192
+
+**Тестирование:**
+```bash
+# Регенерация иконок
+node scripts/generate-icons.mjs
+
+# Production build (обязательно!)
+npm run build
+npm run start
+
+# Проверка в DevTools
+# Chrome → F12 → Application → Manifest
+```
+
+**Файлы:**
+- `scripts/generate-icons.mjs` - Обновлена генерация с фиолетовым фоном
+- `public/manifest.json` - Обновлены цвета и параметры
+- `public/icons/icon-*.png` - Все 8 иконок пересозданы
+- `app/layout.tsx` - Apple Touch Icons для iOS
+- `PWA_ICONS_FIXED.md` - Документация исправления
+- `PWA_ICON_TROUBLESHOOTING.md` - Руководство по устранению проблем
+
+**Результат:**
+- ✅ Иконки с фиолетовым фоном и белым логотипом
+- ✅ Правильное отображение на Android и iOS
+- ✅ Название при установке: "Nur-kitep"
+- ✅ Все размеры для различных устройств
+
+
 ### Исправление отправки email для менеджеров (10.05.2026)
 
 **Проблема:**

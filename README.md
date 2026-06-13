@@ -35,6 +35,40 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## PWA (Progressive Web App)
+
+Приложение поддерживает установку как PWA на мобильные устройства и desktop.
+
+### ✅ Исправлено: Иконки на мобильных (09.05.2026)
+
+**Проблема:** Логотип не отображался при установке PWA на Android и iOS.
+
+**Решение:** Все иконки пересозданы с **фиолетовым фоном** (#8b5cf6) для правильного отображения на всех устройствах.
+
+### Как выглядят иконки:
+- **Фон**: Фиолетовый #8b5cf6
+- **Логотип**: Белый, центрированный
+- **Размер логотипа**: 75% от размера иконки
+- **Отступы**: 12.5% со всех сторон
+
+### Тестирование PWA:
+
+```bash
+# 1. Production build (обязательно!)
+npm run build
+npm run start
+
+# 2. Откройте http://localhost:3000
+# 3. DevTools (F12) → Application → Manifest
+# 4. Проверьте иконки с фиолетовым фоном
+```
+
+### Документация PWA:
+- [PWA_TEST_NOW.md](./PWA_TEST_NOW.md) - Быстрый тест
+- [PWA_ICONS_FIXED.md](./PWA_ICONS_FIXED.md) - Что исправлено
+- [PWA_ICON_TROUBLESHOOTING.md](./PWA_ICON_TROUBLESHOOTING.md) - Устранение проблем
+- [PWA_SETUP.md](./PWA_SETUP.md) - Полная настройка
+
 ## Форматирование полей ввода
 
 ### Телефонные номера

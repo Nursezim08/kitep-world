@@ -21,41 +21,58 @@ async function generateIcons() {
   try {
     // Получаем информацию о исходном изображении
     const metadata = await sharp(inputPath).metadata();
-    console.log(`📐 Исходный логотип: ${metadata.width}x${metadata.height}\n`);
+    console.log(`📐 Исходный логотип: ${metadata.width}x${metadata.height}`);
+    console.log(`   Формат: ${metadata.format}`);
+    console.log(`   Каналы: ${metadata.channels} (${metadata.hasAlpha ? 'с прозрачностью' : 'без прозрачности'})\n`);
 
     for (const size of sizes) {
       const outputPath = path.join(outputDir, `icon-${size}x${size}.png`);
       
-      // Создаём иконку с белым фоном и центрированным логотипом
-      // Логотип занимает 80% от размера иконки (20% padding)
-      const logoSize = Math.round(size * 0.8);
+      // Создаём иконку с фиолетовым фоном и центрированным логотипом
+      // Логотип занимает 75% от размера иконки (25% padding для безопасности)
+      const logoSize = Math.round(size * 0.75);
       const padding = Math.round((size - logoSize) / 2);
       
-      await sharp(inputPath)
+      // Создаём базовый квадрат с фиолетовым фоном
+      const background = await sharp({
+        create: {
+          width: size,
+          height: size,
+          channels: 4,
+          background: { r: 139, g: 92, b: 246, alpha: 1 } // #8b5cf6 (фиолетовый)
+        }
+      })
+      .png()
+      .toBuffer();
+      
+      // Изменяем размер логотипа
+      const resizedLogo = await sharp(inputPath)
         .resize(logoSize, logoSize, {
           fit: 'contain',
-          background: { r: 255, g: 255, b: 255, alpha: 0 }
+          background: { r: 0, g: 0, b: 0, alpha: 0 } // Прозрачный фон для логотипа
         })
-        .extend({
+        .toBuffer();
+      
+      // Накладываем логотип на фон
+      await sharp(background)
+        .composite([{
+          input: resizedLogo,
           top: padding,
-          bottom: padding,
-          left: padding,
-          right: padding,
-          background: { r: 255, g: 255, b: 255, alpha: 1 }
-        })
-        .png()
+          left: padding
+        }])
+        .png({ quality: 100, compressionLevel: 9 })
         .toFile(outputPath);
       
-      console.log(`✅ Создана иконка ${size}x${size} (логотип: ${logoSize}x${logoSize})`);
+      console.log(`✅ Создана иконка ${size}x${size} (логотип: ${logoSize}x${logoSize}, padding: ${padding}px)`);
     }
     
     console.log('\n🎉 Все иконки успешно созданы!');
     console.log(`📁 Иконки сохранены в: ${outputDir}`);
     console.log('\n💡 Иконки имеют:');
-    console.log('   • Белый фон');
-    console.log('   • 10% padding со всех сторон');
-    console.log('   • Центрированный логотип');
-    console.log('   • Подходят для Android, iOS и Desktop\n');
+    console.log('   • Фиолетовый фон (#8b5cf6)');
+    console.log('   • 12.5% padding со всех сторон');
+    console.log('   • Центрированный логотип с сохранением прозрачности');
+    console.log('   • Высокое качество PNG\n');
   } catch (error) {
     console.error('❌ Ошибка при генерации иконок:', error);
     process.exit(1);
