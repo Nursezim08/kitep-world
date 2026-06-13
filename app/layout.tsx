@@ -11,14 +11,14 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Nur-Kitep - Канцелярский магазин",
+  title: "Nur-kitep - Канцелярский магазин",
   description: "Интернет-магазин канцелярских товаров с самовывозом в Кыргызстане",
   manifest: "/manifest.json",
   themeColor: "#8b5cf6",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Nur-Kitep",
+    title: "Nur-kitep",
   },
   viewport: {
     width: "device-width",
@@ -49,12 +49,13 @@ export default function RootLayout({
       className={`${nunito.variable} h-full antialiased`}
     >
       <head>
+        <link rel="icon" href="/favicon.png" type="image/png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#8b5cf6" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Nur-Kitep" />
+        <meta name="apple-mobile-web-app-title" content="Nur-kitep" />
         <link rel="apple-touch-icon" href="/icons/icon-152x152.png" />
         <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
         <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />

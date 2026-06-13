@@ -65,7 +65,7 @@ export default function InstallPWA() {
               Установите приложение
             </h3>
             <p className="text-sm text-violet-100 mb-3">
-              Добавьте Nur-Kitep на главный экран для быстрого доступа
+              Добавьте Nur-kitep на главный экран для быстрого доступа
             </p>
 
             <div className="flex gap-2">
