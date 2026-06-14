@@ -84,16 +84,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Rewrite для sitemap.xml
-  async rewrites() {
-    return [
-      {
-        source: '/sitemap.xml',
-        destination: '/api/sitemap.xml',
-      },
-    ];
-  },
-
   // Оптимизация производительности
   experimental: {
     optimizeCss: true,

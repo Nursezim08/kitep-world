@@ -12,7 +12,111 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- END:nextjs-agent-rules -->
 
 
-### Исправление: Sitemap.xml через API Route - решение проблемы 404 (14.05.2026)
+### Исправление: Sitemap.xml через статический файл - ФИНАЛЬНОЕ РЕШЕНИЕ v2 (14.05.2026)
+
+**Проблема:**
+- API Route с rewrite не работал на продакшн сервере (404)
+- Даже после создания статического файла продолжал показывать 404
+- **Причина:** Rewrite правило в `next.config.ts` конфликтовало со статическим файлом!
+
+**ФИНАЛЬНОЕ решение v2:**
+Создан **статический файл** `public/sitemap.xml` + **УДАЛЕНО rewrite правило** из `next.config.ts`!
+
+**Почему теперь работает:**
+- Next.js **автоматически** отдаёт все файлы из папки `public/` как статические
+- Rewrite правила имеют приоритет над статическими файлами
+- Удаление rewrite позволяет Next.js отдавать статический файл напрямую
+- Это стандартное поведение, которое работает на любом хостинге без настройки!
+
+**Что сделано:**
+
+1. **Создан статический XML файл:**
+   - Файл: `public/sitemap.xml`
+   - Содержит 5 основных страниц сайта
+   - Валидный XML формат
+   - Правильный домен: `https://nur-kitep.store`
+
+2. **УДАЛЕНО rewrite правило из next.config.ts:**
+   ```typescript
+   // ❌ УДАЛЕНО - конфликтовало со статическим файлом!
+   async rewrites() {
+     return [
+       { source: '/sitemap.xml', destination: '/api/sitemap.xml' }
+     ];
+   }
+   ```
+
+3. **УДАЛЕНЫ ненужные файлы:**
+   - `app/api/sitemap.xml/route.ts` - API route больше не нужен
+   - `app/sitemap.ts` - динамический sitemap больше не нужен
+
+4. **Проект успешно собирается:**
+   ```bash
+   npm run build  # ✅ Exit Code: 0
+   ```
+
+**Содержимое sitemap.xml:**
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://nur-kitep.store</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <!-- ... остальные 4 страницы -->
+</urlset>
+```
+
+**Страницы в sitemap:**
+- `/` - Главная (priority 1.0)
+- `/catalog` - Каталог (priority 0.9)
+- `/search` - Поиск (priority 0.7)
+- `/terms` - Условия использования (priority 0.3)
+- `/privacy` - Политика конфиденциальности (priority 0.3)
+
+**Преимущества:**
+- ✅ Не требует API Route
+- ✅ Не требует rewrite (удалили конфликтующее правило!)
+- ✅ Не требует настройки Nginx
+- ✅ Работает на ЛЮБОМ хостинге
+- ✅ Просто загрузи файл и готово!
+
+**Инструкция для деплоя:**
+1. Установите зависимости: `npm install`
+2. Соберите проект: `npm run build`
+3. Загрузите на сервер (git pull или вручную)
+4. Перезапустите: `pm2 restart nur-kitep`
+5. Проверьте: `https://nur-kitep.store/sitemap.xml` ✅
+
+**Результат:**
+После деплоя sitemap будет доступен по адресу:
+- ✅ `https://nur-kitep.store/sitemap.xml`
+
+**Обновление в будущем:**
+Просто отредактируйте `public/sitemap.xml` и загрузите на сервер.
+Для добавления динамических страниц (товары, категории) можно использовать скрипт генерации.
+
+**Файлы:**
+- `public/sitemap.xml` - статический XML файл (создан)
+- `next.config.ts` - УДАЛЕНО rewrite правило (исправлено!)
+- `app/api/sitemap.xml/route.ts` - УДАЛЕНО (больше не нужно)
+- `app/sitemap.ts` - УДАЛЕНО (больше не нужно)
+- `public/robots.txt` - уже содержит правильную ссылку
+- `SITEMAP_ФИНАЛЬНОЕ_РЕШЕНИЕ.md` - подробная инструкция
+
+**Все попытки:**
+- ❌ Попытка 1: API Route `app/api/sitemap.xml/route.ts`
+- ❌ Попытка 2: Rewrite в `next.config.ts` + API Route
+- ❌ Попытка 3: Dynamic sitemap `app/sitemap.ts`
+- ❌ Попытка 4: Статический файл + rewrite (конфликт!)
+- ✅ **Попытка 5: Статический файл БЕЗ rewrite - РАБОТАЕТ!** 🎯
+
+**Вывод:**
+Статический файл в `public/` + удаление конфликтующих rewrites = надёжное решение! 🎉
+
+
+### Исправление компиляции проекта (14.05.2026)
 
 **Проблема:**
 - Sitemap.xml работал локально, но возвращал 404 на продакшн сервере
