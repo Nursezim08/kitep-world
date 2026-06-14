@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Условия использования | Nur-kitep',
     description: 'Правила использования интернет-магазина',
-    url: 'https://nur-kitep.kg/terms',
+    url: 'https://nur-kitep.store/terms',
   },
 };
 

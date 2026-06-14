@@ -13,18 +13,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const prisma = getPrismaClient();
 
   try {
-    const product = await prisma.product.findUnique({
+    const product = await prisma.products.findUnique({
       where: { id },
       include: {
-        translations: true,
-        category: {
+        product_translations: true,
+        categories: {
           include: {
-            translations: true,
+            category_translations: true,
           },
         },
-        images: {
+        product_images: {
           take: 1,
-          orderBy: { createdAt: 'asc' },
         },
       },
     });
@@ -35,12 +34,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
     }
 
-    const ruTranslation = product.translations.find((t) => t.language === 'ru');
-    const categoryRuTranslation = product.category?.translations.find((t) => t.language === 'ru');
+    const ruTranslation = product.product_translations.find((t) => t.locale === 'ru');
+    const categoryRuTranslation = product.categories?.category_translations.find((t) => t.locale === 'ru');
     const productName = ruTranslation?.name || 'Товар';
     const productDescription = ruTranslation?.description || '';
     const categoryName = categoryRuTranslation?.name || 'Канцелярия';
-    const productImage = product.images[0]?.url || '/placeholder-product.jpg';
+    const productImage = product.product_images[0]?.image_url || '/placeholder-product.jpg';
 
     return {
       title: `${productName} - ${categoryName} | Nur-kitep`,
@@ -57,8 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title: `${productName} | Nur-kitep`,
         description: productDescription || `${productName} - ${categoryName}`,
-        url: `https://nur-kitep.kg/product/${id}`,
-        type: 'product',
+        url: `https://nur-kitep.store/product/${id}`,
         images: [
           {
             url: productImage,

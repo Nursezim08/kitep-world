@@ -45,9 +45,27 @@ This version has breaking changes — APIs, conventions, and file structure may 
    - Автоматически перенаправляет `/sitemap.xml` на `/api/sitemap.xml`
    - Прозрачно для пользователей и поисковиков
 
-3. **Создана документация:**
+3. **Исправлены ошибки сборки проекта:**
+   - ✅ Созданы отсутствующие файлы:
+     - `app/(legal)/privacy/PrivacyClient.tsx` - страница политики конфиденциальности
+     - `app/(legal)/terms/TermsClient.tsx` - страница условий использования
+   - ✅ Исправлены названия моделей в Prisma:
+     - `prisma.product` → `prisma.products`
+     - `translations` → `product_translations`
+     - `category` → `categories`
+     - `category.translations` → `categories.category_translations`
+     - `images` → `product_images`
+     - `images[0].url` → `product_images[0].image_url`
+     - `t.language` → `t.locale`
+   - ✅ Исправлен OpenGraph type (убрано `type: 'product'`)
+   - ✅ Исправлены иконки manifest.ts (`purpose: "any maskable"` → `purpose: "maskable"`)
+   - ✅ Добавлен `'use client'` в `app/offline/page.tsx`
+   - ✅ Обновлены все URL с `.kg` на `.store`
+
+4. **Создана документация:**
    - `SITEMAP_API_SOLUTION.md` - подробная инструкция
    - `БЫСТРЫЙ_СТАРТ_SITEMAP.md` - краткая инструкция на русском
+   - `README_SITEMAP_FIX.md` - итоговая информация
 
 **Преимущества решения:**
 - ✅ Не требует настройки сервера
@@ -57,20 +75,28 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - ✅ Оптимизировано с кешированием
 
 **Результат:**
-После деплоя sitemap доступен по адресу:
-- ✅ `https://nur-kitep.store/sitemap.xml` (через rewrite)
-- ✅ `https://nur-kitep.store/api/sitemap.xml` (прямой API)
+- ✅ Проект успешно собирается (`npm run build`)
+- ✅ После деплоя sitemap доступен по адресу:
+  - `https://nur-kitep.store/sitemap.xml` (через rewrite)
+  - `https://nur-kitep.store/api/sitemap.xml` (прямой API)
 
 **Инструкция для деплоя:**
-1. `npm run build`
+1. `npm run build` ✅ (уже выполнено локально)
 2. Задеплойте на сервер
 3. `pm2 restart nur-kitep`
 4. Проверьте: `https://nur-kitep.store/sitemap.xml`
 5. Добавьте в Google Search Console и Яндекс.Вебмастер
 
 **Файлы:**
-- `app/api/sitemap.xml/route.ts` - API endpoint (новый)
+- `app/api/sitemap.xml/route.ts` - API endpoint (создан)
 - `next.config.ts` - добавлен rewrite
+- `app/(legal)/privacy/PrivacyClient.tsx` - создан
+- `app/(legal)/terms/TermsClient.tsx` - создан
+- `app/(legal)/privacy/page.tsx` - обновлен URL
+- `app/(legal)/terms/page.tsx` - обновлен URL
+- `app/(user)/product/[id]/page.tsx` - исправлены Prisma queries
+- `app/manifest.ts` - исправлены purpose
+- `app/offline/page.tsx` - добавлен 'use client'
 - `public/robots.txt` - уже настроен
 - `SITEMAP_API_SOLUTION.md` - документация
 - `БЫСТРЫЙ_СТАРТ_SITEMAP.md` - краткая инструкция

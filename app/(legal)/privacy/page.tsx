@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Политика конфиденциальности | Nur-kitep',
     description: 'Правила обработки персональных данных',
-    url: 'https://nur-kitep.kg/privacy',
+    url: 'https://nur-kitep.store/privacy',
   },
 };
 
