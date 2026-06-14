@@ -12,6 +12,70 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- END:nextjs-agent-rules -->
 
 
+### Исправление: Sitemap.xml через API Route - решение проблемы 404 (14.05.2026)
+
+**Проблема:**
+- Sitemap.xml работал локально, но возвращал 404 на продакшн сервере
+- Причина: проблемы с конфигурацией Nginx/сервера
+- Пользователь не имеет доступа к настройке сервера
+
+**Решение:**
+Создан **API Route в Next.js** с автоматическим rewrite правилом - не требует настройки сервера!
+
+**Что сделано:**
+
+1. **Создан API Route для sitemap:**
+   - Файл: `app/api/sitemap.xml/route.ts`
+   - Генерирует валидный XML sitemap
+   - Content-Type: `application/xml`
+   - Кеширование: 1 час
+   - Домен: `https://nur-kitep.store`
+
+2. **Добавлен rewrite в next.config.ts:**
+   ```typescript
+   async rewrites() {
+     return [
+       {
+         source: '/sitemap.xml',
+         destination: '/api/sitemap.xml',
+       },
+     ];
+   }
+   ```
+   - Автоматически перенаправляет `/sitemap.xml` на `/api/sitemap.xml`
+   - Прозрачно для пользователей и поисковиков
+
+3. **Создана документация:**
+   - `SITEMAP_API_SOLUTION.md` - подробная инструкция
+   - `БЫСТРЫЙ_СТАРТ_SITEMAP.md` - краткая инструкция на русском
+
+**Преимущества решения:**
+- ✅ Не требует настройки сервера
+- ✅ Не требует прав root
+- ✅ Работает на любом хостинге с Node.js
+- ✅ SEO-friendly URL: `/sitemap.xml`
+- ✅ Оптимизировано с кешированием
+
+**Результат:**
+После деплоя sitemap доступен по адресу:
+- ✅ `https://nur-kitep.store/sitemap.xml` (через rewrite)
+- ✅ `https://nur-kitep.store/api/sitemap.xml` (прямой API)
+
+**Инструкция для деплоя:**
+1. `npm run build`
+2. Задеплойте на сервер
+3. `pm2 restart nur-kitep`
+4. Проверьте: `https://nur-kitep.store/sitemap.xml`
+5. Добавьте в Google Search Console и Яндекс.Вебмастер
+
+**Файлы:**
+- `app/api/sitemap.xml/route.ts` - API endpoint (новый)
+- `next.config.ts` - добавлен rewrite
+- `public/robots.txt` - уже настроен
+- `SITEMAP_API_SOLUTION.md` - документация
+- `БЫСТРЫЙ_СТАРТ_SITEMAP.md` - краткая инструкция
+
+
 ### Исправление: PWA иконки теперь отображаются на мобильных устройствах (09.05.2026)
 
 **Проблема:**
